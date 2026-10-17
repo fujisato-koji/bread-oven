@@ -1,0 +1,201 @@
+# パン窯のナビゲータのモデル（正）
+# tools/gen_nav.py がこれと docs/01-requirements.md と docs/data/oven.json を読み、点検してから docs/navigator/nav.json を作る。
+# 部品の id は 3D の図（docs/viewer/main.js の PARTS）と図面の data-part と同じにする。
+
+meta:
+  title: パン窯 ナビゲータ
+  rev: "0.1"
+  date: "2026-10-17"
+
+# 物（3D と図面に出る部品）。dims は oven.json の params の鍵。doc は設計書の文書。
+parts:
+  - {id: foundation, name: 基礎, mat: 砕石と鉄筋コンクリート（仮）, dims: [foundation.thickness, foundation.top, frost.depth], doc: 02-configuration.md}
+  - {id: stand, name: 台, mat: コンクリートブロック（仮）, dims: [stand.height, stand.wall], doc: 02-configuration.md}
+  - {id: slab, name: 床版, mat: 鉄筋コンクリート（仮）, dims: [hearth.slab], doc: 02-configuration.md}
+  - {id: hearthIns, name: 炉床の断熱, mat: パーライトとセメント 1:5（仮）, dims: [hearth.insulation], doc: 02-configuration.md}
+  - {id: hearth, name: 炉床, mat: 耐火粘土レンガを縦に立てて並べる, dims: [hearth.firebrick, dome.inner_diameter], doc: 03-structural-design.md}
+  - {id: chamber, name: 窯壁（ドームの内張り）, mat: 耐火粘土レンガ, dims: [wall.firebrick, dome.inner_diameter, dome.inner_height], doc: 02-configuration.md}
+  - {id: mass, name: 蓄熱層, mat: 粘土と砂, dims: [dome.mass], doc: 03-structural-design.md}
+  - {id: insulation, name: 断熱, mat: パーライトとセメント 1:5（仮）, dims: [insulation.thickness], doc: 02-configuration.md}
+  - {id: shell, name: 外殻, mat: 左官の仕上げ（仮）, dims: [shell.thickness], doc: 02-configuration.md}
+  - {id: landing, name: 前室と焚き口, mat: 耐火粘土レンガ, dims: [door.width, door.height_ratio, landing.depth, landing.wall], doc: 03-structural-design.md}
+  - {id: door, name: 扉, mat: 内側を耐火材、外側を断熱にした板（仮）, dims: [door.thickness, door.width], doc: 02-configuration.md}
+  - {id: chimney, name: 煙突とダンパー, mat: 金属の煙突（仮）, dims: [chimney.diameter, chimney.top], doc: 01-requirements.md}
+  - {id: roof, name: 屋根と柱, mat: 未定, dims: [roof.eave, roof.ridge, roof.post_offset], doc: 02-configuration.md}
+  - {id: wood, name: 薪置き, mat: 乾いた広葉樹, dims: [], doc: 06-operation.md}
+  - {id: person, name: 人（大きさの目安）, mat: 目安, dims: [person.height], doc: ""}
+  - {id: frost, name: 凍結深度, mat: 地盤, dims: [frost.depth], doc: 01-requirements.md}
+
+# 系統図だけに出る、物でないもの
+nodes:
+  - {id: fire, name: 火（焚く間）}
+  - {id: embers, name: 熾火}
+  - {id: gas, name: 燃焼ガス}
+  - {id: air, name: 焼き室の空気}
+  - {id: bread, name: パン}
+  - {id: outside, name: 外気}
+
+# 流れの媒体。cat は線の種類（navigator.css の .cat-<cat>）。
+media:
+  rad: {name: 放射, cat: heat}
+  cond: {name: 伝導, cat: heat}
+  conv: {name: 対流, cat: heat}
+  loss: {name: 熱の損失, cat: loss}
+  smoke: {name: 煙, cat: smoke}
+  steam: {name: 蒸気, cat: steam}
+  airin: {name: 燃焼用の空気, cat: air}
+
+categories:
+  heat: {name: 熱}
+  loss: {name: 熱の損失}
+  smoke: {name: 煙}
+  steam: {name: 蒸気}
+  air: {name: 空気}
+
+# 系統図の見方。pos は図の座標（左上が原点、単位は画素）。flows の各行は [from, to, media, 注記]。
+sheets:
+  - id: bake
+    title: 焼いている間の熱の流れ
+    caption: 熾火を掻き出して扉を閉めたあと。蓄熱から窯壁と炉床を通ってパンへ熱が入り、外へも逃げる。
+    size: [1260, 600]
+    pos:
+      outside: [90, 310]
+      shell: [260, 120]
+      insulation: [435, 120]
+      mass: [610, 120]
+      chamber: [785, 120]
+      slab: [260, 500]
+      hearthIns: [435, 500]
+      hearth: [785, 500]
+      air: [980, 220]
+      bread: [980, 380]
+      door: [1160, 500]
+    flows:
+      - [mass, chamber, cond, 焼いている間は蓄熱層から窯壁へ熱が戻る]
+      - [chamber, bread, rad, 上からの熱の大半は放射。ピザ窯の試験で約 73%（P6）]
+      - [chamber, air, conv, ""]
+      - [air, bread, conv, ピザ窯の試験で約 15%（P6）]
+      - [hearth, bread, cond, 炉床からの伝導。ピザ窯の試験で約 12%（P6）。耐火レンガは炉床の温度差の 5〜6 割を底に伝える（P7）]
+      - [bread, air, steam, 焼き始めは扉で閉じ込める（R-02c）]
+      - [mass, insulation, loss, 断熱を通る損失 0.70〜0.93 kW（03 の 3.2）]
+      - [insulation, shell, loss, ""]
+      - [shell, outside, loss, ""]
+      - [hearth, hearthIns, loss, ""]
+      - [hearthIns, slab, loss, ""]
+      - [slab, outside, loss, ""]
+      - [hearth, door, rad, 扉の内面が冷たいと焚き口の側の炉床が冷える（P38 による計算）。扉は内側を耐火材、外側を断熱にする]
+  - id: fire
+    title: 焚く間の熱と煙
+    caption: 窯の中で薪を焚き、蓄熱層と炉床に熱をためる。煙は焚き口の上から前室と煙突へ出る。
+    size: [1100, 560]
+    pos:
+      outside: [90, 330]
+      chimney: [90, 140]
+      landing: [290, 140]
+      door: [290, 450]
+      gas: [500, 140]
+      fire: [500, 330]
+      embers: [500, 480]
+      chamber: [720, 140]
+      mass: [930, 140]
+      hearth: [720, 480]
+    flows:
+      - [outside, door, airin, 扉を外して焚く。空気は焚き口の下から入る]
+      - [door, fire, airin, ""]
+      - [fire, gas, conv, ""]
+      - [gas, landing, smoke, 煙は焚き口の上から出る]
+      - [landing, chimney, smoke, ""]
+      - [chimney, outside, smoke, 乾いた広葉樹を使う（R-06）]
+      - [fire, chamber, rad, ""]
+      - [gas, chamber, conv, ""]
+      - [chamber, mass, cond, 熱の届く深さは 6 時間で約 9 cm（P7 から計算）]
+      - [fire, hearth, rad, 火の位置を動かして炉床のむらを作らない（付録 A.1）]
+      - [embers, hearth, cond, 焚き終わりに熾火を炉床全体に広げて 30 分以上（F15、F19）]
+  - id: steam
+    title: 蒸気の通り道
+    caption: 焼き始めは扉とダンパーで蒸気を閉じ込め、焼き終わりに扉を開けて抜く（R-02c）。
+    size: [1000, 460]
+    pos:
+      bread: [820, 300]
+      air: [620, 300]
+      door: [420, 300]
+      landing: [420, 120]
+      chimney: [200, 120]
+      outside: [200, 300]
+    flows:
+      - [bread, air, steam, 生地から出る水分]
+      - [air, door, steam, 焼き始めは扉で閉じ込める]
+      - [door, landing, steam, 焼き終わりに扉を開けて抜く（P21）]
+      - [landing, chimney, steam, ダンパーを開ける]
+      - [chimney, outside, steam, ""]
+
+# 焚き方と焼き方の流れ（付録 06-operation.md）。lane は列の担当、col は左からの順、row は同じレーンの中の段（0 が上）。
+lanes:
+  - {id: oven, name: 窯}
+  - {id: dough, name: 生地}
+
+steps:
+  - {id: dry, lane: oven, col: 0, row: 0, kind: step, name: 初めての乾燥, desc: 初めて火を入れる前に、数日かけて段階的に乾かす。, parts: [chamber, mass, insulation, shell], reqs: [R-05], src: [P16, P5]}
+  - {id: burn, lane: oven, col: 1, row: 0, kind: step, name: 焚く, desc: 焚いている間に火の位置を動かす。, parts: [chamber, hearth], reqs: [R-02e, R-06], src: [F34]}
+  - {id: spread, lane: oven, col: 2, row: 0, kind: step, name: 熾火を広げる, desc: 焚き終わりに熾火を炉床全体に広げて 30 分以上置く。, parts: [hearth], reqs: [R-02e], src: [F15, F19]}
+  - {id: rake, lane: oven, col: 3, row: 0, kind: step, name: 掻き出して拭く, desc: 熾火と灰を掻き出し、炉床を掃いて湿った布で手早く拭く。, parts: [hearth], reqs: [R-02e], src: [P67, S19, F35, F17]}
+  - {id: soak, lane: oven, col: 4, row: 0, kind: step, name: 閉じて均す, desc: 扉を閉めて 30〜60 分置き、温度を揃える。, parts: [door, chamber, hearth], reqs: [R-02e], src: [F36, F16]}
+  - {id: measure, lane: oven, col: 5, row: 0, kind: gate, name: 測る, desc: 炉床の 5 点の差が 20℃以内で、炉床が 250〜300℃なら窯入れする。, parts: [hearth], reqs: [R-02e, R-02a], src: [P38]}
+  - {id: load1, lane: oven, col: 6, row: 0, kind: step, name: 1 回目の窯入れ, desc: 手早く入れる。焚き口の前 10 cm には置かない。大きいパンは奥と中央。, parts: [door, hearth, landing], reqs: [R-01, R-04], src: [P38, F18]}
+  - {id: bake1, lane: oven, col: 7, row: 0, kind: step, name: 焼く, desc: 扉で蒸気を閉じ込め、焼成時間の半分で前後を入れ替える。焼き終わりに扉を開けて蒸気を抜く。, parts: [door, chimney], reqs: [R-02b, R-02c, R-02e], src: [P40, P21]}
+  - {id: rest, lane: oven, col: 8, row: 0, kind: step, name: 取り出して待つ, desc: 取り出したら扉を閉め、10〜30 分待って奥の熱を表面へ戻す。, parts: [door, hearth], reqs: [R-04b], src: [P1]}
+  - {id: check2, lane: oven, col: 9, row: 0, kind: gate, name: 250℃以上か, desc: 2 回目は炉床が 250℃以上あることを確かめてから入れる。, parts: [hearth], reqs: [R-04b], src: [P1]}
+  - {id: refire, lane: oven, col: 9, row: 1, kind: step, name: 焚き直す, desc: 小さい火を 30 分焚いて 30 分均す。, parts: [chamber, hearth], reqs: [R-04b], src: [F21]}
+  - {id: load2, lane: oven, col: 10, row: 0, kind: step, name: 2 回目の窯入れ, desc: 1 回目と同じ手順で入れて焼く。, parts: [door, hearth], reqs: [R-04, R-04b], src: [P1]}
+  - {id: after, lane: oven, col: 11, row: 0, kind: step, name: 低い温度で使う, desc: 3 回目より後は型焼き、甘いパン、料理、乾燥に回す。, parts: [chamber], reqs: [], src: [P41]}
+  - {id: mix, lane: dough, col: 1, row: 0, kind: step, name: 仕込む, desc: 量の多い日は手で折りたたむ製法。ミニはふだん粉 360 g ほどから練る。, parts: [], reqs: [R-04a], src: [S27, P56]}
+  - {id: bulk, lane: dough, col: 2, row: 0, kind: step, name: 一次発酵, desc: 30 分ごとに折りたたむ。, parts: [], reqs: [], src: [S27]}
+  - {id: shape, lane: dough, col: 3, row: 0, kind: step, name: 成形して冷蔵, desc: 成形した生地を一晩（8〜12 時間）冷蔵する。, parts: [], reqs: [], src: [S25]}
+  - {id: out1, lane: dough, col: 5, row: 0, kind: step, name: 1 回目の分を出す, desc: 十分に膨らんでいれば冷たいまま窯に入れてよい。, parts: [], reqs: [], src: [F29, F28]}
+  - {id: out2, lane: dough, col: 9, row: 0, kind: step, name: 2 回目の分を出す, desc: 1 回目から約 30 分後に冷蔵庫から出す。, parts: [], reqs: [R-04b], src: [F28]}
+
+# 流れの矢印。[from, to, ラベル]。ラベルが「いいえ」の矢印は戻りとして描く。
+edges:
+  - [dry, burn, 初回だけ]
+  - [burn, spread, ""]
+  - [spread, rake, ""]
+  - [rake, soak, ""]
+  - [soak, measure, ""]
+  - [measure, load1, はい]
+  - [measure, soak, いいえ]
+  - [load1, bake1, ""]
+  - [bake1, rest, ""]
+  - [rest, check2, ""]
+  - [check2, load2, はい]
+  - [check2, refire, いいえ]
+  - [refire, check2, ""]
+  - [load2, after, ""]
+  - [mix, bulk, ""]
+  - [bulk, shape, ""]
+  - [shape, out1, ""]
+  - [out1, load1, ""]
+  - [shape, out2, ""]
+  - [out2, load2, ""]
+
+# 要求の割り当て。要求の番号は docs/01-requirements.md の 1.2 の表から読む。
+alloc:
+  R-01: {parts: [hearth], steps: [load1]}
+  R-02: {parts: [], steps: []}
+  R-02a: {parts: [hearth, chamber, mass], steps: [measure]}
+  R-02b: {parts: [mass, insulation, hearth, chamber], steps: [bake1]}
+  R-02c: {parts: [door, chimney, landing], steps: [bake1]}
+  R-02d: {parts: [hearth, chamber], steps: []}
+  R-02e: {parts: [hearth, door], steps: [burn, spread, rake, soak, measure, bake1]}
+  R-03: {parts: [chamber, hearth, door], steps: []}
+  R-04: {parts: [hearth], steps: [load1, load2]}
+  R-04a: {parts: [door, landing], steps: [mix]}
+  R-04b: {parts: [hearth, mass, chamber, insulation], steps: [rest, check2, refire, load2, out2]}
+  R-05: {parts: [chamber, mass, insulation, shell], steps: [dry]}
+  R-06: {parts: [wood], steps: [burn]}
+  R-07: {parts: [stand, slab, foundation], steps: []}
+  R-08: {parts: [shell, roof, foundation, insulation, frost], steps: []}
+  R-09: {parts: [], steps: []}
+  R-10: {parts: [], steps: []}
+  R-11: {parts: [chimney, roof], steps: []}
+  R-12: {parts: [door, insulation, shell, chimney], steps: []}
+  R-13: {parts: [foundation, stand], steps: []}

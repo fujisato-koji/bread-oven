@@ -1,0 +1,539 @@
+// パン窯ナビゲータの外枠。
+// モードの切り替え、URL の状態、選んだものの札、図の拡大縮小を受け持つ。
+// 各モード（req.js、flow.js、sys.js、dwg.js、v3d.js）は NavApp.register(名前, 作る関数) で登録し、
+// 作る関数は api を受け取って { enter(params), leave(), params(), highlight(sel), escape() } を返す。
+// 決まりごとは NAVIGATOR.md に書く。
+(function () {
+  'use strict';
+
+  const MODES = ['req', 'flow', 'sys', 'dwg', 'v3d'];
+  const KIND = { part: '部品', node: '系統図の要素', req: '要求', step: '工程', flow: '流れ' };
+  const THEME_KEY = 'bread-nav-theme';
+
+  const factories = {};
+  const mods = {};
+  let D = null;
+  let OVEN = null;
+  let mode = null;
+  let sel = { kind: null, id: null };
+  const IX = { thing: new Map(), req: new Map(), step: new Map(), flow: new Map(), kids: new Map() };
+
+  // ---------- 小さな道具
+
+  const $ = (s, r = document) => r.querySelector(s);
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const SVGNS = 'http://www.w3.org/2000/svg';
+
+  // el('div', {class: 'x'}, [子]) か el('svg:rect', {...})。属性の値が null なら付けない。
+  function el(tag, attrs = {}, kids = []) {
+    const svg = tag.startsWith('svg:');
+    const n = svg ? document.createElementNS(SVGNS, tag.slice(4)) : document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) {
+      if (v == null || v === false) continue;
+      if (k === 'text') n.textContent = v;
+      else if (k === 'html') n.innerHTML = v;
+      else n.setAttribute(k, v === true ? '' : v);
+    }
+    for (const c of [].concat(kids)) if (c != null) n.append(c);
+    return n;
+  }
+
+  function statusClass(s) {
+    if (!s) return '';
+    if (s.startsWith('決定') || s.startsWith('確定')) return 's-fix';
+    if (s.startsWith('仮')) return 's-tmp';
+    if (s.startsWith('未') || s.includes('待ち')) return 's-undef';
+    return '';
+  }
+  const chip = (s) => `<span class="chip ${statusClass(s)}">${esc(s)}</span>`;
+
+  // 出典の記号（P7、F15 など）に、題を出すリンクを付ける。
+  function srcHtml(text) {
+    const t = esc(text);
+    if (!D) return t;
+    return t.replace(/\b([PSMF]\d+[a-z]?)\b/g, (m) => {
+      const s = D.sources[m];
+      if (!s) return m;
+      const title = esc(`${s.title}（${s.kind}）`);
+      return s.url
+        ? `<a class="src" href="${esc(s.url)}" target="_blank" rel="noopener" title="${title}">${m}</a>`
+        : `<span class="src" title="${title}">${m}</span>`;
+    });
+  }
+
+  // 設計書の文書へのリンク。MkDocs はディレクトリの URL を使う。
+  function docHref(path) {
+    if (!path) return null;
+    const [file, hash] = path.split('#');
+    const base = file === 'index.md' ? '../' : `../${file.replace(/\.md$/, '')}/`;
+    return hash ? `${base}#${hash}` : base;
+  }
+
+  // ---------- 索引
+
+  function index() {
+    for (const p of D.parts) IX.thing.set(p.id, p);
+    for (const n of D.nodes) IX.thing.set(n.id, n);
+    for (const r of D.reqs) {
+      IX.req.set(r.id, r);
+      if (r.parent) {
+        if (!IX.kids.has(r.parent)) IX.kids.set(r.parent, []);
+        IX.kids.get(r.parent).push(r.id);
+      }
+    }
+    for (const s of D.steps) IX.step.set(s.id, s);
+    for (const sh of D.sheets) {
+      sh.flows.forEach((f, i) => {
+        const id = `${sh.id}:${i}`;
+        IX.flow.set(id, { id, sheet: sh.id, from: f[0], to: f[1], media: f[2], note: f[3] || '' });
+      });
+    }
+  }
+
+  const thing = (id) => IX.thing.get(id);
+  const req = (id) => IX.req.get(id);
+  const step = (id) => IX.step.get(id);
+  const flow = (id) => IX.flow.get(id);
+  const kidsOf = (rid) => IX.kids.get(rid) || [];
+  const allocOf = (rid) => D.alloc[rid] || { parts: [], steps: [] };
+
+  function reqsOfPart(pid) {
+    return D.reqs.filter((r) => allocOf(r.id).parts.includes(pid)).map((r) => r.id);
+  }
+  function stepsOfPart(pid) {
+    return D.steps.filter((s) => (s.parts || []).includes(pid)).map((s) => s.id);
+  }
+  function reqsOfStep(sid) {
+    const s = step(sid);
+    const set = new Set(s ? s.reqs || [] : []);
+    for (const r of D.reqs) if (allocOf(r.id).steps.includes(sid)) set.add(r.id);
+    return [...set];
+  }
+  function flowsOf(id) {
+    return [...IX.flow.values()].filter((f) => f.from === id || f.to === id);
+  }
+  function sheetsOf(id) {
+    return D.sheets.filter((sh) => id in sh.pos).map((sh) => sh.id);
+  }
+
+  // 選んだものに関係する部品、工程、要求、流れ。各モードはこれで光らせる。
+  function related(s = sel) {
+    const out = { parts: new Set(), steps: new Set(), reqs: new Set(), flows: new Set() };
+    if (!s || !s.kind) return out;
+    const addReq = (rid) => {
+      out.reqs.add(rid);
+      const a = allocOf(rid);
+      a.parts.forEach((p) => out.parts.add(p));
+      a.steps.forEach((x) => out.steps.add(x));
+    };
+    if (s.kind === 'part' || s.kind === 'node') {
+      out.parts.add(s.id);
+      stepsOfPart(s.id).forEach((x) => out.steps.add(x));
+      reqsOfPart(s.id).forEach((r) => out.reqs.add(r));
+      flowsOf(s.id).forEach((f) => out.flows.add(f.id));
+    } else if (s.kind === 'req') {
+      addReq(s.id);
+      kidsOf(s.id).forEach(addReq);
+    } else if (s.kind === 'step') {
+      out.steps.add(s.id);
+      const st = step(s.id);
+      (st ? st.parts || [] : []).forEach((p) => out.parts.add(p));
+      reqsOfStep(s.id).forEach((r) => out.reqs.add(r));
+    } else if (s.kind === 'flow') {
+      const f = flow(s.id);
+      if (f) {
+        out.flows.add(f.id);
+        out.parts.add(f.from);
+        out.parts.add(f.to);
+      }
+    }
+    return out;
+  }
+
+  // ---------- 図の拡大縮小（viewBox を動かす）
+
+  // svg を stage に置いたあとに呼ぶ。box は「全体を収める」の範囲 [x, y, w, h]。
+  // init を渡すと、最初の表示はその範囲にする（横に長い図で、最初は読める大きさで出すため）。
+  function panZoom(svg, stage, box, init) {
+    let vb = (init || box).slice();
+    let base = box.slice();
+    const set = () => svg.setAttribute('viewBox', vb.map((v) => v.toFixed(2)).join(' '));
+    const toSvg = (cx, cy) => {
+      const r = svg.getBoundingClientRect();
+      const s = Math.max(vb[2] / r.width, vb[3] / r.height);
+      const ox = vb[0] + (vb[2] - r.width * s) / 2;
+      const oy = vb[1] + (vb[3] - r.height * s) / 2;
+      return [ox + (cx - r.left) * s, oy + (cy - r.top) * s, s];
+    };
+    function zoomAt(cx, cy, f) {
+      const [x, y] = toSvg(cx, cy);
+      const nw = Math.min(Math.max(vb[2] * f, base[2] / 24), base[2] * 4);
+      const k = nw / vb[2];
+      vb = [x - (x - vb[0]) * k, y - (y - vb[1]) * k, vb[2] * k, vb[3] * k];
+      set();
+    }
+    svg.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      zoomAt(e.clientX, e.clientY, e.deltaY > 0 ? 1.15 : 1 / 1.15);
+    }, { passive: false });
+    let drag = null;
+    let moved = false;
+    svg.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
+      drag = { x: e.clientX, y: e.clientY, vb: vb.slice() };
+      moved = false;
+    });
+    window.addEventListener('pointermove', (e) => {
+      if (!drag) return;
+      const dx = e.clientX - drag.x;
+      const dy = e.clientY - drag.y;
+      if (!moved && Math.hypot(dx, dy) < 4) return;
+      if (!moved) svg.setPointerCapture?.(e.pointerId);
+      moved = true;
+      const [, , s] = toSvg(e.clientX, e.clientY);
+      vb = [drag.vb[0] - dx * s, drag.vb[1] - dy * s, vb[2], vb[3]];
+      set();
+    });
+    window.addEventListener('pointerup', () => { drag = null; });
+    // ドラッグの後のクリックは選択にしない。
+    svg.addEventListener('click', (e) => {
+      if (moved) { e.stopPropagation(); e.preventDefault(); moved = false; }
+    }, true);
+    const ctl = el('div', { class: 'zoomctl' }, [
+      el('button', { type: 'button', 'aria-label': '拡大', text: '＋' }),
+      el('button', { type: 'button', 'aria-label': '縮小', text: '−' }),
+      el('button', { type: 'button', 'aria-label': '全体を収める', text: '□' }),
+    ]);
+    const [bin, bout, bfit] = ctl.children;
+    const center = () => {
+      const r = svg.getBoundingClientRect();
+      return [r.left + r.width / 2, r.top + r.height / 2];
+    };
+    bin.onclick = () => zoomAt(...center(), 1 / 1.3);
+    bout.onclick = () => zoomAt(...center(), 1.3);
+    bfit.onclick = () => fit();
+    stage.append(ctl);
+    function fit() { vb = base.slice(); set(); }
+    // 範囲 [x, y, w, h] が見えるように寄せる。いまの倍率で入るなら動かすだけ。
+    function reveal(x, y, w, h, zoom = false) {
+      const pad = 40;
+      if (zoom) {
+        const nw = Math.max(w + pad * 2, base[2] / 6);
+        const nh = Math.max(h + pad * 2, base[3] / 6);
+        const k = Math.max(nw / vb[2], nh / vb[3]);
+        vb = [x + w / 2 - (vb[2] * k) / 2, y + h / 2 - (vb[3] * k) / 2, vb[2] * k, vb[3] * k];
+      } else {
+        const inside = x >= vb[0] && y >= vb[1] && x + w <= vb[0] + vb[2] && y + h <= vb[1] + vb[3];
+        if (!inside) vb = [x + w / 2 - vb[2] / 2, y + h / 2 - vb[3] / 2, vb[2], vb[3]];
+      }
+      set();
+    }
+    function reset(newBox, newInit) { base = newBox.slice(); vb = (newInit || newBox).slice(); set(); }
+    set();
+    return { fit, reveal, reset, zoomAt };
+  }
+
+  // ---------- 選んだものの札
+
+  function pillsHtml(kind, ids, nameOf) {
+    if (!ids.length) return '<p class="muted">なし</p>';
+    return ids.map((id) => `<button type="button" class="pill" data-sel="${kind}:${esc(id)}">${esc(nameOf(id))}</button>`).join('');
+  }
+  const partName = (id) => (thing(id) ? thing(id).name : id);
+  const reqName = (id) => `${id} ${req(id) ? req(id).text : ''}`.trim();
+  const stepName = (id) => (step(id) ? step(id).name : id);
+
+  function goButtons(kind, id) {
+    const b = [];
+    const go = (m, label) => b.push(`<button type="button" data-goto="${m}" data-sel="${kind}:${esc(id)}">${label}</button>`);
+    if (kind === 'part') {
+      go('req', '要求で見る');
+      if (stepsOfPart(id).length) go('flow', 'フローで見る');
+      if (sheetsOf(id).length) go('sys', '系統図で見る');
+      go('dwg', '図面で見る');
+      go('v3d', '3D で見る');
+      const p = thing(id);
+      if (p && p.doc) b.push(`<a href="${esc(docHref(p.doc))}" target="_blank" rel="noopener">設計書で読む</a>`);
+    } else if (kind === 'node') {
+      go('sys', '系統図で見る');
+    } else if (kind === 'req') {
+      go('req', '要求で見る');
+      if (allocOf(id).steps.length) go('flow', 'フローで見る');
+      if (allocOf(id).parts.length) { go('dwg', '図面で見る'); go('v3d', '3D で見る'); }
+      b.push(`<a href="${esc(docHref('01-requirements.md'))}" target="_blank" rel="noopener">要求の表で読む</a>`);
+    } else if (kind === 'step') {
+      go('flow', 'フローで見る');
+      b.push(`<a href="${esc(docHref('06-operation.md'))}" target="_blank" rel="noopener">手順を読む</a>`);
+    } else if (kind === 'flow') {
+      go('sys', '系統図で見る');
+    }
+    return `<div class="go">${b.join('')}</div>`;
+  }
+
+  function detailHtml(s) {
+    if (s.kind === 'part') {
+      const p = thing(s.id);
+      const dims = p.dims.length
+        ? `<table>${p.dims.map((d) => `<tr><td>${esc(d.label)}</td><td class="num">${d.v == null ? '未定' : esc(d.v + (d.unit ? ' ' + d.unit : ''))}</td><td>${chip(d.status)}</td></tr>`).join('')}</table>`
+        : '<p class="muted">寸法なし</p>';
+      return `<h2>${esc(p.name)}</h2><p>${esc(p.mat)}</p>
+        <h3>寸法（oven.json）</h3>${dims}
+        <h3>この部品で満たす要求</h3>${pillsHtml('req', reqsOfPart(s.id), reqName)}
+        <h3>この部品を使う工程</h3>${pillsHtml('step', stepsOfPart(s.id), stepName)}
+        ${goButtons('part', s.id)}`;
+    }
+    if (s.kind === 'node') {
+      const n = thing(s.id);
+      const fl = flowsOf(s.id);
+      const rows = fl.map((f) => `<button type="button" class="pill" data-sel="flow:${esc(f.id)}">${esc(partName(f.from))} → ${esc(partName(f.to))}（${esc(D.media[f.media].name)}）</button>`).join('') || '<p class="muted">なし</p>';
+      return `<h2>${esc(n.name)}</h2><p class="muted">物ではなく、系統図で熱や煙の流れを示すための要素。</p><h3>出入りする流れ</h3>${rows}${goButtons('node', s.id)}`;
+    }
+    if (s.kind === 'req') {
+      const r = req(s.id);
+      const a = allocOf(s.id);
+      const kids = kidsOf(s.id);
+      return `<h2>${esc(r.id)} ${esc(r.text)}</h2>
+        <p>${chip(r.status)} <span class="muted">由来: ${esc(r.origin)}</span></p>
+        <h3>設計点</h3><p>${srcHtml(r.point)}</p>
+        ${r.basis ? `<h3>根拠</h3><p>${srcHtml(r.basis)}</p>` : ''}
+        ${r.note ? `<h3>根拠の読み方</h3><p>${srcHtml(r.note)}</p>` : ''}
+        ${r.parent ? `<h3>上位</h3>${pillsHtml('req', [r.parent], reqName)}` : ''}
+        ${kids.length ? `<h3>下位</h3>${pillsHtml('req', kids, reqName)}` : ''}
+        <h3>満たす部品</h3>${pillsHtml('part', a.parts, partName)}
+        <h3>関わる工程</h3>${pillsHtml('step', a.steps, stepName)}
+        ${goButtons('req', s.id)}`;
+    }
+    if (s.kind === 'step') {
+      const st = step(s.id);
+      const lane = D.lanes.find((l) => l.id === st.lane);
+      return `<h2>${esc(st.name)}</h2><p class="muted">${esc(lane ? lane.name : '')}${st.kind === 'gate' ? '、判断' : ''}</p>
+        <p>${srcHtml(st.desc)}</p>
+        <h3>使う部品</h3>${pillsHtml('part', st.parts || [], partName)}
+        <h3>関わる要求</h3>${pillsHtml('req', reqsOfStep(s.id), reqName)}
+        <h3>出典</h3><p>${(st.src || []).map((c) => srcHtml(c)).join('、') || 'なし'}</p>
+        ${goButtons('step', s.id)}`;
+    }
+    if (s.kind === 'flow') {
+      const f = flow(s.id);
+      const sh = D.sheets.find((x) => x.id === f.sheet);
+      return `<h2>${esc(partName(f.from))} → ${esc(partName(f.to))}</h2>
+        <p>${esc(D.media[f.media].name)} <span class="muted">（${esc(sh.title)}）</span></p>
+        ${f.note ? `<p>${srcHtml(f.note)}</p>` : ''}
+        <h3>両端</h3>${pillsHtml(thing(f.from).kind === 'part' ? 'part' : 'node', [f.from], partName)}${pillsHtml(thing(f.to).kind === 'part' ? 'part' : 'node', [f.to], partName)}
+        ${goButtons('flow', s.id)}`;
+    }
+    return '';
+  }
+
+  function renderDetail() {
+    const box = $('#detail');
+    if (!sel.kind) {
+      box.classList.add('empty');
+      $('#dkind').textContent = '';
+      $('#dbody').innerHTML = '<p class="muted">図や一覧の要素を選ぶと、ここに中身と、ほかのモードへの行き先が出ます。</p>';
+      return;
+    }
+    box.classList.remove('empty');
+    $('#dkind').textContent = KIND[sel.kind] || '';
+    $('#dbody').innerHTML = detailHtml(sel);
+  }
+
+  // ---------- 選択とモード
+
+  function select(kind, id, opts = {}) {
+    const valid = kind && ((kind === 'part' || kind === 'node') ? thing(id) && thing(id).kind === kind
+      : kind === 'req' ? req(id) : kind === 'step' ? step(id) : kind === 'flow' ? flow(id) : false);
+    sel = valid ? { kind, id } : { kind: null, id: null };
+    renderDetail();
+    for (const m of Object.values(mods)) if (m && m.highlight) m.highlight(sel, opts);
+    writeUrl(!!opts.push);
+  }
+
+  function initMode(m) {
+    if (m in mods) return mods[m];
+    try {
+      mods[m] = factories[m] ? factories[m](api) : null;
+    } catch (e) {
+      console.error(e);
+      mods[m] = null;
+    }
+    if (!mods[m]) {
+      const tab = $(`#tab-${m}`);
+      if (tab) tab.hidden = true;
+    }
+    return mods[m];
+  }
+
+  function setMode(m, opts = {}) {
+    if (!MODES.includes(m)) m = 'req';
+    const mod = initMode(m);
+    if (!mod) {
+      const first = MODES.find((x) => x !== m && initMode(x));
+      if (first && first !== m) return setMode(first, opts);
+      return;
+    }
+    if (mode && mode !== m && mods[mode] && mods[mode].leave) mods[mode].leave();
+    mode = m;
+    for (const x of MODES) {
+      const on = x === m;
+      $(`#mode-${x}`).classList.toggle('on', on);
+      const tab = $(`#tab-${x}`);
+      tab.setAttribute('aria-selected', String(on));
+      tab.tabIndex = on ? 0 : -1;
+    }
+    mod.enter(opts.params || {});
+    if (mod.highlight) mod.highlight(sel, { reveal: true });
+    writeUrl(!!opts.push);
+  }
+
+  function goto(m, params = {}) { setMode(m, { push: true, params }); }
+
+  // ---------- URL（#/?m=モード&k=種類&i=id と、モードごとの引数）
+
+  function hashOf() {
+    const sp = new URLSearchParams();
+    if (mode) sp.set('m', mode);
+    if (sel.kind) { sp.set('k', sel.kind); sp.set('i', sel.id); }
+    const mod = mode && mods[mode];
+    if (mod && mod.params) for (const [k, v] of Object.entries(mod.params() || {})) if (v != null && v !== '') sp.set(k, v);
+    return '#/?' + sp.toString();
+  }
+  let writing = false;
+  function writeUrl(push) {
+    if (writing) return;
+    const h = hashOf();
+    if (h === location.hash) return;
+    if (push) history.pushState(null, '', h);
+    else history.replaceState(null, '', h);
+  }
+  function readUrl() {
+    const q = location.hash.replace(/^#\/?\??/, '');
+    const sp = new URLSearchParams(q);
+    const params = Object.fromEntries(sp.entries());
+    writing = true;
+    try {
+      if (params.k && params.i) {
+        const valid = (params.k === 'part' || params.k === 'node') ? thing(params.i) : params.k === 'req' ? req(params.i)
+          : params.k === 'step' ? step(params.i) : params.k === 'flow' ? flow(params.i) : null;
+        sel = valid ? { kind: params.k, id: params.i } : { kind: null, id: null };
+      } else {
+        sel = { kind: null, id: null };
+      }
+      renderDetail();
+      setMode(params.m || 'req', { params });
+      for (const m of Object.values(mods)) if (m && m.highlight) m.highlight(sel, { reveal: true });
+    } finally {
+      writing = false;
+    }
+    writeUrl(false);
+  }
+
+  // ---------- 明暗
+
+  function applyTheme(t) {
+    if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+    else document.documentElement.removeAttribute('data-theme');
+  }
+  function initTheme() {
+    let t = null;
+    try { t = localStorage.getItem(THEME_KEY); } catch (e) { /* 保存できなくても動く */ }
+    applyTheme(t);
+    $('#theme').onclick = () => {
+      const cur = document.documentElement.getAttribute('data-theme');
+      const dark = cur ? cur === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+      const next = dark ? 'light' : 'dark';
+      applyTheme(next);
+      try { localStorage.setItem(THEME_KEY, next); } catch (e) { /* 保存できなくても動く */ }
+      for (const m of Object.values(mods)) if (m && m.theme) m.theme();
+    };
+  }
+
+  // ---------- 起動
+
+  function fail(msg) {
+    const f = $('#fail');
+    f.hidden = false;
+    f.textContent = msg;
+  }
+
+  async function boot() {
+    initTheme();
+    try {
+      const [a, b] = await Promise.all([
+        fetch('nav.json', { cache: 'no-cache' }),
+        fetch('../data/oven.json', { cache: 'no-cache' }),
+      ]);
+      if (!a.ok) throw new Error(`nav.json を読めません（${a.status}）。tools/gen_nav.py を実行してください。`);
+      if (!b.ok) throw new Error(`oven.json を読めません（${b.status}）。`);
+      D = await a.json();
+      OVEN = await b.json();
+    } catch (e) {
+      fail(String(e.message || e));
+      return;
+    }
+    index();
+    $('#rev').textContent = `改訂 ${D.meta.rev}、寸法 ${D.meta.oven_revision}（${D.meta.oven_date}）`;
+
+    document.addEventListener('click', (e) => {
+      const t = e.target.closest('[data-sel], [data-goto]');
+      if (!t || !t.closest('#detail, .side, .stage')) return;
+      if (t.closest('.stage svg')) return; // 図の中のクリックは各モードが扱う
+      e.preventDefault();
+      const [k, i] = (t.dataset.sel || ':').split(/:(.*)/s);
+      if (t.dataset.goto) {
+        if (k) select(k, i, { push: false });
+        goto(t.dataset.goto, {});
+      } else if (k) {
+        select(k, i, { push: true, reveal: true });
+      }
+    });
+    $('#dclose').onclick = () => select(null, null, { push: true });
+    const tabs = [...document.querySelectorAll('#modes [role=tab]')];
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => goto(tab.dataset.mode));
+      tab.addEventListener('keydown', (e) => {
+        if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+        const vis = tabs.filter((x) => !x.hidden);
+        const i = vis.indexOf(tab);
+        const n = vis[(i + (e.key === 'ArrowRight' ? 1 : vis.length - 1)) % vis.length];
+        n.focus();
+        n.click();
+      });
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      const mod = mods[mode];
+      if (mod && mod.escape && mod.escape()) return;
+      if (sel.kind) select(null, null, { push: true });
+    });
+    window.addEventListener('popstate', readUrl);
+    readUrl();
+  }
+
+  // ---------- 各モードへの口
+
+  const api = {
+    get data() { return D; },
+    get oven() { return OVEN; },
+    get sel() { return sel; },
+    get mode() { return mode; },
+    $, el, esc, chip, statusClass, srcHtml, docHref,
+    thing, req, step, flow, kidsOf, allocOf,
+    reqsOfPart, stepsOfPart, reqsOfStep, flowsOf, sheetsOf, related,
+    select, goto, writeUrl, panZoom,
+    tip(html, x, y) {
+      const t = $('#tip');
+      if (!html) { t.hidden = true; return; }
+      t.innerHTML = html;
+      t.hidden = false;
+      t.style.left = `${x + 12}px`;
+      t.style.top = `${y + 12}px`;
+    },
+  };
+
+  window.NavApp = {
+    register(name, factory) { factories[name] = factory; },
+    boot,
+    api,
+  };
+})();

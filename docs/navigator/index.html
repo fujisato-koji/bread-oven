@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>パン窯ナビゲータ</title>
+<link rel="stylesheet" href="navigator.css">
+<script src="app.js" defer></script>
+<script src="req.js" defer></script>
+<script src="flow.js" defer></script>
+<script src="sys.js" defer></script>
+<script src="dwg.js" defer></script>
+<script src="v3d.js" defer></script>
+<script src="boot.js" defer></script>
+</head>
+<body>
+<header class="bar">
+  <a class="brand" href="../">パン窯ナビゲータ</a>
+  <nav class="seg" id="modes" role="tablist" aria-label="モード">
+    <button type="button" role="tab" id="tab-req" data-mode="req" aria-controls="mode-req">要求</button>
+    <button type="button" role="tab" id="tab-flow" data-mode="flow" aria-controls="mode-flow">フロー</button>
+    <button type="button" role="tab" id="tab-sys" data-mode="sys" aria-controls="mode-sys">系統図</button>
+    <button type="button" role="tab" id="tab-dwg" data-mode="dwg" aria-controls="mode-dwg">図面</button>
+    <button type="button" role="tab" id="tab-v3d" data-mode="v3d" aria-controls="mode-v3d">3D</button>
+  </nav>
+  <div class="meta">
+    <span id="rev"></span>
+    <a href="../">設計書</a>
+    <button type="button" id="theme" aria-label="明るさを切り替える">明暗</button>
+  </div>
+</header>
+
+<div class="body">
+  <main id="main">
+    <section class="mode" id="mode-req" role="tabpanel" aria-labelledby="tab-req">
+      <div class="modebar"><h1 class="mtitle">要求</h1><p class="mnote" id="req-note"></p></div>
+      <div class="work">
+        <aside class="side" id="req-side" aria-label="要求の一覧"></aside>
+        <div class="stage" id="req-stage" tabindex="0"></div>
+      </div>
+    </section>
+
+    <section class="mode" id="mode-flow" role="tabpanel" aria-labelledby="tab-flow">
+      <div class="modebar"><h1 class="mtitle">焚き方と焼き方の流れ</h1><p class="mnote" id="flow-note"></p></div>
+      <div class="work">
+        <aside class="side" id="flow-side" aria-label="工程の一覧"></aside>
+        <div class="stage" id="flow-stage" tabindex="0"></div>
+      </div>
+    </section>
+
+    <section class="mode" id="mode-sys" role="tabpanel" aria-labelledby="tab-sys">
+      <div class="modebar"><h1 class="mtitle">系統図</h1><p class="mnote" id="sys-note"></p></div>
+      <div class="work">
+        <aside class="side" id="sys-side" aria-label="見方と凡例"></aside>
+        <div class="stage" id="sys-stage" tabindex="0"></div>
+      </div>
+    </section>
+
+    <section class="mode" id="mode-dwg" role="tabpanel" aria-labelledby="tab-dwg">
+      <div class="modebar"><h1 class="mtitle">図面</h1><p class="mnote" id="dwg-note"></p></div>
+      <div class="work">
+        <aside class="side" id="dwg-side" aria-label="図面の一覧"></aside>
+        <div class="stage" id="dwg-stage" tabindex="0"></div>
+      </div>
+    </section>
+
+    <section class="mode" id="mode-v3d" role="tabpanel" aria-labelledby="tab-v3d">
+      <div class="modebar"><h1 class="mtitle">3D</h1><p class="mnote" id="v3d-note"></p></div>
+      <div class="work">
+        <div class="stage" id="v3d-stage"></div>
+      </div>
+    </section>
+
+    <div id="fail" class="fail" role="alert" hidden></div>
+  </main>
+
+  <aside class="detail" id="detail" aria-label="選んだもの" aria-live="polite">
+    <div class="dhead">
+      <span class="dkind" id="dkind"></span>
+      <button type="button" class="dclose" id="dclose" aria-label="選択を外す">×</button>
+    </div>
+    <div class="dbody" id="dbody"></div>
+  </aside>
+</div>
+<div id="tip" class="tip" role="tooltip" hidden></div>
+</body>
+</html>

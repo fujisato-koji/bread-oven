@@ -52,5 +52,7 @@ nav:
   - 3. 構造設計: 03-structural-design.md
   - 4. 部材の入手性: 04-procurement.md
   - 5. 部品リストと費用: 05-parts-list.md
+  - 付録 焚き方と焼き方: 06-operation.md
+  - ナビゲータ: navi.md
   - 3D の全体像: model.md
   - 出典: sources.md

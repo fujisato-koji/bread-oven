@@ -7,6 +7,10 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 const $ = (id) => document.getElementById(id);
 
+// ?embed=1 のときはナビゲータの iframe として動く（左の操作面を隠し、親と伝言をやり取りする）。
+const EMBED = new URLSearchParams(location.search).get('embed') === '1';
+if (EMBED) document.body.classList.add('embed');
+
 let spec;
 try {
   const res = await fetch('../data/oven.json', { cache: 'no-store' });
@@ -36,6 +40,7 @@ const PARTS = [
   { key: 'insulation', label: '断熱', color: 0xe6dcb4, mat: 'セラミックファイバーや軽量断熱コンクリート（未定）' },
   { key: 'shell', label: '外殻', color: 0xd3cbbd, mat: '防水の外装（未定）' },
   { key: 'landing', label: '前室と焚き口', color: 0xd08a5f, mat: '耐火レンガ（仮）' },
+  { key: 'door', label: '扉', color: 0x4a3b30, mat: '内側を耐火材、外側を断熱にした扉（仮）' },
   { key: 'chimney', label: '煙突', color: 0x5d6066, mat: '金属の煙突（未定）' },
   { key: 'roof', label: '屋根と柱', color: 0x8b6a4a, mat: '木の柱と屋根（未定）' },
   { key: 'wood', label: '薪', color: 0xa0703f, mat: '薪置き（目安）' },
@@ -390,6 +395,21 @@ function build(type) {
   const landingFloor = box(tunW, th, tunLen, 0, yInsTop + th / 2 - 0.002, zDoorIn + tunLen / 2, lmat, lInfo);
   groups.landing.add(tunnel, landingFloor);
 
+  // 扉は焼き室と前室の境に置き、煙突は扉の外に来るようにする。前室の内面と重ならないよう 2 mm 小さくする。
+  const dt = P('door.thickness');
+  const dIn = { halfW: door.halfW - GAP, spring: door.spring, height: door.height };
+  const doorShape = new THREE.Shape();
+  doorShape.moveTo(-dIn.halfW, GAP);
+  doorShape.lineTo(-dIn.halfW, dIn.spring);
+  doorShape.absarc(0, dIn.spring, dIn.halfW, Math.PI, 0, true);
+  doorShape.lineTo(dIn.halfW, GAP);
+  doorShape.closePath();
+  const zDoorFace = type === 'barrel' ? P('barrel.inner_depth') / 2 + t : Ro;
+  const doorMesh = mesh(extrude(doorShape, dt), material('door'),
+    info('door', `幅 ${f2(2 * door.halfW)} m、高さ ${f2(door.height)} m、厚さ ${f3(dt)} m`));
+  doorMesh.position.set(0, yFloor, zDoorFace - dt);
+  groups.door.add(doorMesh);
+
   // 煙突は前室の上に立てる。
   const rc = P('chimney.diameter') / 2;
   const yChimBase = yFloor + tunH;
@@ -533,7 +553,62 @@ function rebuild() {
   }
   state.selected = null;
   renderInfo(null);
+  applyFocus(false);
 }
+
+// ---------- 親（ナビゲータ）から指された部品を光らせる
+
+let focusKeys = [];
+const FOCUS_COLOR = 0xb86a00;
+const FOCUS_INTENSITY = 0.55;
+
+// on: 光らせる、dim: 光らせる部品があるときのほかの部品（中に隠れた部品が見えるよう薄くする）
+function setGlow(m, on, dim) {
+  if (!m || !m.emissive) return;
+  if (!m.userData.emBase) {
+    m.userData.emBase = {
+      color: m.emissive.getHex(), intensity: m.emissiveIntensity,
+      transparent: m.transparent, opacity: m.opacity, depthWrite: m.depthWrite,
+    };
+  }
+  const b = m.userData.emBase;
+  m.emissive.setHex(on ? FOCUS_COLOR : b.color);
+  m.emissiveIntensity = on ? FOCUS_INTENSITY : b.intensity;
+  const fade = dim && !on;
+  m.transparent = fade ? true : b.transparent;
+  m.opacity = fade ? Math.min(b.opacity, 0.15) : b.opacity;
+  m.depthWrite = fade ? false : b.depthWrite;
+  m.needsUpdate = true;
+}
+
+function applyFocus(recenter) {
+  if (!current) return;
+  const keys = focusKeys.filter((k) => current.groups[k]);
+  const box = new THREE.Box3();
+  for (const p of PARTS) {
+    const on = keys.includes(p.key);
+    current.groups[p.key].traverse((o) => {
+      if (!o.isMesh) return;
+      setGlow(o.material, on, keys.length > 0);
+    });
+    if (on) box.expandByObject(current.groups[p.key]);
+  }
+  if (recenter && keys.length && !box.isEmpty()) {
+    const c = box.getCenter(new THREE.Vector3());
+    const delta = c.sub(controls.target);
+    camera.position.add(delta);
+    controls.target.add(delta);
+    controls.update();
+  }
+}
+
+window.addEventListener('message', (e) => {
+  if (e.origin !== location.origin) return;
+  const m = e.data;
+  if (!m || m.type !== 'v3d:focus') return;
+  focusKeys = Array.isArray(m.parts) ? m.parts.filter((k) => typeof k === 'string') : [];
+  applyFocus(true);
+});
 
 function applyVisibility() {
   for (const p of PARTS) current.groups[p.key].visible = state.visible[p.key];
@@ -658,6 +733,9 @@ canvas.addEventListener('pointerup', (ev) => {
   if (!downAt || Math.hypot(ev.clientX - downAt[0], ev.clientY - downAt[1]) > 4) return;
   const h = pick(ev);
   renderInfo(h ? h.object.userData.info : null);
+  if (EMBED && h && window.parent !== window) {
+    window.parent.postMessage({ type: 'v3d:pick', part: h.object.userData.info.key }, location.origin);
+  }
 });
 
 // ---------- 操作
@@ -695,6 +773,7 @@ function resize() {
 }
 new ResizeObserver(resize).observe(canvas.parentElement);
 resize();
+if (EMBED && window.parent !== window) window.parent.postMessage({ type: 'v3d:ready' }, location.origin);
 
 renderer.setAnimationLoop(() => {
   controls.update();
