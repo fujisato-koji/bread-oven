@@ -54,6 +54,7 @@ const state = {
   type: ['dome', 'earth', 'barrel'].includes(spec.type) ? spec.type : 'dome',
   section: false,
   seeThrough: false,
+  fade: false,
   visible: Object.fromEntries(PARTS.map((p) => [p.key, true])),
   selected: null,
 };
@@ -61,7 +62,7 @@ const state = {
 // ---------- 描画の準備
 
 const canvas = $('scene');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true, stencil: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -123,6 +124,7 @@ function material(key, extra = {}) {
 
 // ドームの各層に焚き口の穴をあける。形状を切らずに、焚き口の範囲の画素を捨てる。
 function cutDoor(m, door) {
+  m.userData.door = door;
   m.onBeforeCompile = (shader) => {
     shader.uniforms.uDoor = { value: new THREE.Vector3(door.halfW, door.spring, door.bottom) };
     shader.vertexShader = 'varying vec3 vLocalPos;\n' + shader.vertexShader.replace(
@@ -223,6 +225,67 @@ const f2 = (v) => (v == null ? '未定' : Number(v).toFixed(2));
 const f3 = (v) => (v == null ? '未定' : Number(v).toFixed(3));
 
 // ---------- 窯を組む
+
+// ---------- 断面の切り口を埋める
+// 中身の詰まった部品は、切った面に部品の色の蓋を描く（stencil で切り口の内側だけを塗る）。
+// 煙突は管なので蓋を付けない。人と凍結深度の面も付けない。
+const CAP_SKIP = new Set(['chimney', 'frost', 'person']);
+
+function addCaps(b) {
+  const objs = [];
+  const mats = [];
+  const capGeom = new THREE.PlaneGeometry(12, 12);
+  let order = 1;
+  for (const p of PARTS) {
+    if (CAP_SKIP.has(p.key)) continue;
+    const g = b.groups[p.key];
+    const meshes = [];
+    g.traverse((o) => {
+      if (o.isMesh && !o.material.transparent && !o.userData.passThrough) meshes.push(o);
+    });
+    for (const m of meshes) {
+      const common = {
+        colorWrite: false, depthWrite: false, depthTest: false,
+        stencilWrite: true, stencilFunc: THREE.AlwaysStencilFunc, clippingPlanes: [cutPlane],
+      };
+      const back = new THREE.MeshBasicMaterial({
+        ...common, side: THREE.BackSide,
+        stencilFail: THREE.IncrementWrapStencilOp, stencilZFail: THREE.IncrementWrapStencilOp, stencilZPass: THREE.IncrementWrapStencilOp,
+      });
+      const front = new THREE.MeshBasicMaterial({
+        ...common, side: THREE.FrontSide,
+        stencilFail: THREE.DecrementWrapStencilOp, stencilZFail: THREE.DecrementWrapStencilOp, stencilZPass: THREE.DecrementWrapStencilOp,
+      });
+      if (m.material.userData.door) { cutDoor(back, m.material.userData.door); cutDoor(front, m.material.userData.door); }
+      for (const mat of [back, front]) {
+        const h = new THREE.Mesh(m.geometry, mat);
+        h.renderOrder = order;
+        h.userData.passThrough = true;
+        h.raycast = () => {};
+        m.add(h);
+        objs.push(h);
+        mats.push(mat);
+      }
+      const capMat = new THREE.MeshStandardMaterial({
+        color: m.material.color.clone().multiplyScalar(0.82), roughness: 0.95, metalness: 0,
+        stencilWrite: true, stencilRef: 0, stencilFunc: THREE.NotEqualStencilFunc,
+        stencilFail: THREE.ReplaceStencilOp, stencilZFail: THREE.ReplaceStencilOp, stencilZPass: THREE.ReplaceStencilOp,
+      });
+      const cap = new THREE.Mesh(capGeom, capMat);
+      cap.rotation.y = Math.PI / 2;
+      cap.position.set(0, 1.5, b.d.centerZ);
+      cap.renderOrder = order + 0.5;
+      cap.onAfterRender = (r) => r.clearStencil();
+      cap.userData.passThrough = true;
+      cap.raycast = () => {};
+      g.add(cap);
+      objs.push(cap);
+      mats.push(capMat);
+      order += 1;
+    }
+  }
+  return { objs, mats };
+}
 
 function build(type) {
   ovenMaterials = [];
@@ -540,9 +603,11 @@ function rebuild() {
     scene.remove(current.root);
     disposeTree(current.root);
     current.mats.forEach((m) => m.dispose());
+    current.caps.mats.forEach((m) => m.dispose());
   }
   const b = build(state.type);
-  current = { ...b, mats: ovenMaterials };
+  const caps = addCaps(b);
+  current = { ...b, mats: ovenMaterials, caps };
   scene.add(b.root);
   applyVisibility();
   applySection();
@@ -574,7 +639,7 @@ function setGlow(m, on, dim) {
   const b = m.userData.emBase;
   m.emissive.setHex(on ? FOCUS_COLOR : b.color);
   m.emissiveIntensity = on ? FOCUS_INTENSITY : b.intensity;
-  const fade = dim && !on;
+  const fade = state.fade && dim && !on;
   m.transparent = fade ? true : b.transparent;
   m.opacity = fade ? Math.min(b.opacity, 0.15) : b.opacity;
   m.depthWrite = fade ? false : b.depthWrite;
@@ -605,9 +670,21 @@ function applyFocus(recenter) {
 window.addEventListener('message', (e) => {
   if (e.origin !== location.origin) return;
   const m = e.data;
-  if (!m || m.type !== 'v3d:focus') return;
-  focusKeys = Array.isArray(m.parts) ? m.parts.filter((k) => typeof k === 'string') : [];
-  applyFocus(true);
+  if (!m || typeof m !== 'object') return;
+  if (m.type === 'v3d:focus') {
+    focusKeys = Array.isArray(m.parts) ? m.parts.filter((k) => typeof k === 'string') : [];
+    applyFocus(!state.section);
+  } else if (m.type === 'v3d:section') {
+    state.section = !!m.on;
+    $('section').checked = state.section;
+    applySection();
+    setView(state.section ? 'cut' : 'iso');
+  } else if (m.type === 'v3d:view') {
+    if (['iso', 'front', 'side', 'top', 'cut'].includes(m.view)) setView(m.view);
+  } else if (m.type === 'v3d:fade') {
+    state.fade = !!m.on;
+    applyFocus(false);
+  }
 });
 
 function applyVisibility() {
@@ -619,6 +696,7 @@ function applySection() {
     m.clippingPlanes = state.section ? [cutPlane] : [];
     m.needsUpdate = true;
   }
+  for (const o of current.caps.objs) o.visible = state.section;
 }
 
 function applySeeThrough() {
@@ -733,8 +811,8 @@ canvas.addEventListener('pointerup', (ev) => {
   if (!downAt || Math.hypot(ev.clientX - downAt[0], ev.clientY - downAt[1]) > 4) return;
   const h = pick(ev);
   renderInfo(h ? h.object.userData.info : null);
-  if (EMBED && h && window.parent !== window) {
-    window.parent.postMessage({ type: 'v3d:pick', part: h.object.userData.info.key }, location.origin);
+  if (EMBED && window.parent !== window) {
+    window.parent.postMessage({ type: 'v3d:pick', part: h ? h.object.userData.info.key : null }, location.origin);
   }
 });
 
