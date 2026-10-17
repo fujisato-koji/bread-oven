@@ -43,9 +43,10 @@ const PARTS = [
   { key: 'frost', label: '凍結深度', color: 0x5aa0d8, mat: '凍結深度の面' },
 ];
 const PART = Object.fromEntries(PARTS.map((p) => [p.key, p]));
+const TYPE_LABEL = { dome: 'レンガ内張りのドーム', earth: '土窯', barrel: 'バレル（参考）' };
 
 const state = {
-  type: spec.type === 'barrel' ? 'barrel' : 'dome',
+  type: ['dome', 'earth', 'barrel'].includes(spec.type) ? spec.type : 'dome',
   section: false,
   seeThrough: false,
   visible: Object.fromEntries(PARTS.map((p) => [p.key, true])),
@@ -73,8 +74,8 @@ sun.position.set(4.5, 8, 6);
 sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
 Object.assign(sun.shadow.camera, { left: -5, right: 5, top: 5, bottom: -5, near: 0.5, far: 30 });
-sun.shadow.bias = -0.0004;
-sun.shadow.normalBias = 0.02;
+sun.shadow.bias = -0.0015;
+sun.shadow.normalBias = 0.04;
 scene.add(sun);
 
 // 断面は x = 0 で切り、x < 0 の側を残す。
@@ -108,7 +109,8 @@ let ovenMaterials = [];
 
 function material(key, extra = {}) {
   const m = new THREE.MeshStandardMaterial({
-    color: PART[key].color, roughness: 0.92, metalness: 0, side: THREE.DoubleSide, ...extra,
+    color: PART[key].color, roughness: 0.92, metalness: 0, side: THREE.DoubleSide,
+    shadowSide: THREE.BackSide, ...extra,
   });
   ovenMaterials.push(m);
   return m;
@@ -209,6 +211,9 @@ function extrude(shape, depth) {
   return new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: false, curveSegments: 48 });
 }
 
+// 層の境で面を少し離す量
+const GAP = 0.002;
+
 const f2 = (v) => (v == null ? '未定' : Number(v).toFixed(2));
 const f3 = (v) => (v == null ? '未定' : Number(v).toFixed(3));
 
@@ -223,7 +228,7 @@ function build(type) {
     root.add(g);
     return [p.key, g];
   }));
-  const info = (key, dims) => ({ key, name: PART[key].label, mat: PART[key].mat, dims });
+  const info = (key, dims, mat) => ({ key, name: PART[key].label, mat: mat || PART[key].mat, dims });
 
   // 高さの基準
   const yFt = P('foundation.top');
@@ -243,12 +248,16 @@ function build(type) {
   const d = { yFloor };
   let Ro, zBack, zDoorIn, door, outerTop, innerHeight;
 
-  if (type === 'dome') {
+  if (type === 'dome' || type === 'earth') {
+    // 土窯は窯壁を粘土と砂で作り、蓄熱層を持たない。断熱はおが屑と粘土。
+    const earth = type === 'earth';
     const R = P('dome.inner_diameter') / 2;
     const H = P('dome.inner_height');
-    const m = P('dome.mass');
+    const wt = earth ? P('earth.wall') : t;
+    const m = earth ? 0 : P('dome.mass');
+    const it = earth ? P('earth.insulation') : ins;
     innerHeight = H;
-    const offs = [0, t, t + m, t + m + ins, t + m + ins + sh];
+    const offs = [0, wt, wt + m, wt + m + it, wt + m + it + sh];
     Ro = R + offs[4];
     zBack = -Ro;
     outerTop = yFloor + H + offs[4];
@@ -269,20 +278,26 @@ function build(type) {
     }
 
     // 炉床はドームの内側に敷き、ドームの壁は炉床の断熱の上に立てる。
-    const hearth = mesh(new THREE.CylinderGeometry(R, R, th, 96), material('hearth'),
+    // 積んだ部材は、断面で開いた底面が下の部材の上面と重ならないよう、底を GAP だけ浮かせる。
+    const hearth = mesh(new THREE.CylinderGeometry(R, R, th - GAP, 96), material('hearth'),
       info('hearth', `直径 ${f2(2 * R)} m、厚さ ${f3(th)} m、面積 ${f2(Math.PI * R * R)} m²`));
-    hearth.position.set(0, yInsTop + th / 2, 0);
+    hearth.position.set(0, yInsTop + GAP + (th - GAP) / 2, 0);
     groups.hearth.add(hearth);
 
     const layers = [
-      ['chamber', 0, 1, `内径 ${f2(2 * R)} m、内高 ${f2(H)} m、厚さ ${f3(t)} m`],
-      ['mass', 1, 2, `厚さ ${f3(m)} m`],
-      ['insulation', 2, 3, `厚さ ${f3(ins)} m`],
-      ['shell', 3, 4, `厚さ ${f3(sh)} m、外径 ${f2(2 * Ro)} m`],
+      ['chamber', 0, 1, `内径 ${f2(2 * R)} m、内高 ${f2(H)} m、厚さ ${f3(wt)} m`,
+        earth ? { mat: '粘土と砂（仮）', color: 0xa47d5c } : {}],
+      ['mass', 1, 2, `厚さ ${f3(m)} m`, { mat: '粘土と砂（仮）' }],
+      ['insulation', 2, 3, `厚さ ${f3(it)} m`,
+        earth ? { mat: 'おが屑と粘土（仮）' } : { mat: 'パーライトとセメント（仮）' }],
+      ['shell', 3, 4, `厚さ ${f3(sh)} m、外径 ${f2(2 * Ro)} m`, {}],
     ];
-    for (const [key, i0, i1, dims] of layers) {
+    for (const [key, i0, i1, dims, o] of layers) {
       if (offs[i1] - offs[i0] <= 1e-6) continue;
-      const g = mesh(domeShell(R, H, offs[i0], offs[i1], th), cutDoor(material(key), door), info(key, dims));
+      const mt = cutDoor(material(key, o.color ? { color: o.color } : {}), door);
+      // 隣の層と面が重なってちらつかないよう、外側の層が続くときは外面を 2 mm 下げる。
+      const b = i1 < 4 ? offs[i1] - GAP : offs[i1];
+      const g = mesh(domeShell(R, H, offs[i0], b, th), mt, info(key, dims, o.mat));
       g.position.y = yFloor;
       groups[key].add(g);
     }
@@ -306,14 +321,14 @@ function build(type) {
     // 前の壁に焚き口の切り欠きがあるので、前室は前の壁の外面から始める。
     zDoorIn = D / 2 + t;
 
-    const hearth = box(W + 2 * t, th, D + 2 * t, 0, yInsTop + th / 2, 0, material('hearth'),
+    const hearth = box(W + 2 * t, th - GAP, D + 2 * t, 0, yInsTop + GAP + (th - GAP) / 2, 0, material('hearth'),
       info('hearth', `${f2(W)} m × ${f2(D)} m（内法）、厚さ ${f3(th)} m、面積 ${f2(W * D)} m²`));
     groups.hearth.add(hearth);
 
     // 窯壁: 円筒部、奥の壁、焚き口のある前の壁
     const cm = material('chamber');
     const cInfo = info('chamber', `内幅 ${f2(W)} m、奥行 ${f2(D)} m、内高 ${f2(innerHeight)} m、厚さ ${f3(t)} m`);
-    const vault = mesh(extrude(archRing(r, hs, 0, t), D), cm, cInfo);
+    const vault = mesh(extrude(archRing(r, hs, 0, t - GAP), D), cm, cInfo);
     vault.position.set(0, yFloor, -D / 2);
     const back = mesh(extrude(archSolid(r, hs, t), t), cm, cInfo);
     back.position.set(0, yFloor, -D / 2 - t);
@@ -333,7 +348,7 @@ function build(type) {
       if (b - a <= 1e-6) continue;
       const lm = material(key);
       const li = info(key, dims);
-      const ring = mesh(extrude(archRing(r, hs, a, b), D + t + a), lm, li);
+      const ring = mesh(extrude(archRing(r, hs, a, i1 < 4 ? b - GAP : b), D + t + a), lm, li);
       ring.position.set(0, yFloor, -D / 2 - a);
       const cap = mesh(extrude(archSolid(r, hs, b), b - a), lm, li);
       cap.position.set(0, yFloor, -D / 2 - b);
@@ -358,7 +373,7 @@ function build(type) {
   }
 
   // 前室と焚き口。外の枠に焚き口の形の穴をあけて手前へ延ばす。
-  const zFront = (type === 'dome' ? Ro : P('barrel.inner_depth') / 2 + t) + landingDepth;
+  const zFront = (type === 'barrel' ? P('barrel.inner_depth') / 2 + t : Ro) + landingDepth;
   const tunW = 2 * (door.halfW + lw);
   const tunH = door.height + lw;
   const tunLen = zFront - zDoorIn;
@@ -389,7 +404,8 @@ function build(type) {
   const fx = Ro;
   const fz0 = zBack;
   const fz1 = zFront;
-  const insBox = box(2 * fx, P('hearth.insulation'), fz1 - fz0, 0, ySlabTop + P('hearth.insulation') / 2, (fz0 + fz1) / 2,
+  const hi = P('hearth.insulation');
+  const insBox = box(2 * fx, hi - GAP, fz1 - fz0, 0, ySlabTop + GAP + (hi - GAP) / 2, (fz0 + fz1) / 2,
     material('hearthIns'), info('hearthIns', `厚さ ${f3(P('hearth.insulation'))} m`));
   groups.hearthIns.add(insBox);
 
@@ -397,7 +413,8 @@ function build(type) {
   const sw = 2 * (fx + mg);
   const sd = fz1 - fz0 + 2 * mg;
   const sz = (fz0 + fz1) / 2;
-  groups.slab.add(box(sw, P('hearth.slab'), sd, 0, yStandTop + P('hearth.slab') / 2, sz,
+  const hs2 = P('hearth.slab');
+  groups.slab.add(box(sw, hs2 - GAP, sd, 0, yStandTop + GAP + (hs2 - GAP) / 2, sz,
     material('slab'), info('slab', `${f2(sw)} m × ${f2(sd)} m、厚さ ${f3(P('hearth.slab'))} m`)));
 
   const wt = P('stand.wall');
@@ -547,7 +564,10 @@ function setView(name) {
     front: [0, cy + 0.2, d.centerZ + span * 2.3],
     side: [span * 2.3, cy + 0.2, d.centerZ],
     top: [0.001, span * 2.8, d.centerZ + 0.001],
+    cut: [d.outerD * 2.1, (d.yFloor + d.outerTop) / 2 + 0.15, d.centerZ + 0.15],
   }[name];
+  // 断面は窯に寄って見る。
+  if (name === 'cut') target.set(0, (d.yFloor + d.outerTop) / 2, d.centerZ + 0.15);
   camera.position.set(...pos);
   controls.target.copy(target);
   controls.update();
@@ -569,7 +589,7 @@ function renderParams() {
 
 function renderDerived(d) {
   const rows = [
-    ['型式', d.type === 'dome' ? 'ドーム型' : 'バレル型'],
+    ['型式', TYPE_LABEL[d.type]],
     ['炉床の面の高さ', `${f2(d.yFloor)} m`],
     ['炉床の形', d.hearthText],
     ['炉床の面積', `${f2(d.hearthArea)} m²`],
@@ -655,17 +675,17 @@ $('views').addEventListener('click', (e) => { if (e.target.dataset.view) setView
 $('section').addEventListener('change', (e) => {
   state.section = e.target.checked;
   applySection();
-  if (state.section) setView('side');
+  if (state.section) setView('cut');
 });
 $('seeThrough').addEventListener('change', (e) => { state.seeThrough = e.target.checked; applySeeThrough(); });
 
 // URL の ?type=barrel&section=1&view=side で初期状態を指定できる。
 const q = new URLSearchParams(location.search);
-if (q.get('type') === 'dome' || q.get('type') === 'barrel') state.type = q.get('type');
+if (q.get('type') in TYPE_LABEL) state.type = q.get('type');
 if (q.get('section') === '1') { state.section = true; $('section').checked = true; }
 
 rebuild();
-setView(q.get('view') || (state.section ? 'side' : 'iso'));
+setView(q.get('view') || (state.section ? 'cut' : 'iso'));
 
 function resize() {
   const r = canvas.parentElement.getBoundingClientRect();
