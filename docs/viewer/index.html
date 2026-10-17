@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>パン窯 3D モデル</title>
+<style>
+  :root {
+    --bg: #f4f0e8;
+    --panel: #fffdf8;
+    --ink: #2b2622;
+    --muted: #6f655c;
+    --line: #ddd4c6;
+    --accent: #b4532a;
+    --accent-ink: #ffffff;
+    --scene-bg: #e8e3d8;
+    --ground: #b9b49f;
+    --grid: #8f8a78;
+    --chip-tmp: #f3dca8;
+    --chip-fix: #c4e5c9;
+    --chip-undef: #f2c0b8;
+    --chip-ref: #e2ded6;
+    --chip-calc: #c9dcef;
+    --chip-ink: #2b2622;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1c1a18;
+      --panel: #24211e;
+      --ink: #ece6dc;
+      --muted: #a89e92;
+      --line: #3a3530;
+      --accent: #e0835a;
+      --accent-ink: #1c1a18;
+      --scene-bg: #2a2724;
+      --ground: #4a473c;
+      --grid: #6c6858;
+      --chip-tmp: #6b5520;
+      --chip-fix: #2f5a37;
+      --chip-undef: #6e3229;
+      --chip-ref: #45403a;
+      --chip-calc: #2d4a66;
+      --chip-ink: #ece6dc;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1c1a18;
+    --panel: #24211e;
+    --ink: #ece6dc;
+    --muted: #a89e92;
+    --line: #3a3530;
+    --accent: #e0835a;
+    --accent-ink: #1c1a18;
+    --scene-bg: #2a2724;
+    --ground: #4a473c;
+    --grid: #6c6858;
+    --chip-tmp: #6b5520;
+    --chip-fix: #2f5a37;
+    --chip-undef: #6e3229;
+    --chip-ref: #45403a;
+    --chip-calc: #2d4a66;
+    --chip-ink: #ece6dc;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font: 14px/1.6 system-ui, "Hiragino Sans", "Yu Gothic UI", "Meiryo", sans-serif;
+  }
+  .app { display: grid; grid-template-columns: 330px 1fr; height: 100vh; }
+  aside {
+    overflow: auto;
+    background: var(--panel);
+    border-right: 1px solid var(--line);
+    padding: 14px 16px 24px;
+  }
+  main { position: relative; min-width: 0; }
+  canvas#scene { display: block; width: 100%; height: 100%; touch-action: none; }
+  h1 { font-size: 17px; margin: 0 0 2px; }
+  h2 { font-size: 13px; margin: 18px 0 6px; color: var(--muted); font-weight: 600; }
+  .sub { color: var(--muted); font-size: 12px; margin: 0; }
+  .seg { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .seg button {
+    flex: 1; border: 0; padding: 7px 0; background: transparent; color: var(--ink);
+    font: inherit; cursor: pointer;
+  }
+  .seg button + button { border-left: 1px solid var(--line); }
+  .seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  .row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .btn {
+    border: 1px solid var(--line); background: transparent; color: var(--ink);
+    border-radius: 6px; padding: 5px 10px; font: inherit; cursor: pointer;
+  }
+  .btn:hover, .seg button:hover { outline: 1px solid var(--accent); outline-offset: -1px; }
+  label.part { display: flex; align-items: center; gap: 8px; padding: 2px 0; cursor: pointer; }
+  .sw { width: 12px; height: 12px; border-radius: 3px; border: 1px solid rgba(0,0,0,.25); flex: none; }
+  .toggles label { display: flex; align-items: center; gap: 8px; padding: 2px 0; cursor: pointer; }
+  table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+  td, th { padding: 3px 4px; border-bottom: 1px solid var(--line); vertical-align: top; text-align: left; }
+  td.num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .chip {
+    display: inline-block; padding: 0 6px; border-radius: 9px; font-size: 11px;
+    color: var(--chip-ink); white-space: nowrap;
+  }
+  .chip.仮 { background: var(--chip-tmp); }
+  .chip.決定 { background: var(--chip-fix); }
+  .chip.未定 { background: var(--chip-undef); }
+  .chip.参考 { background: var(--chip-ref); }
+  .chip.算出 { background: var(--chip-calc); }
+  #info {
+    border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; min-height: 44px;
+    font-size: 13px;
+  }
+  #info .name { font-weight: 600; }
+  #info .muted, .note { color: var(--muted); font-size: 12px; }
+  #tip {
+    position: absolute; pointer-events: none; background: var(--panel); color: var(--ink);
+    border: 1px solid var(--line); border-radius: 6px; padding: 3px 8px; font-size: 12px;
+    display: none; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,.15);
+  }
+  #legend {
+    position: absolute; left: 10px; bottom: 8px; font-size: 11.5px; color: var(--muted);
+    background: color-mix(in srgb, var(--panel) 80%, transparent); padding: 2px 8px; border-radius: 6px;
+  }
+  #err { position: absolute; inset: 0; display: none; place-items: center; padding: 24px; color: var(--ink); }
+  @media (max-width: 760px) {
+    .app { grid-template-columns: 1fr; grid-template-rows: 62vh auto; height: auto; }
+    main { order: 1; height: 62vh; }
+    aside { order: 2; border-right: 0; border-top: 1px solid var(--line); padding: 12px 16px 24px; }
+  }
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+<div class="app">
+  <aside>
+    <h1>パン窯 3D モデル</h1>
+    <p class="sub" id="rev"></p>
+
+    <h2>型式</h2>
+    <div class="seg" id="type">
+      <button type="button" data-type="dome">ドーム型</button>
+      <button type="button" data-type="barrel">バレル型</button>
+    </div>
+
+    <h2>見る向き</h2>
+    <div class="row" id="views">
+      <button class="btn" type="button" data-view="iso">斜め</button>
+      <button class="btn" type="button" data-view="front">正面</button>
+      <button class="btn" type="button" data-view="side">側面</button>
+      <button class="btn" type="button" data-view="top">上</button>
+    </div>
+    <div class="toggles" style="margin-top:8px">
+      <label><input type="checkbox" id="section"> 中心で切って断面を見る</label>
+      <label><input type="checkbox" id="seeThrough"> 地面を透かして基礎を見る</label>
+    </div>
+
+    <h2>部品</h2>
+    <div id="parts"></div>
+
+    <h2>選んだ部品</h2>
+    <div id="info"><span class="muted">図の部品をクリックすると、材料と寸法が出ます。</span></div>
+
+    <h2>主な寸法（算出）</h2>
+    <table id="derived"></table>
+
+    <h2>寸法の値</h2>
+    <table id="params"></table>
+    <p class="note">寸法の正は <code>docs/data/oven.json</code> です。値を変えると図も変わります。</p>
+  </aside>
+  <main>
+    <canvas id="scene"></canvas>
+    <div id="tip"></div>
+    <div id="legend">マス目は 0.5 m</div>
+    <div id="err"></div>
+  </main>
+</div>
+<script type="module" src="main.js"></script>
+</body>
+</html>
