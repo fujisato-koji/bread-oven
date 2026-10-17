@@ -90,12 +90,18 @@ def read_reqs():
             "status": plain(cells[5]),
             "note": "",
         })
-    # 設計点の根拠の読み方（- R-xx：本文）
+    # 設計点の根拠の読み方（- R-xx：本文。2 文目からは字下げした続きの行）
     notes = {}
+    cur = None
     for line in section(text, "### 設計点の根拠の読み方"):
         m = re.match(r"- (R-\d+[a-z]?)：(.*)", line.strip())
         if m:
-            notes[m.group(1)] = plain(m.group(2))
+            cur = m.group(1)
+            notes[cur] = plain(m.group(2))
+        elif cur and line.startswith("    ") and line.strip():
+            notes[cur] += plain(line.strip())
+        elif not line.strip() or line.startswith("- ") or line.startswith("#"):
+            cur = None
     for r in reqs:
         r["note"] = notes.get(r["id"], "")
     return reqs
