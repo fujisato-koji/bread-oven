@@ -9,6 +9,7 @@
   const MODES = ['req', 'flow', 'sys', 'dwg', 'v3d'];
   const KIND = { part: '部品', node: '系統図の要素', req: '要求', step: '工程', flow: '流れ' };
   const THEME_KEY = 'bread-nav-theme';
+  const WIDTH_KEY = 'bread-nav-widths';
 
   const factories = {};
   const mods = {};
@@ -194,7 +195,10 @@
       vb = [drag.vb[0] - dx * s, drag.vb[1] - dy * s, vb[2], vb[3]];
       set();
     });
-    window.addEventListener('pointerup', () => { drag = null; });
+    window.addEventListener('pointerup', (e) => {
+      if (drag && moved && !svg.contains(e.target)) moved = false;
+      drag = null;
+    });
     // ドラッグの後のクリックは選択にしない。
     svg.addEventListener('click', (e) => {
       if (moved) { e.stopPropagation(); e.preventDefault(); moved = false; }
@@ -448,6 +452,88 @@
     };
   }
 
+  // ---------- 幅を変える仕切り
+
+  // 左の一覧（--side-w）と右の札（--detail-w）の幅。localStorage に覚える。
+  const WIDTHS = {
+    side: { prop: '--side-w', def: 272, min: 180, max: 560, label: '一覧の幅を変える' },
+    detail: { prop: '--detail-w', def: 340, min: 240, max: 720, label: '札の幅を変える' },
+  };
+  function loadWidths() {
+    let saved = {};
+    try { saved = JSON.parse(localStorage.getItem(WIDTH_KEY) || '{}'); } catch (e) { /* 保存できなくても動く */ }
+    for (const [k, w] of Object.entries(WIDTHS)) {
+      const v = Number(saved[k]);
+      if (v >= w.min && v <= w.max) document.documentElement.style.setProperty(w.prop, `${v}px`);
+    }
+  }
+  function curWidth(k) {
+    const v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue(WIDTHS[k].prop));
+    return Number.isFinite(v) ? v : WIDTHS[k].def;
+  }
+  function setWidth(k, v, save = true) {
+    const w = WIDTHS[k];
+    const x = Math.round(Math.min(Math.max(v, w.min), w.max));
+    document.documentElement.style.setProperty(w.prop, `${x}px`);
+    document.querySelectorAll(`.splitter[data-w="${k}"]`).forEach((s) => s.setAttribute('aria-valuenow', String(x)));
+    if (save) {
+      try {
+        const saved = JSON.parse(localStorage.getItem(WIDTH_KEY) || '{}');
+        saved[k] = x;
+        localStorage.setItem(WIDTH_KEY, JSON.stringify(saved));
+      } catch (e) { /* 保存できなくても動く */ }
+    }
+  }
+  function makeSplitter(k, measure) {
+    const w = WIDTHS[k];
+    const s = el('div', {
+      class: 'splitter', role: 'separator', 'aria-orientation': 'vertical', tabindex: '0', 'data-w': k,
+      'aria-label': w.label, 'aria-valuemin': String(w.min), 'aria-valuemax': String(w.max),
+      'aria-valuenow': String(curWidth(k)), title: `${w.label}（ダブルクリックで元に戻す）`,
+    });
+    s.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      s.setPointerCapture(e.pointerId);
+      s.classList.add('drag');
+      document.body.classList.add('resizing');
+      const move = (ev) => setWidth(k, measure(ev.clientX), false);
+      const up = (ev) => {
+        s.releasePointerCapture(ev.pointerId);
+        s.classList.remove('drag');
+        document.body.classList.remove('resizing');
+        s.removeEventListener('pointermove', move);
+        s.removeEventListener('pointerup', up);
+        setWidth(k, curWidth(k), true);
+      };
+      s.addEventListener('pointermove', move);
+      s.addEventListener('pointerup', up);
+    });
+    s.addEventListener('dblclick', () => setWidth(k, w.def));
+    s.addEventListener('keydown', (e) => {
+      const step = e.shiftKey ? 64 : 16;
+      const sign = k === 'side' ? 1 : -1; // 右の札は左へ広げる
+      if (e.key === 'ArrowRight') setWidth(k, curWidth(k) + step * sign);
+      else if (e.key === 'ArrowLeft') setWidth(k, curWidth(k) - step * sign);
+      else if (e.key === 'Home') setWidth(k, w.min);
+      else if (e.key === 'End') setWidth(k, w.max);
+      else if (e.key === 'Enter') setWidth(k, w.def);
+      else return;
+      e.preventDefault();
+    });
+    return s;
+  }
+  function initSplitters() {
+    loadWidths();
+    document.querySelectorAll('.work').forEach((work) => {
+      const side = work.querySelector(':scope > .side');
+      if (!side) return;
+      side.after(makeSplitter('side', (x) => x - side.getBoundingClientRect().left));
+    });
+    const detail = $('#detail');
+    detail.before(makeSplitter('detail', (x) => detail.getBoundingClientRect().right - x));
+  }
+
   // ---------- 起動
 
   function fail(msg) {
@@ -458,6 +544,7 @@
 
   async function boot() {
     initTheme();
+    initSplitters();
     try {
       const [a, b] = await Promise.all([
         fetch('nav.json', { cache: 'no-cache' }),
