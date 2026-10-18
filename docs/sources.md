@@ -33,7 +33,7 @@ P1 と P41 は Google Books の抜粋で該当の頁を確かめた。
 | P16 | Forno Bravo「How to Cure Your Forno Bravo Pizza Oven」V2.1, 2012-2013 | <https://support.fornobravo.com/hc/en-us/article_attachments/202046787> |
 | P17 | Forno Bravo「Casa2G datasheet」v3.2, 2014 | <https://fornobravo.com/PDF/Casa2G_datasheet.pdf> |
 | P18 | JIS R 2304:1995 粘土質耐火れんが、JIS R 2611:2001 耐火断熱れんが | <https://kikakurui.com/r2/R2304-1995-01.html> |
-| P19a | 北海道 建築指導課「凍結深度」 | <https://www.pref.hokkaido.lg.jp/kn/ksd/kijun/touketsushindo.html> |
+| P19a | 北海道 建築指導課「凍結深度」（市町村ごとの標準的な値。50〜120 cm、60 cm が最も多い。同じ市町村でも地質、地下水位、標高で違う） | <https://www.pref.hokkaido.lg.jp/kn/ksd/kijun/touketsushindo.html> |
 | P19b | 北海道 建築指導課「垂直積雪量」 | <https://www.pref.hokkaido.lg.jp/kn/ksd/kijun/sekisetu.html> |
 | P20 | 環境省「木質バイオマスストーブ環境ガイドブック」2012 | <https://www.env.go.jp/content/900399532.pdf> |
 | P21 | Pane di Altamura DOP の登録書類（EU） | <https://ec.europa.eu/geographical-indications-register/eambrosia-public-api/api/v1/attachments/59722> |
