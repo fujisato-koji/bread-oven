@@ -48,7 +48,7 @@ const PARTS = [
   { key: 'frost', label: '凍結深度', color: 0x5aa0d8, mat: '凍結深度の面' },
 ];
 const PART = Object.fromEntries(PARTS.map((p) => [p.key, p]));
-const TYPE_LABEL = { dome: 'レンガ内張りのドーム', earth: '土窯', barrel: 'バレル（参考）' };
+const TYPE_LABEL = { dome: 'レンガのドーム（第一案）', earth: '土窯', barrel: 'バレル（参考）' };
 
 const state = {
   type: ['dome', 'earth', 'barrel'].includes(spec.type) ? spec.type : 'dome',

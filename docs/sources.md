@@ -73,6 +73,12 @@ P1 と P41 は Google Books の抜粋で該当の頁を確かめた。
 | P68 | F. Guerrero, K. Yáñez, V. Vidal, F. Cereceda-Balic「Effects of wood moisture on emission factors for PM2.5, particle numbers and particulate-phase PAHs from Eucalyptus globulus combustion」Sci. Total Environ. 648:737-744, 2019 | <https://doi.org/10.1016/j.scitotenv.2018.08.057> |
 | P69 | M. Lodovici ほか「Polycyclic aromatic hydrocarbon contamination in the Italian diet」Food Addit. Contam., 1995 | <https://doi.org/10.1080/02652039509374360> |
 | P70 | KitchenAid (Whirlpool)「KSM3311X KSM3316X Use and Care Guide」W10882018A, 2016（米国版。Sears PartsDirect に掲載された写し）、KitchenAid UK の FAQ「Warm mixer head」（完全に冷えるまで 30〜45 分） | <https://c.searspartsdirect.com/doc/1707358L>、<https://kitchenaid.co.uk/faq/warm-mixer-head> |
+| P71 | ニチアス「ニチアスの不定形耐火物」カタログ I03, 2023 年 12 月（不定形耐火物の特長と、トンボ 5915-135C の施工所要量 1,900 kg/m³、乾燥後のかさ比重 1.9） | <https://nichias.co.jp/cms/nichias/pdf/catalog/I03.pdf> |
+| P72 | Le Panyol「Le Panyol 83」「Sérénité 75」製品ページ（重さ、内径、組立の方式） | <https://www.lepanyol.com/en/wood-fired-oven-bread-pizza-le-panyol-83.html>、<https://www.lepanyol.com/en/wood-fired-oven-bread-pizza-serenity-75.html> |
+| P73 | 札幌市「札幌市建築確認申請の手引き 第 2 章 第 2 節 構造 1 構造耐力 ① 積雪荷重（令第 86 条、細則第 21 条）」2-97 頁 | <https://www.city.sapporo.jp/toshi/k-shido/documents/tebiki2-97.pdf> |
+| P74 | 北海道立総合研究機構 農業研究本部「令和 2 年度 成績概要書 単管を利用した北海道向けの園芸用パイプハウス」2021 | <https://www.hro.or.jp/upload/18203/06.pdf> |
+| P75 | 札幌市消防局「札幌市火災予防条例 解説 第 6 条（火を使用する設備に附属する煙突）」 | <https://www.city.sapporo.jp/shobo/yobo/jorei/documents/012-06jyo.pdf> |
+| P76 | アイリスソーコー（アイリスオーヤマグループ）製品頁「アイリス ポリカ波板-PN」（イプロス掲載、英語の自動翻訳版。使用温度 -40〜+120℃） | <https://pr.mono.ipros.com/en/irissoko/product/detail/2001661556/> |
 
 ## 二次資料
 
@@ -96,6 +102,8 @@ P1 と P41 は Google Books の抜粋で該当の頁を確かめた。
 | S27 | King Arthur Baking「Unkneaded Six-Fold French Bread」（J. Hamelman『Bread』から） | <https://www.kingarthurbaking.com/recipes/unkneaded-six-fold-french-bread-recipe> |
 | S28 | Deutsches Brotinstitut「Das Holzofenbrot wird Brot des Jahres 2022」報道発表 | <https://www.brotinstitut.de/fileadmin/editorial-content/dokumente/pressemeldungen/PM_Brot_des_Jahres_2022.pdf> |
 | S29 | Société nationale des Meilleurs Ouvriers de France のバゲットの解説（Google Arts & Culture） | <https://artsandculture.google.com/story/lwVBP40SiRwPPA> |
+| S30 | Forno Bravo「Introduction to pizza oven kits」（検索結果の抜粋。頁は 403 で開けなかった） | <https://www.fornobravo.com/blog/introduction-pizza-oven-kits> |
+| S31 | New Steel Construction「Critical temperatures for fire design, Part 2: Columns」David Brown, 2024 年 4 月（BS EN 1993-1-2 表 3.1 の内挿の値） | <https://www.newsteelconstruction.com/wp/wp-content/uploads/2024/04/NSCApr2024-Tech.pdf> |
 
 ## 販売ページ
 
@@ -108,6 +116,59 @@ P1 と P41 は Google Books の抜粋で該当の頁を確かめた。
 | M5 | 楽天 薪クラブ 耐火モルタル 25 kg、3,850 円（検索結果の抜粋） | |
 | M7 | コメリ パーライト 50 L 税込 1,780 円、砂 20 kg 税込 218 円（検索結果の抜粋） | |
 | M10 | A&A マテリアル けい酸カルシウム保温材 | <https://aa-material.co.jp/eng/products/ip/ti/silica/hr/super_feather_silica.html> |
+| M11 | あいランドガーデン（Yahoo!ショッピング）「レンガ 国産 耐火煉瓦 SK34 新品 送料込み60個セット送料込み（北海道＋送料3,000円）」 | <https://store.shopping.yahoo.co.jp/iiland/br0328-60.html> |
+| M12 | 建材ショップ（楽天市場）「【大型】国産耐火レンガ ＳＫ３２ 並形 ５枚入り」 | <https://item.rakuten.co.jp/firebrick/sk32nami9/> |
+| M13 | タイルオンライン（楽天市場）「耐火レンガ SK-32 JISサイズ 230x114x65 イエローブリック」 | <https://item.rakuten.co.jp/tileonline/taikarengajis1/> |
+| M14 | クラフトショップNAVI（楽天市場）「耐火煉瓦 SK34 JiS 並形」 | <https://item.rakuten.co.jp/c-navi/702011/> |
+| M15 | モノタロウ「耐火レンガ JIS並形(23×11.4×6.5cm) 玉川窯業」 | <https://www.monotaro.com/g/06221317/> |
+| M16 | カインズ「カインズ 耐火煉瓦 SK32」 | <https://www.cainz.com/g/4549509929123.html> |
+| M17 | 薪クラブ（楽天市場）「耐火モルタル 25kg 袋入 石窯、ピザ窯製作 炉の補修などに」 | <https://item.rakuten.co.jp/makiclub/tm25/> |
+| M18 | お庭の玉手箱（楽天市場）「【業務用】耐火モルタルSK＃32 25kg」 | <https://item.rakuten.co.jp/tamatebako/r-m32/> |
+| M19 | モノタロウ「耐火モルタルS 家庭化学」 | <https://www.monotaro.com/g/01341521/> |
+| M20 | 建材ショップ（楽天市場）「アサヒキャスターCA-13T 25Kg」 | <https://item.rakuten.co.jp/firebrick/13t/> |
+| M21 | 薪クラブ（楽天市場）「アサヒキャスター CA-13T 25kg（検索一覧と配送料金表で確かめた）」 | <https://item.rakuten.co.jp/makiclub/ca13t/> |
+| M22 | ジオトーロ（東洋炉材株式会社）「耐火コンクリート（25kg入）」 | <https://www.geo-toro.com/product-page/%E8%80%90%E7%81%AB%E3%83%A2%E3%83%AB%E3%82%BF%E3%83%AB-%E3%82%AD%E3%83%A3%E3%82%B9%E3%82%BF%E3%83%96%E3%83%AB> |
+| M23 | モノタロウ「キャスタブル耐火材 耐火モルタル 25kg（マツモト産業）」 | <https://www.monotaro.com/g/06093127/> |
+| M24 | クラフトショップNAVI（楽天市場）「耐火断熱レンガ C-1 並形」 | <https://item.rakuten.co.jp/c-navi/702012/> |
+| M25 | 建材ショップ（楽天市場）「【大型】イソウールＢＳＳＲ １３００ ブランケット ７２００Ｘ６００Ｘ２５ｍｍ」 | <https://item.rakuten.co.jp/firebrick/10000319/> |
+| M26 | ねん土の丸石（楽天市場）「陶芸粘土 磁器土「C土」プレスケーキ（20kg）」 | <https://item.rakuten.co.jp/maruisi-nendo/549662/> |
+| M27 | ビバホーム オンライン 楽天市場店「荒木田土 18L」 | <https://item.rakuten.co.jp/vivahome/31121230/> |
+| M28 | コメリ（検索結果の抜粋）「セメント用 砂 ２０ｋｇ の通販」 | <https://www.komeri.com/shop/g/g454977/> |
+| M29 | 建材ショップ（楽天市場）「珪砂5号 25kg」 | <https://item.rakuten.co.jp/firebrick/keisa5-25/> |
+| M30 | 刀川平和農園（楽天市場）「パーライト 50L」 | <https://item.rakuten.co.jp/heiwa/10001928/> |
+| M31 | カインズ「カインズ セメント 25kg(東日本)」 | <https://www.cainz.com/g/4936695313629.html> |
+| M32 | コメリ（検索結果の抜粋）「ポルトランドセメント（北海道店舗） ２５ｋｇ の通販」 | <https://www.komeri.com/shop/g/g1345021/> |
+| M33 | 表札ポストグレーチングの通販売店（楽天市場）「普通ポルトランドセメント 25kg」 | <https://item.rakuten.co.jp/kenzai-yamashita/kenzaisement/> |
+| M34 | カインズ「重量ブロック 10cm 基本」 | <https://www.cainz.com/g/2200027052220.html> |
+| M35 | コメリ（検索結果の抜粋）「ブロック C-１５ 基本 の通販」 | <https://www.komeri.com/shop/g/g141451/> |
+| M36 | カインズ（コメリの値は検索結果の抜粋）「異形丸棒 D10×5.5m【SU】」 | <https://www.cainz.com/g/2200027341843.html> |
+| M37 | カインズ「ワイヤーメッシュ φ5×P150×1×2【SU】」 | <https://www.cainz.com/g/2200227320112.html> |
+| M38 | カインズ「砕石 6号 約20kg」 | <https://www.cainz.com/g/4965888093475.html> |
+| M39 | カインズ「針葉樹合板 910×1820×12mm【SU】」 | <https://www.cainz.com/g/2200024310125.html> |
+| M40 | カインズ「Lアングル 3×40×1820mm」 | <https://www.cainz.com/g/4996129100072.html> |
+| M41 | カインズ「長ねじボルト ユニクロ M12×1000mm」 | <https://www.cainz.com/g/4962123017142.html> |
+| M42 | カインズ「ステンレス 直筒 910L φ120mm ハゼ折り煙突」 | <https://www.cainz.com/g/4934756312017.html> |
+| M43 | カインズ「ステンレス 半直筒 φ120mm ハゼ折り煙突」 | <https://www.cainz.com/g/4934756312024.html> |
+| M44 | モノタロウ「ステンレス煙突 直筒 ホンマ製作所」 | <https://www.monotaro.com/g/08585349/> |
+| M45 | DCMオンライン「ステンレス煙突 121mm ホクアイ 煙突 直管」 | <https://www.dcm-ekurashi.com/goods/808498> |
+| M46 | カインズ「ステンレス T笠 φ120mm ハゼ折り煙突（H笠 φ120 は 3,280 円の別の頁）」 | <https://www.cainz.com/g/4934756312055.html> |
+| M47 | カインズ「ステンレス 自在煙突支持金具 φ100～150mm用」 | <https://www.cainz.com/g/4934756010715.html> |
+| M48 | カインズ「黒耐熱 スチール製 ダンパー φ120mm ハゼ折り煙突」 | <https://www.cainz.com/g/4934756063087.html> |
+| M49 | カインズ「鋼板 3.2×300×600mm」 | <https://www.cainz.com/g/4996129102564.html> |
+| M50 | カインズ「ケイカル板 910×1820×6mm【SU】」 | <https://www.cainz.com/g/2200024530165.html> |
+| M51 | カインズ「アイアンハンドル 62803」 | <https://www.cainz.com/g/4512706628038.html> |
+| M52 | 楽天市場 手作りSHOP ばすぷすん工房「ピザ窯 扉 蓋」 | <https://item.rakuten.co.jp/buspusun/c/0000000189/> |
+| M53 | モノタロウ「MIR211 放射温度計 測定範囲-50～500℃」 | <https://www.monotaro.com/g/01591511/> |
+| M54 | モノタロウ「AD5601A 熱電対温度計(Kタイプ) A&D」 | <https://www.monotaro.com/p/8881/1344/> |
+| M55 | カインズ「ACQ防腐土台ひのき 幅90mm 長さ3000mm 厚さ90mm【SU】」 | <https://www.cainz.com/g/4560171972743.html> |
+| M56 | DCMオンライン「杉乾燥垂木 束売り(4入) 約45×45×1820mm ナイス」 | <https://www.dcm-ekurashi.com/goods/1037713> |
+| M57 | カインズ「ガルバリウム波板 8尺 0.25厚【SU】」 | <https://www.cainz.com/g/2200027170153.html> |
+| M58 | DCMオンライン「ガルバ連結波板スクリュ 木下地 3.9×35mm 90本（YAHATA）」 | <https://www.dcm-ekurashi.com/goods/1166759> |
+| M59 | コメリ（検索結果の抜粋）「単管パイプ ３ｍ」 | <https://www.komeri.com/shop/g/g2069371/> |
+| M60 | DCMオンライン「固定ベース KB48.6_4157 大洋」 | <https://www.dcm-ekurashi.com/goods/157362> |
+| M61 | DCMオンライン「波板 ヒシ波ポリカ 6尺 クリア TNP6C」 | <https://www.dcm-ekurashi.com/goods/234641> |
+| M62 | 生活堂「LIXIL フーゴA プラスミニ サイクルポート CP-L-FUAP（工事費込セット）」 | <https://www.seikatsu-do.com/exterior/cycleport/lixil/CP-L-FUAP-KJ/> |
+| M63 | 陶芸ショップ.コム（株式会社竹昇精工）「イソウールブランケット1260℃ 厚さ25mm」 | <https://www.tougeishop.com/products/detail/4060/> |
 
 ## フォーラム（経験則）
 
@@ -142,3 +203,11 @@ P1 と P41 は Google Books の抜粋で該当の頁を確かめた。
 | F37 | The Fresh Loaf「Can you fake a wood fired effect?」2012 | <https://www.thefreshloaf.com/node/31240> |
 | F38 | The Fresh Loaf「Baking bread in a WFO with a fire still going」2010 | <https://www.thefreshloaf.com/comment/137165> |
 | F39 | The Fresh Loaf「The old can of ashes trick」2019 | <https://www.thefreshloaf.com/comment/440251> |
+| F40 | Forno Bravo「Mr Gs Aussie Castable oven」2009-11〜12。40 インチを 4 分割、1 個約 95 kg | <https://community.fornobravo.com/forum/pizza-oven-design-and-installation/getting-started/9071-mr-gs-aussie-castable-oven?p=118681> |
+| F41 | Forno Bravo「30" castable dome」2019-10〜11。4 分割、使った材料は 55 lb 袋 5 袋 | <https://community.fornobravo.com/forum/pizza-oven-design-and-installation/getting-started/416983-30-castable-dome> |
+| F42 | Forno Bravo「Embarking on a Cast Oven Dome」2014-06。鋳込みの最低厚さと内外二重の型 | <https://community.fornobravo.com/forum/pizza-oven-design-and-installation/tools-tips-and-techniques/18458-embarking-on-a-cast-oven-dome?p=246494> |
+| F43 | Forno Bravo「Dry stack WFO: pavers or bricks?」2023-09〜2026-06。モルタル無しの窯の熱の逃げと鋼の強度の指摘 | <https://community.fornobravo.com/forum/pizza-oven-design-and-installation/other-oven-types/455773-dry-stack-wfo-pavers-or-bricks> |
+| F44 | Forno Bravo「Temporary dry stacked WFO square design」2013-10〜11。山形鋼と全ねじで締める計画と、焚いた報告 | <https://community.fornobravo.com/forum/pizza-oven-design-and-installation/getting-started/17697-temporary-dry-stacked-wfo-square-design> |
+| F45 | Forno Bravo「Oven clay reuse help」2013-05。粘土の焼結と再利用 | <https://community.fornobravo.com/forum/pizza-oven-design-and-installation/other-oven-types/17016-oven-clay-reuse-help> |
+| F46 | Forno Bravo「Fill enclosure with vermiculite」2022-01-15。ばらのパーライトの断熱 | <https://community.fornobravo.com/forum/pizza-oven-design-and-installation/getting-started/444017-fill-enclosure-with-vermiculite> |
+| F47 | Forno Bravo「Moving a commercial modular oven」2015-06-07。分割ドームを解体した報告 | <https://community.fornobravo.com/forum/pizza-oven-design-and-installation/commercial-pizza-ovens/19510-moving-a-commercial-modular-oven?p=262625> |

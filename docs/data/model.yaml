@@ -14,8 +14,8 @@ parts:
   - {id: slab, name: 床版, mat: 鉄筋コンクリート（仮）, dims: [hearth.slab], doc: 02-configuration.md}
   - {id: hearthIns, name: 炉床の断熱, mat: パーライトとセメント 1:5（仮）, dims: [hearth.insulation], doc: 02-configuration.md}
   - {id: hearth, name: 炉床, mat: 耐火粘土レンガを縦に立てて並べる, dims: [hearth.firebrick, dome.inner_diameter], doc: 03-structural-design.md}
-  - {id: chamber, name: 窯壁（ドームの内張り）, mat: 耐火粘土レンガ, dims: [wall.firebrick, dome.inner_diameter, dome.inner_height], doc: 02-configuration.md}
-  - {id: mass, name: 蓄熱層, mat: 粘土と砂, dims: [dome.mass], doc: 03-structural-design.md}
+  - {id: chamber, name: 窯壁（ドーム）, mat: 耐火粘土レンガ 114 mm（蓄熱を兼ねる）, dims: [wall.firebrick, dome.inner_diameter, dome.inner_height], doc: 02-configuration.md}
+  - {id: mass, name: 蓄熱層, mat: 第一案 B では置かない（土窯の型式で使う粘土と砂）, dims: [dome.mass], doc: 02-configuration.md}
   - {id: insulation, name: 断熱, mat: パーライトとセメント 1:5（仮）, dims: [insulation.thickness], doc: 02-configuration.md}
   - {id: shell, name: 外殻, mat: 左官の仕上げ（仮）, dims: [shell.thickness], doc: 02-configuration.md}
   - {id: landing, name: 前室と焚き口, mat: 耐火粘土レンガ, dims: [door.width, door.height_ratio, landing.depth, landing.wall], doc: 03-structural-design.md}
@@ -62,7 +62,6 @@ sheets:
       outside: [90, 310]
       shell: [260, 120]
       insulation: [435, 120]
-      mass: [610, 120]
       chamber: [785, 120]
       slab: [260, 500]
       hearthIns: [435, 500]
@@ -71,13 +70,12 @@ sheets:
       bread: [980, 380]
       door: [1160, 500]
     flows:
-      - [mass, chamber, cond, 焼いている間は蓄熱層から窯壁へ熱が戻る]
       - [chamber, bread, rad, 上からの熱の大半は放射。ピザ窯の試験で約 73%（P6）]
       - [chamber, air, conv, ""]
       - [air, bread, conv, ピザ窯の試験で約 15%（P6）]
       - [hearth, bread, cond, 炉床からの伝導。ピザ窯の試験で約 12%（P6）。耐火レンガは炉床の温度差の 5〜6 割を底に伝える（P7）]
       - [bread, air, steam, 焼き始めは扉で閉じ込める（R-02c）]
-      - [mass, insulation, loss, 断熱を通る損失 0.70〜0.93 kW（03 の 3.2）]
+      - [chamber, insulation, loss, 窯壁のレンガ 114 mm が熱をため、断熱を通って逃げる。損失 0.61〜0.81 kW（03 の 3.2）]
       - [insulation, shell, loss, ""]
       - [shell, outside, loss, ""]
       - [hearth, hearthIns, loss, ""]
@@ -97,7 +95,6 @@ sheets:
       fire: [500, 330]
       embers: [500, 480]
       chamber: [720, 140]
-      mass: [930, 140]
       hearth: [720, 480]
     flows:
       - [outside, door, airin, 扉を外して焚く。空気は焚き口の下から入る]
@@ -106,9 +103,8 @@ sheets:
       - [gas, landing, smoke, 煙は焚き口の上から出る]
       - [landing, chimney, smoke, ""]
       - [chimney, outside, smoke, 乾いた広葉樹を使う（R-06）]
-      - [fire, chamber, rad, ""]
+      - [fire, chamber, rad, 窯壁のレンガ 114 mm に熱をためる。熱の届く深さは 6 時間で約 9 cm（P7 から計算）]
       - [gas, chamber, conv, ""]
-      - [chamber, mass, cond, 熱の届く深さは 6 時間で約 9 cm（P7 から計算）]
       - [fire, hearth, rad, 火の位置を動かして炉床のむらを作らない（付録 A.1）]
       - [embers, hearth, cond, 焚き終わりに熾火を炉床全体に広げて 30 分以上（F15、F19）]
   - id: steam
@@ -135,7 +131,7 @@ lanes:
   - {id: dough, name: 生地}
 
 steps:
-  - {id: dry, lane: oven, col: 0, row: 0, kind: step, name: 初めての乾燥, desc: 初めて火を入れる前に、数日かけて段階的に乾かす。, parts: [chamber, mass, insulation, shell], reqs: [R-05], src: [P16, P5]}
+  - {id: dry, lane: oven, col: 0, row: 0, kind: step, name: 初めての乾燥, desc: 初めて火を入れる前に、数日かけて段階的に乾かす。, parts: [chamber, insulation, shell], reqs: [R-05], src: [P16, P5]}
   - {id: burn, lane: oven, col: 1, row: 0, kind: step, name: 焚く, desc: 焚いている間に火の位置を動かす。, parts: [chamber, hearth], reqs: [R-02e, R-06], src: [F34]}
   - {id: spread, lane: oven, col: 2, row: 0, kind: step, name: 熾火を広げる, desc: 焚き終わりに熾火を炉床全体に広げて 30 分以上置く。, parts: [hearth], reqs: [R-02e], src: [F15, F19]}
   - {id: rake, lane: oven, col: 3, row: 0, kind: step, name: 掻き出して拭く, desc: 熾火と灰を掻き出し、炉床を掃いて湿った布で手早く拭く。, parts: [hearth], reqs: [R-02e], src: [P67, S19, F35, F17]}
@@ -181,16 +177,16 @@ edges:
 alloc:
   R-01: {parts: [hearth], steps: [load1]}
   R-02: {parts: [], steps: []}
-  R-02a: {parts: [hearth, chamber, mass], steps: [measure]}
-  R-02b: {parts: [mass, insulation, hearth, chamber], steps: [bake1]}
+  R-02a: {parts: [hearth, chamber], steps: [measure]}
+  R-02b: {parts: [insulation, hearth, chamber], steps: [bake1]}
   R-02c: {parts: [door, chimney, landing], steps: [bake1]}
   R-02d: {parts: [hearth, chamber], steps: []}
   R-02e: {parts: [hearth, door], steps: [burn, spread, rake, soak, measure, bake1]}
   R-03: {parts: [chamber, hearth, door], steps: []}
   R-04: {parts: [hearth], steps: [load1, load2]}
   R-04a: {parts: [door, landing], steps: [mix]}
-  R-04b: {parts: [hearth, mass, chamber, insulation], steps: [rest, check2, refire, load2, out2]}
-  R-05: {parts: [chamber, mass, insulation, shell], steps: [dry]}
+  R-04b: {parts: [hearth, chamber, insulation], steps: [rest, check2, refire, load2, out2]}
+  R-05: {parts: [chamber, insulation, shell], steps: [dry]}
   R-06: {parts: [wood], steps: [burn]}
   R-07: {parts: [stand, slab, foundation], steps: []}
   R-08: {parts: [shell, roof, foundation, insulation, frost], steps: []}
