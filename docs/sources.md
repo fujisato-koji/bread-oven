@@ -1,7 +1,7 @@
 # 出典
 
 本文の数値は、ここの記号で引く。
-取得日はすべて 2026-10-17。
+取得日は 2026-10-17。P77 から P85、M64 から M89、F48 から F55 は 2026-10-18。
 
 | 記号 | 種別 |
 |------|------|
@@ -66,7 +66,7 @@ P1 と P41 は Google Books の抜粋で該当の頁を確かめた。
 | P60 | D.B.M. Ficco ほか「Milling overrides cultivar, leavening agent and baking mode on chemical and rheological traits and sensory perception of durum wheat breads」Sci. Rep. 7:13632, 2017 | <https://pmc.ncbi.nlm.nih.gov/articles/PMC5648824/> |
 | P62 | M.B. Bayramoğlu Karşı ほか「Levels, Dietary Exposure, and Health Risk Estimation of Polycyclic Aromatic Hydrocarbons in Bread Baked with Different Oven and Fuel Types」Polycyclic Aromatic Compounds 43(1):811-825, 2023（2021 年にオンライン） | <https://doi.org/10.1080/10406638.2021.2020306> |
 | P63 | Codex「Code of Practice for the Reduction of Contamination of Food with PAH from Smoking and Direct Drying Processes」CXC 68 | <https://www.fao.org/input/download/standards/11257/CXP_068e.pdf> |
-| P64 | 米国環境保護庁「Best Wood-Burning Practices」（Burn Wise） | <https://www.epa.gov/burnwise/best-wood-burning-practices> |
+| P64 | 米国環境保護庁「Best Wood-Burning Practices」（Burn Wise） | <https://www.epa.gov/burnwise/best-wood-burning-practices>、<https://www.epa.gov/burnwise/burn-wise-facts-figures-health-and-safety-tips>（薪を割って浮かせて積む、広葉樹は 1 年以上、含水率 20% 以下） |
 | P65 | E. Fasano, I. Yebra-Pimentel, E. Martínez-Carballo, J. Simal-Gándara「Profiling, distribution and levels of carcinogenic polycyclic aromatic hydrocarbons in traditional smoked plant and animal foods」Food Control 59:581-590, 2016 | <https://doi.org/10.1016/j.foodcont.2015.06.036> |
 | P66 | J. Buchli ほか「Energieeffizienz des Brotbackprozesses (Teil 1)」Cereal Technology, 2016（要旨だけ） | <https://digitalcollection.zhaw.ch/handle/11475/10291> |
 | P67 | Jim Wills, James Bairey「Baking Wood-Fired Breads with Forno Bravo」Forno Bravo（年の記載なし） | <https://www.fornobravo.com/PDF/hearth_bread.pdf> |
@@ -79,6 +79,15 @@ P1 と P41 は Google Books の抜粋で該当の頁を確かめた。
 | P74 | 北海道立総合研究機構 農業研究本部「令和 2 年度 成績概要書 単管を利用した北海道向けの園芸用パイプハウス」2021 | <https://www.hro.or.jp/upload/18203/06.pdf> |
 | P75 | 札幌市消防局「札幌市火災予防条例 解説 第 6 条（火を使用する設備に附属する煙突）」 | <https://www.city.sapporo.jp/shobo/yobo/jorei/documents/012-06jyo.pdf> |
 | P76 | アイリスソーコー（アイリスオーヤマグループ）製品頁「アイリス ポリカ波板-PN」（イプロス掲載、英語の自動翻訳版。使用温度 -40〜+120℃） | <https://pr.mono.ipros.com/en/irissoko/product/detail/2001661556/> |
+| P77 | Forno Bravo「Pompeii Oven: Igloo Finish」（断熱の上の金網、粗塗りと仕上げ、水を入れない最終層） | <https://www.fornobravo.com/pompeii-oven/oven-finish-igloo/> |
+| P78 | Forno Bravo「Pompeii Oven: Curing」（養生焚き。左官を仕上げてから 5 日で段階的に上げる） | <https://www.fornobravo.com/pompeii-oven/curing/> |
+| P79 | Forno Bravo「Winter wood-fired cooking tips」（冬の焚き方、外装の点検と補修） | <https://www.fornobravo.com/blog/winter-wood-fired-cooking-tips/> |
+| P80 | Forno Bravo「Outdoor pizza oven in winter」（火の入った窯に天幕を張らない、笠と扉、雪と氷）。笠と扉と雪と氷と逆圧の注意は、P79 と P80 のどちらの記述かを確かめていない（2026-10-18 に頁の取得を断られた） | <https://www.fornobravo.com/pizza-oven-gallery/outdoor-pizza-oven-winter/> |
+| P81 | Forno Bravo「Pompeii Oven: Foundation Slab」（台より 8 インチ広く、前に 6 インチ、下は砕石 3 インチとポリシート） | <https://www.fornobravo.com/article-series/pompeii-oven/foundation-slab/> |
+| P82 | アサヒペン 防水塗料（透明、油性アクリル、強力浸透タイプ）製品頁 | <https://www.asahipen.jp/products/view/14015> |
+| P83 | 日本ペイント アクアシール 製品頁（シラン系、水蒸気を通す、凍害の抑制。業務用 16 L 缶） | <https://www.nipponpaint.co.jp/products/building/35/> |
+| P84 | 日本製鉄 ガルバリウム鋼板の解説頁（アルカリに触れると腐食が進む） | <https://www.nipponsteel.com/product/sheet/list/automotive/superdyma/material/galvalume.html> |
+| P85 | Fontana Forni USA「Winter outdoor oven care」（中の雪を取り、乾いてから点火、火は少しずつ） | <https://fontanaforniusa.com/blogs/news-1/winter-outdoor-oven-care> |
 
 ## 二次資料
 
@@ -169,6 +178,32 @@ P1 と P41 は Google Books の抜粋で該当の頁を確かめた。
 | M61 | DCMオンライン「波板 ヒシ波ポリカ 6尺 クリア TNP6C」 | <https://www.dcm-ekurashi.com/goods/234641> |
 | M62 | 生活堂「LIXIL フーゴA プラスミニ サイクルポート CP-L-FUAP（工事費込セット）」 | <https://www.seikatsu-do.com/exterior/cycleport/lixil/CP-L-FUAP-KJ/> |
 | M63 | 陶芸ショップ.コム（株式会社竹昇精工）「イソウールブランケット1260℃ 厚さ25mm」 | <https://www.tougeishop.com/products/detail/4060/> |
+| M64 | コメリ 耐火レンガ（2026-10-18。検索結果の抜粋） | <https://www.komeri.com/shop/g/g2116428/> |
+| M65 | コメリ 耐火モルタル 25 kg（トーヨーマテラン） | <https://www.komeri.com/shop/g/g964325/> |
+| M66 | コメリ パーライト 50 L | <https://www.komeri.com/shop/g/g835907/> |
+| M67 | コメリ コンクリートブロック C-12（北海道で扱わない） | <https://www.komeri.com/shop/g/g141442/> |
+| M68 | コメリ セメント 25 kg（北海道店舗向け） | <https://www.komeri.com/shop/g/g1345021/> |
+| M69 | コメリ 砂 20 kg（北海道で扱わない） | <https://www.komeri.com/shop/g/g454977/> |
+| M70 | コーナン e ショップ 砂 約 18 kg | <https://www.kohnan-eshop.com/shop/g/g4522831127214/> |
+| M71 | コメリ 異形棒鋼 D10 5.5 m | <https://www.komeri.com/shop/g/g130018/> |
+| M72 | コメリ JAS コンパネ 12 mm | <https://www.komeri.com/shop/g/g427900/> |
+| M73 | コメリ ステン煙突 直筒 φ120 | <https://www.komeri.com/shop/g/g47145/> |
+| M74 | コメリ ステン煙突 H 笠 φ120 | <https://www.komeri.com/shop/c/c23230101/> |
+| M75 | コメリ 煙突の自在支持金具 | <https://www.komeri.com/shop/g/g47247/> |
+| M76 | コメリ 鋼板 3.2 × 300 × 300 mm | <https://www.komeri.com/shop/g/g113681/> |
+| M77 | コメリ 縞鋼板 3.2 × 450 × 600 mm | <https://www.komeri.com/shop/g/g113664/> |
+| M78 | コメリ ケイカル板 6 mm | <https://www.komeri.com/shop/g/g447507/> |
+| M79 | コメリ 取っ手（和気産業 TW-381） | <https://www.komeri.com/shop/c/c22050704/> |
+| M80 | コーナン e ショップ 放射温度計 CUSTOM IR-212（-50〜+580℃） | <https://www.kohnan-eshop.com/shop/g/g4983621200287/> |
+| M81 | コメリ ペール缶 K+GEAR 20 L スチール | <https://www.komeri.com/shop/g/g2097443/> |
+| M82 | コメリ ペール缶の蓋 | <https://www.komeri.com/shop/g/g2109092/> |
+| M83 | コメリ アサヒペン 防水塗料 1 L（検索結果の抜粋） | <https://www.komeri.com/shop/c/c46010605_dD/?maker=4970925> |
+| M84 | コメリ K+BUILD タフ UV シート #4000 2.7 × 3.6 m | <https://www.komeri.com/shop/g/g2151953/> |
+| M85 | コメリ シート用ゴムバンド フック付 20 mm × 3 m | <https://www.komeri.com/shop/c/c342302_dD/> |
+| M86 | コメリ ガルバ平板 0.27 × 914 × 1829 mm | <https://www.komeri.com/shop/g/g776502/> |
+| M87 | コーナン e ショップ ステン丸型フード付ガラリ WFGN-100 | <https://www.kohnan-eshop.com/shop/g/g4515161026852/> |
+| M88 | コーナン e ショップ 配送の案内（送料 7,700 円未満 660 円、以上無料） | <https://www.kohnan-eshop.com/shop/pages/delivery.aspx> |
+| M89 | ホームセンターコーナン 店舗検索（北海道に店舗が無い） | <https://www.hc-kohnan.com/shop/> |
 
 ## フォーラム（経験則）
 
@@ -211,3 +246,11 @@ P1 と P41 は Google Books の抜粋で該当の頁を確かめた。
 | F45 | Forno Bravo「Oven clay reuse help」2013-05。粘土の焼結と再利用 | <https://community.fornobravo.com/forum/pizza-oven-design-and-installation/other-oven-types/17016-oven-clay-reuse-help> |
 | F46 | Forno Bravo「Fill enclosure with vermiculite」2022-01-15。ばらのパーライトの断熱 | <https://community.fornobravo.com/forum/pizza-oven-design-and-installation/getting-started/444017-fill-enclosure-with-vermiculite> |
 | F47 | Forno Bravo「Moving a commercial modular oven」2015-06-07。分割ドームを解体した報告 | <https://community.fornobravo.com/forum/pizza-oven-design-and-installation/commercial-pizza-ovens/19510-moving-a-commercial-modular-oven?p=262625> |
+| F48 | Forno Bravo「Poll: how hot is the outside of your igloo」。外殻の表面温度（触れて温かい、40℃以下の回答） | <https://community.fornobravo.com/forum/oven-management/heat-management/9598-poll-how-hot-is-the-outside-of-your-igloo> |
+| F49 | Forno Bravo「Opinions on techniques for dome waterproofing」。膜で塞ぐか透湿かの意見、水は焚き口と煙突の取り合いから入る | <https://community.fornobravo.com/forum/good-background-information/forum-guidelines/18140-opinions-on-techniques-for-dome-waterproofingr> |
+| F50 | Forno Bravo「Weep hole and FB board placement」。床版の水抜き孔 | <https://community.fornobravo.com/forum/pizza-oven-design-and-installation/pompeii-oven-construction/425064-weep-hole-and-fb-board-placement> |
+| F51 | Forno Bravo「Vent system」。頂部のベント | <https://community.fornobravo.com/forum/pizza-oven-design-and-installation/pompeii-oven-construction/459491-vent-system> |
+| F52 | Forno Bravo「Should I buy a cover for my oven」。ビニールのカバーは水を閉じ込めもする | <https://community.fornobravo.com/forum/good-background-information/newbie-forum/16240-should-i-buy-a-cover-for-my-oven> |
+| F53 | Forno Bravo「Open or closed wood storage」。薪置き | <https://community.fornobravo.com/forum/pizza-oven-design-and-installation/design-styles-chimneys-and-finish/4277-open-or-closed-wood-storage> |
+| F54 | Forno Bravo「Winter cooking」2008。1℃の窯を 1 時間で本焼きまで上げてレンガが割れた | <https://community.fornobravo.com/forum/oven-management/heat-management/3355-winter-cooking> |
+| F55 | Forno Bravo「Warning on hearth design」。炉床の水平と張り出し | <https://community.fornobravo.com/forum/pizza-oven-design-and-installation/pompeii-oven-construction/10408-warning-on-hearth-design> |

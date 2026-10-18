@@ -33,16 +33,18 @@ const PARTS = [
   { key: 'foundation', label: '基礎', color: 0x8e9093, mat: '鉄筋コンクリート（仮）' },
   { key: 'stand', label: '台', color: 0xa9abae, mat: 'コンクリートブロック（仮）' },
   { key: 'slab', label: '床版', color: 0xc2c4c6, mat: '鉄筋コンクリート（仮）' },
-  { key: 'hearthIns', label: '炉床の断熱', color: 0xeee6cc, mat: '断熱板（材料は未定）' },
-  { key: 'hearth', label: '炉床', color: 0xb85f3c, mat: '耐火レンガ（仮）' },
-  { key: 'chamber', label: '窯壁', color: 0xc8734a, mat: '耐火レンガ（仮）' },
+  { key: 'hearthIns', label: '炉床の断熱', color: 0xeee6cc, mat: 'パーライトとセメント 1:5（仮）' },
+  { key: 'hearth', label: '炉床', color: 0xb85f3c, mat: '耐火粘土レンガを縦に立てて並べる' },
+  { key: 'chamber', label: '窯壁', color: 0xc8734a, mat: '耐火粘土レンガ 114 mm' },
   { key: 'mass', label: '蓄熱層', color: 0x9b8a7c, mat: '耐火モルタルや耐火キャスタブル（未定）' },
-  { key: 'insulation', label: '断熱', color: 0xe6dcb4, mat: 'セラミックファイバーや軽量断熱コンクリート（未定）' },
-  { key: 'shell', label: '外殻', color: 0xd3cbbd, mat: '防水の外装（未定）' },
+  { key: 'insulation', label: '断熱', color: 0xe6dcb4, mat: 'パーライトとセメント 1:5（仮）' },
+  { key: 'shell', label: '外殻', color: 0xd3cbbd, mat: '金網と左官 2 層、浸透性の防水材（仮）' },
   { key: 'landing', label: '前室と焚き口', color: 0xd08a5f, mat: '耐火レンガ（仮）' },
   { key: 'door', label: '扉', color: 0x4a3b30, mat: '内側を耐火材、外側を断熱にした扉（仮）' },
-  { key: 'chimney', label: '煙突', color: 0x5d6066, mat: '金属の煙突（未定）' },
-  { key: 'roof', label: '屋根と柱', color: 0x8b6a4a, mat: '木の柱と屋根（未定）' },
+  { key: 'chimney', label: '煙突', color: 0x5d6066, mat: 'ステンレスの煙突 φ120、H 笠、ダンパーは自作' },
+  { key: 'hood', label: '焚き口のひさし', color: 0x9aa4ab, mat: 'ガルバリウム鋼板を曲げる（仮）' },
+  { key: 'vent', label: '頂部のベント', color: 0xb9bec2, mat: 'ステンレスのフード付きガラリ 100 mm' },
+  { key: 'roof', label: '屋根と柱', color: 0x8b6a4a, mat: '木の柱と屋根（架けない）' },
   { key: 'wood', label: '薪', color: 0xa0703f, mat: '薪置き（目安）' },
   { key: 'person', label: '人（大きさの目安）', color: 0x6c8fb3, mat: '背丈の目安' },
   { key: 'frost', label: '凍結深度', color: 0x5aa0d8, mat: '凍結深度の面' },
@@ -483,6 +485,26 @@ function build(type) {
   chim.position.set(0, (yChimBase + yChimTop) / 2, zFront - landingDepth / 2);
   groups.chimney.add(chim);
 
+  // 焚き口のひさし。前室の正面の上端に付け、先を下げて水を切る。
+  const hoodD = P('hood.depth');
+  const hoodW = tunW + 0.06;
+  const hoodTilt = 0.25;
+  const hood = box(hoodW, 0.006, hoodD, 0, 0, 0, material('hood', { metalness: 0.5, roughness: 0.45 }),
+    info('hood', `幅 ${f2(hoodW)} m、出 ${f2(hoodD)} m、先を下げて水を切る`));
+  hood.rotation.x = hoodTilt;
+  hood.position.set(0, yFloor + tunH - 0.01 - (hoodD / 2) * Math.sin(hoodTilt), zFront + (hoodD / 2) * Math.cos(hoodTilt));
+  groups.hood.add(hood);
+
+  // 頂部のベント。外殻を抜けて、断熱に入った湿気を出す。
+  const vr = P('vent.diameter') / 2;
+  const vmat = material('vent', { metalness: 0.6, roughness: 0.35 });
+  const vInfo = info('vent', `径 ${f2(2 * vr)} m、断熱に入った湿気を出す`);
+  const ventPipe = mesh(new THREE.CylinderGeometry(vr, vr, 0.10, 24), vmat, vInfo);
+  ventPipe.position.set(0, outerTop + 0.02, 0);
+  const ventCap = mesh(new THREE.CylinderGeometry(vr + 0.03, vr + 0.03, 0.012, 24), vmat, vInfo);
+  ventCap.position.set(0, outerTop + 0.09, 0);
+  groups.vent.add(ventPipe, ventCap);
+
   // 炉床の断熱、床版、台、基礎
   const fx = Ro;
   const fz0 = zBack;
@@ -497,8 +519,10 @@ function build(type) {
   const sd = fz1 - fz0 + 2 * mg;
   const sz = (fz0 + fz1) / 2;
   const hs2 = P('hearth.slab');
-  groups.slab.add(box(sw, hs2 - GAP, sd, 0, yStandTop + GAP + (hs2 - GAP) / 2, sz,
-    material('slab'), info('slab', `${f2(sw)} m × ${f2(sd)} m、厚さ ${f3(P('hearth.slab'))} m`)));
+  // 床版は台より外へ出して水切りにする。
+  const so = P('slab.overhang') || 0;
+  groups.slab.add(box(sw + 2 * so, hs2 - GAP, sd + 2 * so, 0, yStandTop + GAP + (hs2 - GAP) / 2, sz,
+    material('slab'), info('slab', `${f2(sw + 2 * so)} m × ${f2(sd + 2 * so)} m、厚さ ${f3(P('hearth.slab'))} m、台からの張り出し ${f3(so)} m`)));
 
   const wt = P('stand.wall');
   const sh2 = P('stand.height');
@@ -543,7 +567,8 @@ function build(type) {
     }
   }
 
-  // 屋根と柱
+  // 屋根と柱（roof.use が 0 なら作らない）
+  const roofUse = !!P('roof.use');
   const po = P('roof.post_offset');
   const px = fx + mg + po;
   const pz0 = fz0 - mg - po;
@@ -554,7 +579,7 @@ function build(type) {
   const rm = material('roof');
   const rInfo = info('roof', `柱の間 ${f2(2 * px)} m × ${f2(pz1 - pz0)} m、軒 ${f2(eave)} m、棟 ${f2(ridge)} m`);
   const post = 0.105;
-  for (const x of [-px, px]) {
+  for (const x of roofUse ? [-px, px] : []) {
     for (const z of [pz0, pz1]) groups.roof.add(box(post, eave, post, x, eave / 2, z, rm, rInfo));
     groups.roof.add(box(post, post, pz1 - pz0 + post, x, eave - post / 2, (pz0 + pz1) / 2, rm, rInfo));
   }
@@ -564,7 +589,7 @@ function build(type) {
   const ang = Math.atan2(rise, run);
   const roofLen = pz1 - pz0 + 2 * oh;
   const sheet = material('roof', { color: 0x5a6470, transparent: true, opacity: 0.55, depthWrite: false });
-  for (const sgn of [-1, 1]) {
+  for (const sgn of roofUse ? [-1, 1] : []) {
     const p = box(slope, 0.03, roofLen, sgn * run / 2, (eave + ridge) / 2, (pz0 + pz1) / 2, sheet, rInfo);
     p.rotation.z = -sgn * ang;
     p.castShadow = false;
@@ -585,7 +610,7 @@ function build(type) {
   Object.assign(d, {
     type, innerHeight, door, outerTop, zFront, zBack,
     outerW: 2 * Ro, outerD: zFront - zBack, standW: sw, standD: sd,
-    roofW: 2 * px, roofD: pz1 - pz0, centerZ: sz,
+    roofUse, roofW: roofUse ? 2 * px : sw, roofD: roofUse ? pz1 - pz0 : sd, centerZ: sz,
   });
   return { root, groups, d };
 }
@@ -610,6 +635,7 @@ function rebuild() {
   current = { ...b, mats: ovenMaterials, caps };
   scene.add(b.root);
   applyVisibility();
+  syncPartList();
   applySection();
   renderDerived(b.d);
   renderParams();
@@ -691,6 +717,13 @@ function applyVisibility() {
   for (const p of PARTS) current.groups[p.key].visible = state.visible[p.key];
 }
 
+// 図に形の無い部品（型式で使わない層、架けない屋根）は一覧から外す。
+function syncPartList() {
+  for (const inp of document.querySelectorAll('#parts input[data-part]')) {
+    inp.closest('label').style.display = current.groups[inp.dataset.part].children.length ? '' : 'none';
+  }
+}
+
 function applySection() {
   for (const m of current.mats) {
     m.clippingPlanes = state.section ? [cutPlane] : [];
@@ -750,7 +783,7 @@ function renderDerived(d) {
     ['焚き口', `幅 ${f2(2 * d.door.halfW)} m、高さ ${f2(d.door.height)} m`],
     ['窯の外形', `幅 ${f2(d.outerW)} m、奥行 ${f2(d.outerD)} m、頂部 ${f2(d.outerTop)} m`],
     ['台の大きさ', `${f2(d.standW)} m × ${f2(d.standD)} m`],
-    ['屋根の柱の間', `${f2(d.roofW)} m × ${f2(d.roofD)} m`],
+    ['屋根の柱の間', d.roofUse ? `${f2(d.roofW)} m × ${f2(d.roofD)} m` : '屋根なし'],
   ];
   $('derived').innerHTML = rows.map(([k, v]) => `<tr><td>${k}</td><td class="num">${v}</td><td>${chip('算出')}</td></tr>`).join('');
 }

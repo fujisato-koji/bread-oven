@@ -11,17 +11,19 @@ meta:
 parts:
   - {id: foundation, name: 基礎, mat: 砕石と鉄筋コンクリート（仮）, dims: [foundation.thickness, foundation.top, frost.depth], doc: 02-configuration.md}
   - {id: stand, name: 台, mat: コンクリートブロック（仮）, dims: [stand.height, stand.wall], doc: 02-configuration.md}
-  - {id: slab, name: 床版, mat: 鉄筋コンクリート（仮）, dims: [hearth.slab], doc: 02-configuration.md}
+  - {id: slab, name: 床版, mat: 鉄筋コンクリート（仮）。台より外へ出して水切りにする, dims: [hearth.slab, slab.overhang], doc: 02-configuration.md}
   - {id: hearthIns, name: 炉床の断熱, mat: パーライトとセメント 1:5（仮）, dims: [hearth.insulation], doc: 02-configuration.md}
   - {id: hearth, name: 炉床, mat: 耐火粘土レンガを縦に立てて並べる, dims: [hearth.firebrick, dome.inner_diameter], doc: 03-structural-design.md}
   - {id: chamber, name: 窯壁（ドーム）, mat: 耐火粘土レンガ 114 mm（蓄熱を兼ねる）, dims: [wall.firebrick, dome.inner_diameter, dome.inner_height], doc: 02-configuration.md}
   - {id: mass, name: 蓄熱層, mat: 第一案 B では置かない（土窯の型式で使う粘土と砂）, dims: [dome.mass], doc: 02-configuration.md}
   - {id: insulation, name: 断熱, mat: パーライトとセメント 1:5（仮）, dims: [insulation.thickness], doc: 02-configuration.md}
-  - {id: shell, name: 外殻, mat: 左官の仕上げ（仮）, dims: [shell.thickness], doc: 02-configuration.md}
+  - {id: shell, name: 外殻, mat: 金網と左官 2 層、浸透性の防水材（仮）, dims: [shell.thickness], doc: 02-configuration.md}
   - {id: landing, name: 前室と焚き口, mat: 耐火粘土レンガ, dims: [door.width, door.height_ratio, landing.depth, landing.wall], doc: 03-structural-design.md}
   - {id: door, name: 扉, mat: 内側を耐火材、外側を断熱にした板（仮）, dims: [door.thickness, door.width], doc: 02-configuration.md}
-  - {id: chimney, name: 煙突とダンパー, mat: 金属の煙突（仮）, dims: [chimney.diameter, chimney.top], doc: 01-requirements.md}
-  - {id: roof, name: 屋根と柱, mat: 未定, dims: [roof.eave, roof.ridge, roof.post_offset], doc: 02-configuration.md}
+  - {id: chimney, name: 煙突とダンパー, mat: ステンレスの煙突 φ120、H 笠、ダンパーは自作, dims: [chimney.diameter, chimney.top], doc: 02-configuration.md}
+  - {id: hood, name: 焚き口のひさし, mat: ガルバリウム鋼板を曲げる（仮）, dims: [hood.depth], doc: 02-configuration.md}
+  - {id: vent, name: 頂部のベント, mat: ステンレスのフード付きガラリ 100 mm, dims: [vent.diameter], doc: 02-configuration.md}
+  - {id: roof, name: 屋根と柱, mat: 架けない（2026-10-18、施主の判断）, dims: [roof.use], doc: 02-configuration.md}
   - {id: wood, name: 薪置き, mat: 乾いた広葉樹, dims: [], doc: 06-operation.md}
   - {id: person, name: 人（大きさの目安）, mat: 目安, dims: [person.height], doc: ""}
   - {id: frost, name: 凍結深度, mat: 地盤, dims: [frost.depth], doc: 01-requirements.md}
@@ -144,6 +146,8 @@ steps:
   - {id: refire, lane: oven, col: 9, row: 1, kind: step, name: 焚き直す, desc: 小さい火を 30 分焚いて 30 分均す。, parts: [chamber, hearth], reqs: [R-04b], src: [F21]}
   - {id: load2, lane: oven, col: 10, row: 0, kind: step, name: 2 回目の窯入れ, desc: 1 回目と同じ手順で入れて焼く。, parts: [door, hearth], reqs: [R-04, R-04b], src: [P1]}
   - {id: after, lane: oven, col: 11, row: 0, kind: step, name: 低い温度で使う, desc: 3 回目より後は型焼き、甘いパン、料理、乾燥に回す。, parts: [chamber], reqs: [], src: [P41]}
+  - {id: prep, lane: oven, col: 0, row: 1, kind: step, name: 覆いを外して乾かす, desc: 覆いを外し、窯の中の雪と水を取る。濡れていればゆるい火で乾かす。, parts: [shell, door, chimney], reqs: [R-08, R-05], src: [P80, P85]}
+  - {id: cover, lane: oven, col: 12, row: 0, kind: step, name: 冷めてから覆う, desc: 扉とダンパーを閉め、窯が冷めてから覆いを掛ける。裾は開ける。, parts: [shell, door, chimney], reqs: [R-08], src: [P80, F52]}
   - {id: mix, lane: dough, col: 1, row: 0, kind: step, name: 仕込む, desc: 量の多い日は手で折りたたむ製法。ミニはふだん粉 360 g ほどから練る。, parts: [], reqs: [R-04a], src: [S27, P56]}
   - {id: bulk, lane: dough, col: 2, row: 0, kind: step, name: 一次発酵, desc: 30 分ごとに折りたたむ。, parts: [], reqs: [], src: [S27]}
   - {id: shape, lane: dough, col: 3, row: 0, kind: step, name: 成形して冷蔵, desc: 成形した生地を一晩（8〜12 時間）冷蔵する。, parts: [], reqs: [], src: [S25]}
@@ -153,6 +157,7 @@ steps:
 # 流れの矢印。[from, to, ラベル]。ラベルが「いいえ」の矢印は戻りとして描く。
 edges:
   - [dry, burn, 初回だけ]
+  - [prep, burn, ""]
   - [burn, spread, ""]
   - [spread, rake, ""]
   - [rake, soak, ""]
@@ -166,6 +171,7 @@ edges:
   - [check2, refire, いいえ]
   - [refire, check2, ""]
   - [load2, after, ""]
+  - [after, cover, ""]
   - [mix, bulk, ""]
   - [bulk, shape, ""]
   - [shape, out1, ""]
@@ -189,9 +195,9 @@ alloc:
   R-05: {parts: [chamber, insulation, shell], steps: [dry]}
   R-06: {parts: [wood], steps: [burn]}
   R-07: {parts: [stand, slab, foundation], steps: []}
-  R-08: {parts: [shell, roof, foundation, insulation, frost], steps: []}
+  R-08: {parts: [shell, vent, hood, chimney, slab, foundation, insulation, frost], steps: [prep, cover]}
   R-09: {parts: [], steps: []}
   R-10: {parts: [], steps: []}
-  R-11: {parts: [chimney, roof], steps: []}
+  R-11: {parts: [chimney], steps: []}
   R-12: {parts: [door, insulation, shell, chimney], steps: []}
   R-13: {parts: [foundation, stand], steps: []}

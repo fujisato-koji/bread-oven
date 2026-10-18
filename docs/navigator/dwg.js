@@ -9,7 +9,7 @@ NavApp.register('dwg', (api) => {
   const SH = 297;
   const BOX = [0, 0, SW, SH];
   const DEFAULT_ID = 'BO-DWG-003';
-  const ORDER = ['foundation', 'stand', 'slab', 'hearthIns', 'hearth', 'chamber', 'mass', 'insulation', 'shell', 'landing', 'door', 'chimney', 'roof', 'wood'];
+  const ORDER = ['foundation', 'stand', 'slab', 'hearthIns', 'hearth', 'chamber', 'mass', 'insulation', 'shell', 'landing', 'door', 'chimney', 'hood', 'vent', 'roof', 'wood'];
 
   // ---------- 小さな道具
 
@@ -84,10 +84,17 @@ NavApp.register('dwg', (api) => {
     m.yChimBase = m.yFloor + m.tunH;
     m.yChimTop = P('chimney.top');
     m.zChim = m.zFront - m.landingDepth / 2;
+    // 焚き口のひさしと頂部のベント（viewer/main.js と同じ置き方）
+    m.hoodD = P('hood.depth');
+    m.hoodW = m.tunW + 0.06;
+    m.hoodTilt = 0.25;
+    m.yHood = m.yFloor + m.tunH - 0.01;
+    m.vr = P('vent.diameter') / 2;
     m.hi = P('hearth.insulation');
     m.hs = P('hearth.slab');
 
     m.mg = P('stand.margin');
+    m.so = P('slab.overhang') || 0;
     m.sw = 2 * (m.Ro + m.mg);
     m.sd = m.zFront - m.zBack + 2 * m.mg;
     m.sz = (m.zBack + m.zFront) / 2;
@@ -109,6 +116,7 @@ NavApp.register('dwg', (api) => {
     m.eave = P('roof.eave');
     m.ridge = P('roof.ridge');
     m.oh = P('roof.overhang');
+    m.roofUse = !!P('roof.use');
     m.run = m.px + m.oh;
     m.post = 0.105;
     return m;
@@ -304,13 +312,13 @@ NavApp.register('dwg', (api) => {
     const { sz, sd, sw, fw, fd, Ro, R, zBack, zFront } = M;
 
     part(L, 'foundation', rc(-fw / 2, sz - fd / 2, fw / 2, sz + fd / 2, 'sh fp'));
-    part(L, 'slab', rc(-sw / 2, sz - sd / 2, sw / 2, sz + sd / 2, 'sh fp'));
+    part(L, 'slab', rc(-sw / 2 - M.so, sz - sd / 2 - M.so, sw / 2 + M.so, sz + sd / 2 + M.so, 'sh fp'));
     part(L, 'hearthIns', rc(-Ro, zBack, Ro, zFront, 'sh fp'));
     part(L, 'shell', circEl(X(0), Z(0), Ro * S, 'sh fp'));
     // ドームの各層の境（上からは隠れる）
     const ring = (r) => hid(circEl(X(0), Z(0), r * S));
     part(L, 'chamber', [ring(R), ring(R + M.offs[1])]);
-    part(L, 'mass', ring(R + M.offs[2]));
+    if (M.ms > 0) part(L, 'mass', ring(R + M.offs[2]));
     part(L, 'insulation', ring(R + M.offs[3]));
 
     // 前室。ドームの面が前室の高さに下がる所から外へ出る。
@@ -322,6 +330,8 @@ NavApp.register('dwg', (api) => {
     part(L, 'landing', landing);
     part(L, 'door', hid(rc(-M.door.halfW, Ro - M.dt, M.door.halfW, Ro)));
     part(L, 'chimney', circEl(X(0), Z(M.zChim), M.rc * S, 'sh fp'));
+    part(L, 'hood', rc(-M.hoodW / 2, zFront, M.hoodW / 2, zFront + M.hoodD * Math.cos(M.hoodTilt), 'sh fp'));
+    part(L, 'vent', [circEl(X(0), Z(0), (M.vr + 0.03) * S, 'sh fp'), circEl(X(0), Z(0), M.vr * S, 'sh')]);
 
     // 薪置きと台の内側（床版の下で隠れる）
     const wz1 = sz + sd / 2 - 0.05;
@@ -329,14 +339,16 @@ NavApp.register('dwg', (api) => {
     const ux = sw / 2 - M.wt;
     part(L, 'stand', hid(pathEl(`M ${P2([X(-ux), Z(sz + sd / 2)], [X(-ux), Z(sz - sd / 2 + M.wt)], [X(ux), Z(sz - sd / 2 + M.wt)], [X(ux), Z(sz + sd / 2)])}`)));
 
-    // 屋根と柱
-    const roofKids = [];
-    const rfRect = rc(-M.run, M.pz0 - M.oh, M.run, M.pz1 + M.oh, 'rf');
-    roofKids.push(rfRect, hitOf(rfRect), lineEl(X(0), Z(M.pz0 - M.oh), X(0), Z(M.pz1 + M.oh), 'rf'));
-    for (const x of [-M.px, M.px]) {
-      for (const z of [M.pz0, M.pz1]) roofKids.push(rc(x - M.post / 2, z - M.post / 2, x + M.post / 2, z + M.post / 2, 'sh fp'));
+    // 屋根と柱（roof.use が 0 なら描かない）
+    if (M.roofUse) {
+      const roofKids = [];
+      const rfRect = rc(-M.run, M.pz0 - M.oh, M.run, M.pz1 + M.oh, 'rf');
+      roofKids.push(rfRect, hitOf(rfRect), lineEl(X(0), Z(M.pz0 - M.oh), X(0), Z(M.pz1 + M.oh), 'rf'));
+      for (const x of [-M.px, M.px]) {
+        for (const z of [M.pz0, M.pz1]) roofKids.push(rc(x - M.post / 2, z - M.post / 2, x + M.post / 2, z + M.post / 2, 'sh fp'));
+      }
+      part(L, 'roof', roofKids);
     }
-    part(L, 'roof', roofKids);
 
     // 中心線
     L.body.append(lineEl(X(0), Z(-1.68), X(0), Z(2.02), 'ctr'));
@@ -346,10 +358,10 @@ NavApp.register('dwg', (api) => {
     dimH(L, X(-R), X(R), Z(0), `内径 ${mm(2 * R)}`);
     dimH(L, X(-Ro), X(Ro), Z(0.27), `外径 ${mm(2 * Ro)}`, { ext: [Z(0), Z(0)] });
     dimH(L, X(-sw / 2), X(sw / 2), Z(-1.2), `台の幅 ${mm(sw)}`, { ext: [Z(sz - sd / 2), Z(sz - sd / 2)] });
-    dimH(L, X(-M.px), X(M.px), Z(-1.75), `柱の間隔 ${mm(2 * M.px)}`, { ext: [Z(M.pz0), Z(M.pz0)] });
+    if (M.roofUse) dimH(L, X(-M.px), X(M.px), Z(-1.75), `柱の間隔 ${mm(2 * M.px)}`, { ext: [Z(M.pz0), Z(M.pz0)] });
     dimV(L, Z(Ro), Z(zFront), X(1.75), `前室の奥行 ${mm(zFront - Ro)}`, { ext: [X(hw), X(hw)] });
     dimV(L, Z(sz - sd / 2), Z(sz + sd / 2), X(1.95), `台の奥行 ${mm(sd)}`, { ext: [X(sw / 2), X(sw / 2)] });
-    dimV(L, Z(M.pz0), Z(M.pz1), X(2.15), `柱の間隔 ${mm(M.pz1 - M.pz0)}`, { ext: [X(M.px), X(M.px)] });
+    if (M.roofUse) dimV(L, Z(M.pz0), Z(M.pz1), X(2.15), `柱の間隔 ${mm(M.pz1 - M.pz0)}`, { ext: [X(M.px), X(M.px)] });
     L.extra.push(caption('平面図  S=1:20'));
   }
 
@@ -379,14 +391,14 @@ NavApp.register('dwg', (api) => {
       }
     }
     part(L, 'wood', logs);
-    part(L, 'slab', rc(-sw / 2, yStandTop, sw / 2, ySlabTop, 'sh fp'));
+    part(L, 'slab', rc(-sw / 2 - M.so, yStandTop, sw / 2 + M.so, ySlabTop, 'sh fp'));
     part(L, 'hearthIns', rc(-Ro, ySlabTop, Ro, yInsTop, 'sh fp'));
 
     // ドーム。外形は外殻の半楕円。内側の層は前室の後ろに隠れる。
     const arc = (r, h) => hid(pathEl(`M ${P2([X(-r), Y(yFloor)])} ${halfArc(X(-r), X(r), Y(yFloor), r * S, h * S, 1)}`));
     part(L, 'hearth', hid(rc(-R, yInsTop, R, yFloor)));
     part(L, 'chamber', [...arc(R, H), ...arc(R + M.offs[1], H + M.offs[1])]);
-    part(L, 'mass', arc(R + M.offs[2], H + M.offs[2]));
+    if (M.ms > 0) part(L, 'mass', arc(R + M.offs[2], H + M.offs[2]));
     part(L, 'insulation', arc(R + M.offs[3], H + M.offs[3]));
     part(L, 'shell', pathEl(`M ${P2([X(-Ro), Y(yInsTop)], [X(-Ro), Y(yFloor)])} ${halfArc(X(-Ro), X(Ro), Y(yFloor), Ro * S, (H + M.offs[4]) * S, 1)} L ${P2([X(Ro), Y(yInsTop)])} Z`, 'sh fp'));
 
@@ -400,17 +412,26 @@ NavApp.register('dwg', (api) => {
     // 煙突
     part(L, 'chimney', [rc(-M.rc, M.yChimBase, M.rc, M.yChimTop, 'sh fp'), lineEl(X(-M.rc - 0.02), Y(M.yChimTop), X(M.rc + 0.02), Y(M.yChimTop), 'sh')]);
 
-    // 屋根と柱
-    const roofKids = [];
-    const rfPath = pathEl(`M ${P2([X(-M.run), Y(M.eave)], [X(0), Y(M.ridge)], [X(M.run), Y(M.eave)])}`, 'rf');
-    roofKids.push(rfPath, hitOf(rfPath));
-    for (const x of [-M.px, M.px]) {
-      roofKids.push(rc(x - M.post / 2, 0, x + M.post / 2, M.eave, 'sh fp'));
+    // 焚き口のひさしと頂部のベント
+    part(L, 'hood', rc(-M.hoodW / 2, M.yHood - M.hoodD * Math.sin(M.hoodTilt), M.hoodW / 2, M.yHood, 'sh fp'));
+    part(L, 'vent', [
+      rc(-M.vr, M.outerTop - 0.03, M.vr, M.outerTop + 0.07, 'sh fp'),
+      rc(-M.vr - 0.03, M.outerTop + 0.084, M.vr + 0.03, M.outerTop + 0.096, 'sh fp'),
+    ]);
+
+    // 屋根と柱（roof.use が 0 なら描かない）
+    if (M.roofUse) {
+      const roofKids = [];
+      const rfPath = pathEl(`M ${P2([X(-M.run), Y(M.eave)], [X(0), Y(M.ridge)], [X(M.run), Y(M.eave)])}`, 'rf');
+      roofKids.push(rfPath, hitOf(rfPath));
+      for (const x of [-M.px, M.px]) {
+        roofKids.push(rc(x - M.post / 2, 0, x + M.post / 2, M.eave, 'sh fp'));
+      }
+      part(L, 'roof', roofKids);
     }
-    part(L, 'roof', roofKids);
 
     // 中心線
-    L.body.append(lineEl(X(0), Y(-0.1), X(0), Y(M.ridge + 0.15), 'ctr'));
+    L.body.append(lineEl(X(0), Y(-0.1), X(0), Y((M.roofUse ? M.ridge : M.yChimTop) + 0.15), 'ctr'));
 
     // 寸法。右に GL からの高さ。
     const cx = X(1.85);
@@ -469,7 +490,7 @@ NavApp.register('dwg', (api) => {
       logs.push(rc(wz1 - M.logLen, yFt + row * M.logR * 1.75, wz1, yFt + 2 * M.logR + row * M.logR * 1.75, 'sh fw'));
     }
     part(L, 'wood', logs);
-    part(L, 'slab', rc(zb, yStandTop, zf, ySlabTop, 'sh fconc'));
+    part(L, 'slab', rc(zb - M.so, yStandTop, zf + M.so, ySlabTop, 'sh fconc'));
     part(L, 'hearthIns', rc(zBack, ySlabTop, zFront, yInsTop, 'sh fperl'));
 
     // ドームの層。外側から内側へ、半楕円の輪。
@@ -482,6 +503,7 @@ NavApp.register('dwg', (api) => {
     };
     const layers = [['chamber', 0, 1, 'fbrick'], ['mass', 1, 2, 'fclay'], ['insulation', 2, 3, 'fperl'], ['shell', 3, 4, 'fshell']];
     for (const [id, i0, i1, fill] of layers) {
+      if (M.offs[i1] - M.offs[i0] <= 0) continue;
       const p = pathEl(ringD(M.offs[i0], M.offs[i1]), `sh ${fill}`);
       p.setAttribute('clip-path', 'url(#dwg-cp-door)');
       part(L, id, p);
@@ -504,16 +526,28 @@ NavApp.register('dwg', (api) => {
       rc(cz + M.rc - 0.006, M.yChimBase, cz + M.rc + 0.006, M.yChimTop, 'fi'),
     ]);
 
-    // 屋根と柱（手前の側面の柱と梁。切っていないので面のまま）
-    const roofKids = [];
-    const rfRect = rc(M.pz0 - M.oh, M.eave, M.pz1 + M.oh, M.ridge, 'rf');
-    roofKids.push(rfRect, hitOf(rfRect));
-    for (const z of [M.pz0, M.pz1]) roofKids.push(rc(z - M.post / 2, 0, z + M.post / 2, M.eave, 'sh fp'));
-    roofKids.push(rc(M.pz0 - M.post / 2, M.eave - M.post, M.pz1 + M.post / 2, M.eave, 'sh fp'));
-    part(L, 'roof', roofKids);
+    // 焚き口のひさし（先を下げて水を切る）と頂部のベント（管の壁と笠）
+    const hoodPath = pathEl(`M ${P2([X(zFront), Y(M.yHood)], [X(zFront + M.hoodD * Math.cos(M.hoodTilt)), Y(M.yHood - M.hoodD * Math.sin(M.hoodTilt))])}`, 'sh');
+    part(L, 'hood', [hoodPath, hitOf(hoodPath)]);
+    part(L, 'vent', [
+      rc(-M.vr, M.outerTop - 0.03, M.vr, M.outerTop + 0.07, 'hitf'),
+      rc(-M.vr - 0.004, M.outerTop - 0.03, -M.vr + 0.004, M.outerTop + 0.07, 'fi'),
+      rc(M.vr - 0.004, M.outerTop - 0.03, M.vr + 0.004, M.outerTop + 0.07, 'fi'),
+      rc(-M.vr - 0.03, M.outerTop + 0.084, M.vr + 0.03, M.outerTop + 0.096, 'fi'),
+    ]);
+
+    // 屋根と柱（手前の側面の柱と梁。切っていないので面のまま。roof.use が 0 なら描かない）
+    if (M.roofUse) {
+      const roofKids = [];
+      const rfRect = rc(M.pz0 - M.oh, M.eave, M.pz1 + M.oh, M.ridge, 'rf');
+      roofKids.push(rfRect, hitOf(rfRect));
+      for (const z of [M.pz0, M.pz1]) roofKids.push(rc(z - M.post / 2, 0, z + M.post / 2, M.eave, 'sh fp'));
+      roofKids.push(rc(M.pz0 - M.post / 2, M.eave - M.post, M.pz1 + M.post / 2, M.eave, 'sh fp'));
+      part(L, 'roof', roofKids);
+    }
 
     // 窯の中心線
-    L.body.append(lineEl(X(0), Y(-0.1), X(0), Y(M.ridge + 0.1), 'ctr'));
+    L.body.append(lineEl(X(0), Y(-0.1), X(0), Y((M.roofUse ? M.ridge : M.yChimTop) + 0.1), 'ctr'));
 
     // 寸法
     dimV(L, Y(yFloor + H), Y(yFloor), X(0), `内高 ${mm(H)}`);
@@ -535,7 +569,7 @@ NavApp.register('dwg', (api) => {
       [2, 3, 45, 1.77, `断熱 ${mm(M.ins)}`],
       [1, 2, 35, 1.62, `粘土と砂 ${mm(M.ms)}`],
       [0, 1, 25, 1.47, `耐火レンガ ${mm(M.t)}`],
-    ];
+    ].filter(([i0, i1]) => M.offs[i1] - M.offs[i0] > 0);
     for (const [i0, i1, deg, ty, s] of lay) {
       const mid = (M.offs[i0] + M.offs[i1]) / 2;
       const a = (deg * Math.PI) / 180;
