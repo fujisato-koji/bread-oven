@@ -27,7 +27,7 @@
     "foundation.thickness": {"v": 0.15, "unit": "m", "label": "基礎の厚さ", "status": "仮", "basis": "基礎の様式は移設の範囲で決める（02 の 2.7）"},
     "foundation.margin": {"v": 0.15, "unit": "m", "label": "基礎の台からのはみ出し", "status": "仮", "basis": "仮定"},
     "foundation.top": {"v": 0.05, "unit": "m", "label": "基礎の天端の地面からの高さ", "status": "仮", "basis": "仮定"},
-    "frost.depth": {"v": null, "unit": "m", "label": "凍結深度", "status": "未定", "basis": "据える地点が未定（P19a に市町村ごとの値）"},
+    "frost.depth": {"v": 0.80, "unit": "m", "label": "凍結深度", "status": "決定", "basis": "据える町の凍結深度（北海道の表、P19a）。町名は公開しない。同じ町でも地質、地下水位、標高で違う"},
     "door.width": {"v": 0.38, "unit": "m", "label": "焚き口の幅", "status": "仮", "basis": "直径の半分以下（S10）。内径 0.8 m に合わせた"},
     "door.thickness": {"v": 0.05, "unit": "m", "label": "扉の厚さ", "status": "仮", "basis": "R-02c、R-02e。内側を耐火材、外側を断熱にした扉。扉の内面が冷たいと焚き口の側の炉床が冷え続ける（P38 による計算）"},
     "door.height_ratio": {"v": 0.60, "unit": "", "label": "焚き口の高さと窯の内高の比", "status": "仮", "basis": "構造設計 3.3 で 0.60 に決めた。実在の窯で 55〜60%（P5、P13、F2 の計算）。63% は性能の裏付けなし（F1、S19）"},
