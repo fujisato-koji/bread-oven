@@ -1,7 +1,7 @@
 # 出典
 
 本文の数値は、ここの記号で引く。
-取得日は 2026-10-17。P77 から P94、M64 から M91、F48 から F61 は 2026-10-18。
+取得日は 2026-10-17。P77 から P105、M64 から M113、F48 から F62 は 2026-10-18。
 
 | 記号 | 種別 |
 |------|------|
@@ -97,6 +97,17 @@ P1 と P41 は Google Books の抜粋で該当の頁を確かめた。
 | P92 | Forno Bravo「Pompeii Oven: Chimney」（煙突は断熱の前に付ける） | <https://www.fornobravo.com/pompeii-oven/chimney/> |
 | P93 | トーヨーマテラン「耐火モルタル キャスタブル」SDS（成分は珪砂、ポルトランドセメント、混和材等の混合物） | <https://matelan.co.jp/wp/wp-content/uploads/2021/12/418b3b21b01113daad78581fa18f0647.pdf> |
 | P94 | トーヨーマテラン「耐火モルタル キャスタブル」カタログ（養生は 24 時間以上、練った温度は 10〜30℃、凍るおそれがあれば施工しない、加熱は 50℃/時で上げて 200℃ と 350℃ で保持） | <https://matelan.co.jp/wp/wp-content/uploads/2021/07/c09635c141675d4b349cd097dd898d9d.pdf> |
+| P95 | 日本建築構造技術者協会 北海道支部「雪フォーラム 質疑回答項目一覧表」2022-04-12（北海道の多雪区域の積雪の単位荷重 30 N/m²/cm 以上、垂直積雪量 100 cm 以上を多雪区域とする、多雪区域の組み合わせは長期 G+P+0.7S、短期 G+P+S、地震時 G+P+0.35S+K） | <https://jsca-h.net/wordpress/wp-content/uploads/2022/05/20220412_%E9%9B%AA%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%EF%BC%B1%EF%BC%86%EF%BC%A1.pdf> |
+| P96 | 平成 12 年建設省告示第 2464 号（鋼材等の許容応力度の基準強度。SS400 と STKR400 は厚さ 40 mm 以下で F = 235 N/mm²） | <https://www.mlit.go.jp/notice/noticedata/pdf/201703/00006510.pdf> |
+| P97 | 日鉄建材 一般構造用角形鋼管の寸法と断面性能（50 × 50 × 2.3 は 3.34 kg/m、I 15.9 cm⁴、Z 6.34 cm³。60 × 60 × 2.3 は 4.06 kg/m、I 28.3、Z 9.44。100 × 50 × 2.3 は 5.14 kg/m、Ix 84.8、Zx 17.0） | <https://www.ns-kenzai.co.jp/pdf/a1/a1_4.pdf> |
+| P98 | 木下誠一ほか「北見における凍上観測 昭和44〜45年冬期」低温科学 物理篇 資料集 28, 1971（地面の凍上は最大 6.3 cm、凍結深は最大 87 cm、凍上力は直径 12 cm の円板で最大 36 kg/cm²、地面は 5 月下旬に融けきった） | <https://hdl.handle.net/2115/18660> |
+| P99 | 木下誠一ほか「苫小牧における凍上観測 昭和49〜50年冬期」低温科学 物理篇 資料集 33, 1976（砂のプールは凍上せず、砂質粘土ロームのプールは凍上した） | <https://hdl.handle.net/2115/18684> |
+| P100 | ローバル「ローバル 仕様」（亜鉛 96%、標準膜厚 80 μm で 2 回塗り、500 g/m²、1 kg で 2 m²、乾燥 23℃ で 30 分、170℃ 24 時間で異常なし、赤さびと旧塗膜を除いて使う、導電性のない塗装鋼板にはそのまま使えない） | <https://www.roval.co.jp/products/roval/spec.html> |
+| P101 | 日本溶融亜鉛鍍金協会「よくある質問」（溶接部と切断面は高濃度亜鉛末塗料で補修する、亜鉛めっきとステンレスの直接の接触を避ける） | <https://www.aen-mekki.or.jp/mekki/faq/> |
+| P102 | Carleton Place Building Department「Part 9 Decks and Exterior Platforms」2025（建物につながない 1 層のデッキは基礎を地面に置いてよく、凍上で動くので季節ごとに柱を調整することがある） | <https://carletonplace.ca/wp-content/uploads/2025/07/Code-Guideline-Part-9-Decks2025.pdf> |
+| P103 | CMHA「TEK 17-02A Precast Concrete Lintels for Concrete Masonry Construction」（補強のない組積を支える梁のたわみを L/600 に抑える。ACI 530/TMS 402 を引く） | <https://www.cmha.org/resource/tek-17-02a/> |
+| P104 | 国土交通省 北陸地方整備局の単価資料（縞鋼板 t = 3.2 の材料単価 149,000 円/t、鋼板 SS400 t = 3.2 は 134,550〜140,400 円/t。2026-10-18 に開くと 404 で、検索結果の抜粋のみ） | <https://www.hrr.mlit.go.jp/hsikou/data/kensetu/541/930san.pdf> |
+| P105 | 御厩敷公平ほか（寒地土木研究所）「のり面の凍上対策に関する手引き（案）について」第69回北海道開発技術研究発表会 2025（凍上は温度、水分、土質の 3 つがそろって起こり、水の補給が十分なほど凍上量が大きい） | <https://www.hkd.mlit.go.jp/ky/jg/gijyutu/jtfkjs0000002uu5-att/jtfkjs0000002v2e.pdf> |
 
 ## 二次資料
 
@@ -215,6 +226,28 @@ P1 と P41 は Google Books の抜粋で該当の頁を確かめた。
 | M89 | ホームセンターコーナン 店舗検索（北海道に店舗が無い） | <https://www.hc-kohnan.com/shop/> |
 | M90 | コメリ よくある質問 配送（入金確認の翌日から 7 日前後、北海道は 7 日以上。検索結果の抜粋） | <https://www.komeri.com/shop/pg/1faq-delivery/> |
 | M91 | コメリ Yahoo! 店 耐火モルタル 2 kg（9〜11 日以内に発送、取り寄せの表示） | <https://store.shopping.yahoo.co.jp/komeri/4975160100135.html> |
+| M92 | コメリ カラー角パイプ 2.3 × 50 × 50 × 3000 mm（前に検索結果の抜粋で 4,480 円、取り寄せで 2 週間前後、ネットの最低販売数 10 個と見た。2026-10-18 に開くと掲載を中止または終了と出る） | <https://www.komeri.com/shop/g/g90891/> |
+| M93 | コメリ カラー角パイプ 2.3 × 60 × 60 × 3000 mm（前に検索結果の抜粋で 4,980 円、12.18 kg と見た。2026-10-18 に開くと掲載を中止または終了と出る） | <https://www.komeri.com/shop/g/g2364539/> |
+| M94 | コメリ カラー角パイプ 2.3 × 100 × 50 × 3000 mm（前に検索結果の抜粋で 6,480 円、15.42 kg と見た。2026-10-18 に開くと掲載を中止または終了と出る） | <https://www.komeri.com/shop/g/g2364542/> |
+| M95 | コメリ 縞鋼板 3.2 × 450 × 900 mm（頁で確かめた。4,480 円、10.86 kg、商品コード 05681250、ネットで注文して店で受け取る、配送はできない。同じ頁に 3.2 × 457 × 914 の品もあり、値段は見えなかった） | <https://www.komeri.com/shop/g/g47369/> |
+| M96 | エスコ M20 × 1 m 全ねじボルト（どぶメッキ）EA949HL-220（2,904 円） | <https://www.esco-net.com/wcs/escort/ed/detail?hHinCd=EA949HL-220> |
+| M97 | エスコ M20 六角ナット（どぶメッキ、10 個）EA949LT-620（919 円） | <https://www.esco-net.com/wcs/escort/ed/detail?hHinCd=EA949LT-620> |
+| M98 | エスコ M20 × 100 mm 六角ボルト（どぶメッキ、2 本、全ねじ）EA949LD-2099（1,210 円） | <https://www.esco-net.com/wcs/escort/ed/detail?hHinCd=EA949LD-2099> |
+| M99 | エスコ M10 × 1 m 全ねじボルト（どぶメッキ）EA949HL-210（776 円） | <https://www.esco-net.com/wcs/escort/ed/detail?hHinCd=EA949HL-210> |
+| M100 | エスコ M10 六角ナット（どぶメッキ、40 個）EA949LT-610（776 円） | <https://www.esco-net.com/wcs/escort/ed/detail?hHinCd=EA949LT-610> |
+| M101 | エスコ M8 × 80 mm 六角ボルト（どぶメッキ、5 本、全ねじ）EA949LD-880（462 円） | <https://www.esco-net.com/wcs/escort/ed/detail?hHinCd=EA949LD-880> |
+| M102 | エスコ M8 六角ナット（どぶメッキ、50 個）EA949LT-608（556 円） | <https://www.esco-net.com/wcs/escort/ed/detail?hHinCd=EA949LT-608> |
+| M103 | ローバル直販 ローバル 1 kg（4,290 円、気温 5℃ 以上、湿度 85% 以下で塗る。検索結果の抜粋。2026-10-18 に頁を開くと、売り切れなどの理由で表示しないと出る） | <https://directshop.roval.co.jp/items/35921287> |
+| M104 | コメリ ニッペ 油性高耐久鉄部用 0.7 L ブラック（黒）（一覧で 3,480 円。1.6 L グレーは 5,980 円） | <https://www.komeri.com/shop/c/c46010306/> |
+| M105 | カインズ コンクリートピンコロ 200 × 200 × 150 mm（14 kg、束石や土台石の用途、798 円、店舗限定で配送と店舗受取はできない） | <https://www.cainz.com/g/4965888001456.html> |
+| M106 | コメリ コンクリート束石 25 × 25 × 10 cm（358 円。扱うのは富山、石川、福井、岐阜、滋賀、京都で、北海道では買えない） | <https://www.komeri.com/shop/c/c230506/> |
+| M107 | カインズ コンクリート平板 小 30 × 30 × 6 cm（12 kg、598 円、店舗受取は 545 円、店舗限定） | <https://www.cainz.com/g/4965888040028.html> |
+| M108 | 金田商事 買取価格（鉄スクラップ A は 2026-10-13 に 1 kg 41〜46 円、税別。検索結果の抜粋）、鈴木金属（鉄くずは 100 kg までは無料処分） | <https://www.kaneda-shouji.co.jp/product>、<http://hi-power.jp/suzukin/01/index.php> |
+| M109 | カインズ アサヒペン 油性鉄部木部用 EX 1.6 L（商品名の中黒を外して書いた。4,018 円、北海道へは送らない別送品。乾燥は夏 4〜6 時間、冬 6〜15 時間、塗り重ねは夏 1 日後、冬 2 日後） | <https://www.cainz.com/g/4970925580481.html> |
+| M110 | コメリ 縞鋼板のサイズオーダー（厚さ 3.2、4.5、6 mm、寸法は 200〜950 mm を 1 mm 単位、納期は受注後 7〜10 日。値段の決まり方は頁に無い） | <https://www.komeri.com/contents/event/26_checker_plate/index.html> |
+| M111 | コメリ カラー角パイプ 2.3 × 100 × 100 × 6000 mm（10,500 円、41.7 kg、1 kg あたり約 252 円。2026-10-18 に頁で確かめた） | <https://www.komeri.com/shop/g/g130023/> |
+| M112 | コメリ カラー角パイプ 2.3 × 60 × 60 × 6000 mm（6,780 円、24.36 kg。2026-10-18 に頁で確かめた） | <https://www.komeri.com/shop/g/g244212/> |
+| M113 | コメリ 角パイプのエンドキャップ（1 個 378 円、最低販売数 50、寸法は 100 角、75 角、50 角、75 × 45 角。2026-10-18 に頁で確かめた） | <https://www.komeri.com/shop/g/g2128429/> |
 
 ## フォーラム（経験則）
 
@@ -271,3 +304,4 @@ P1 と P41 は Google Books の抜粋で該当の頁を確かめた。
 | F59 | Forno Bravo「What brand of oven to buy」2008。週末の作業で焼けるまで計 50〜60 時間 | <https://community.fornobravo.com/forum/good-background-information/newbie-forum/5255-what-brand-of-oven-to-buy> |
 | F60 | Forno Bravo「When can I cure oven」2015。養生焚きは 7 日で 7 回が普通。左官の仕上げと防水の前に養生焚きを済ませる意見。シートを掛けて結露を見る | <https://community.fornobravo.com/forum/oven-management/firing-your-oven/383516-when-can-i-cure-oven> |
 | F61 | Forno Bravo「Insulate before curing」2011。手順は完成後 1 週間置く。左官は 1 週間湿らせて強くする | <https://community.fornobravo.com/forum/pizza-oven-design-and-installation/pompeii-oven-construction/13677-insulate-before-curing> |
+| F62 | Decksgo「Rising deck every year from frost」。凍結線より浅い基礎は毎冬少しずつ上がり、融けたときに下のすきまへ土が入るので元に戻らないという経験 | <https://www.decksgo.com/rising-deck-every-year-from-frost.html> |

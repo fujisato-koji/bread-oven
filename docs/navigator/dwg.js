@@ -34,6 +34,69 @@ NavApp.register('dwg', (api) => {
   // 隠れ線。細い線は押しにくいので、見えない太い線を重ねる。
   const hid = (el) => { el.setAttribute('class', 'hid'); return [el, hitOf(el)]; };
 
+  // ---------- 図にだけ使う小さな寸法（構造設計の部材の表の値。oven.json に鍵が無い）
+
+  const DECK_COLS = 3; // 天板の縞鋼板を左右に並べる枚数
+  const DECK_ROWS = 2; // 天板の縞鋼板を前後に並べる枚数
+  const DECK_GAP = 0.002; // 縞鋼板どうしのすきま
+  const SHIM = 0.0128; // 敷き板 3.2 mm を 4 枚重ねた厚さ
+  const SHIM_W = 0.098; // 敷き板の辺
+  const NUT_H = 0.016; // M20 のナットの高さ
+  const NUT_R = 0.017; // M20 のナットの半径
+  const PL = 0.006; // 方杖の上の板、当て板、吊り板の厚さ
+  const BR_PLATE_W = 0.10; // 方杖の上の板の左右の幅
+  const BR_PLATE_D = 0.12; // 方杖の上の板の前後の長さ
+  const TAB_W = 0.13; // 当て板の左右の幅
+  const HANG_W = 0.10; // 吊り板の左右の幅
+  const HANG_BELOW = 0.045; // ピンの中心から吊り板の下端まで
+  const STOP_W = 0.10; // 止めの左右の幅
+  const SLEEVE_R = 0.0136; // ピンのさや管の半径（SGP 20A）
+  const SLEEVE_L = 0.060; // ピンのさや管の長さ
+  const PIN_R = 0.010; // ピン（M20）の半径
+  const PIN_L = 0.10; // ピンの長さ
+  const WOOD_TOP = 0.40; // 薪を積む高さの上限
+
+  // 長方形 [x0, z0, x1, z1] の辺を隠れ線で引く。同じ線の上で重なる辺は 1 本にまとめる。
+  // 破線が 2 本重なると、ずれた破線どうしが実線に見えるため。X と Z は図の座標への写し方。
+  // 別の部品の隠れ線と重なっても破線がそろうよう、破線の始まりを用紙の座標に合わせる。
+  const DASH = 3; // CSS の .hid の破線（2 と 1）の周期
+  const hidLine = (x1, y1, x2, y2) => {
+    const [a, b] = (x1 + y1 <= x2 + y2) ? [[x1, y1], [x2, y2]] : [[x2, y2], [x1, y1]];
+    const l = lineEl(a[0], a[1], b[0], b[1]);
+    l.setAttribute('stroke-dashoffset', r2((a[0] === b[0] ? a[1] : a[0]) % DASH));
+    return hid(l);
+  };
+  function hidRects(rects, X, Z) {
+    const hz = new Map();
+    const vt = new Map();
+    const add = (m, k, a, b) => {
+      const key = Math.round(k * 1e5);
+      if (!m.has(key)) m.set(key, { k, iv: [] });
+      m.get(key).iv.push([Math.min(a, b), Math.max(a, b)]);
+    };
+    for (const [x0, z0, x1, z1] of rects) {
+      add(hz, z0, x0, x1);
+      add(hz, z1, x0, x1);
+      add(vt, x0, z0, z1);
+      add(vt, x1, z0, z1);
+    }
+    const out = [];
+    const merge = (m, mk) => {
+      for (const { k, iv } of m.values()) {
+        iv.sort((p, q) => p[0] - q[0]);
+        let [a, b] = iv[0];
+        for (const [c, d] of iv.slice(1)) {
+          if (c <= b + 1e-9) b = Math.max(b, d);
+          else { out.push(...mk(k, a, b)); [a, b] = [c, d]; }
+        }
+        out.push(...mk(k, a, b));
+      }
+    };
+    merge(hz, (z, a, b) => hidLine(X(a), Z(z), X(b), Z(z)));
+    merge(vt, (x, a, b) => hidLine(X(x), Z(a), X(x), Z(b)));
+    return out;
+  }
+
   // ---------- 寸法を読む（viewer/main.js の build() と同じ式）
 
   function model() {
@@ -43,11 +106,10 @@ NavApp.register('dwg', (api) => {
       return pr[k].v;
     };
     const m = {};
-    m.yFt = P('foundation.top');
-    m.yFb = m.yFt - P('foundation.thickness');
-    m.yStandTop = m.yFt + P('stand.height');
-    m.ySlabTop = m.yStandTop + P('hearth.slab');
-    m.yInsTop = m.ySlabTop + P('hearth.insulation');
+    // 高さの基準。炉床の断熱、炉床、ドームは天板の上面から積む。
+    m.yInsBase = P('table.top');
+    m.hi = P('hearth.insulation');
+    m.yInsTop = m.yInsBase + m.hi;
     m.th = P('hearth.firebrick');
     m.yFloor = m.yInsTop + m.th;
     m.t = P('wall.firebrick');
@@ -90,25 +152,97 @@ NavApp.register('dwg', (api) => {
     m.hoodTilt = 0.25;
     m.yHood = m.yFloor + m.tunH - 0.01;
     m.vr = P('vent.diameter') / 2;
-    m.hi = P('hearth.insulation');
-    m.hs = P('hearth.slab');
 
+    // 鉄のテーブル。後ろの 2 本の脚は天秤で受け、ピン 1 本で枠に留めて 3 点で支える。
+    m.tz = P('table.offset_z');
+    m.W = P('table.width');
+    m.D = P('table.depth');
+    m.ov = P('table.overhang');
+    m.dk = P('deck.thickness');
+    m.jt = P('table.joist');
+    m.bh = P('table.beam_h');
+    m.bw = P('table.beam_w');
+    m.bx = P('table.beam_x');
+    m.fz = P('table.front_z');
+    m.lg = P('table.leg');
+    m.flx = P('table.front_leg_x');
+    m.brz = P('table.brace_z');
+    m.rz = P('table.rear_z');
+    m.rlen = P('table.rear_len');
+    m.rl = P('table.rear_leg');
+    m.rlx = P('table.rear_leg_x');
+    m.rgap = P('table.rear_gap');
+    m.stx = P('table.stop_x');
+    m.sgap = P('table.stop_gap');
+    m.zb = m.tz - m.D / 2;
+    m.zf = m.tz + m.D / 2;
+    m.yJt = m.yInsBase - m.dk; // 根太の上面
+    m.yJb = m.yJt - m.jt; // 根太の下面と側梁の上面
+    m.ySb = m.yJb - m.bh; // 側梁の下面と横梁の上面
+    m.yFxB = m.ySb - m.lg; // 前の横梁の下面
+    m.yRxB = m.ySb - m.bh; // 後ろの横梁の下面
+    m.yBt = m.yRxB - m.rgap; // 天秤の上面
+    m.yBb = m.yBt - m.bh; // 天秤の下面
+    m.yPin = m.yBb + m.bh / 2; // ピンの中心
+    m.yStopTop = m.yBt + m.rgap - m.sgap; // 止めの上面
+    m.yHang = m.yPin - HANG_BELOW; // 吊り板の下端
+
+    // 部材の長さと位置
+    m.jl = m.W - 2 * m.ov - 0.002; // 根太の長さ
+    m.sbz0 = m.zb + m.ov; // 側梁の後ろの端
+    m.sbz1 = m.zf - m.ov; // 側梁の前の端
+    m.fxl = 2 * m.flx + m.lg; // 前の横梁の長さ
+    m.balL = 2 * m.rlx + m.rl; // 天秤の長さ
+    m.brx = m.flx - m.lg; // 方杖の中心の左右の位置
+    // 方杖は 45 度。上の端は板の下面で水平に切り、下の端は前の脚の所で縦に切る。
+    m.brTop = m.ySb - PL;
+    m.brZt0 = m.brz - m.lg / Math.SQRT2;
+    m.brZt1 = m.brz + m.lg / Math.SQRT2;
+    m.brZb = m.fz + 0.025;
+    m.brYb0 = m.brTop - (m.brZb - m.brZt0); // 下の端の下の角
+    m.brYb1 = m.brTop - (m.brZb - m.brZt1); // 下の端の上の角
+
+    // 根太。天板の前後 2 段に 5 本ずつ、各段で等間隔に置く。
+    const nb = Math.floor(P('table.joist_n') / 2);
+    const nf = P('table.joist_n') - nb;
+    const row = (z0, z1, n) => Array.from({ length: n }, (_, i) => (n > 1 ? z0 + ((z1 - z0) * i) / (n - 1) : (z0 + z1) / 2));
+    m.joistZ = [
+      ...row(m.zb + m.ov + m.jt / 2, m.tz - m.jt / 2, nb),
+      ...row(m.tz + m.jt / 2, m.zf - m.ov - m.jt / 2, nf),
+    ];
+
+    // 天板の縞鋼板の継ぎ目
+    const pw = (m.W - (DECK_COLS - 1) * DECK_GAP) / DECK_COLS;
+    const pd = (m.D - (DECK_ROWS - 1) * DECK_GAP) / DECK_ROWS;
+    m.seamX = Array.from({ length: DECK_COLS - 1 }, (_, i) => -m.W / 2 + (i + 1) * (pw + DECK_GAP) - DECK_GAP / 2);
+    m.plateZ = Array.from({ length: DECK_ROWS }, (_, i) => [m.zb + i * (pd + DECK_GAP), m.zb + i * (pd + DECK_GAP) + pd]);
+    m.seamZ = m.plateZ.slice(1).map(([z0]) => z0 - DECK_GAP / 2);
+
+    // 据え台と足
+    m.ps = P('pad.size');
+    m.ph = P('pad.height');
+    m.pg = P('pad.gravel');
+    m.pit = P('pad.pit');
+    m.yPad = P('pad.top');
+    m.rod = P('foot.rod');
+    m.yPlateBot = m.yPad + P('foot.stack'); // 底板の下面
+    m.fpl = P('foot.plate');
+    m.fpw = P('foot.plate_w');
+    m.yLeg = m.yPlateBot + m.fpl; // 脚の下端
+    m.feet = [
+      { x: -m.flx, z: m.fz, front: true }, { x: m.flx, z: m.fz, front: true },
+      { x: -m.rlx, z: m.rz, front: false }, { x: m.rlx, z: m.rz, front: false },
+    ];
+
+    // 薪置き。テーブルの下で、方杖の内に 3 段に積む。
+    m.logR = WOOD_TOP / 5.5;
+    m.wx = m.flx - 1.5 * m.lg - 0.02;
+    m.nPer = Math.max(1, Math.floor((2 * m.wx) / (2 * m.logR)));
+    m.wz1 = m.fz - 0.05;
+    m.wz0 = m.wz1 - 0.45;
+
+    // 屋根の柱は 3D と同じ置き方（stand.margin を使う）
     m.mg = P('stand.margin');
-    m.so = P('slab.overhang') || 0;
-    m.sw = 2 * (m.Ro + m.mg);
-    m.sd = m.zFront - m.zBack + 2 * m.mg;
-    m.sz = (m.zBack + m.zFront) / 2;
-    m.wt = P('stand.wall');
-    m.sh2 = P('stand.height');
-    m.fm = P('foundation.margin');
-    m.fw = m.sw + 2 * m.fm;
-    m.fd = m.sd + 2 * m.fm;
-
-    m.logR = 0.05;
-    m.innerW = m.sw - 2 * m.wt;
-    m.nPer = Math.max(1, Math.floor((m.innerW - 0.04) / (2 * m.logR)));
-    m.logLen = Math.min(0.45, m.sd - m.wt - 0.1);
-
     m.po = P('roof.post_offset');
     m.px = m.Ro + m.mg + m.po;
     m.pz0 = m.zBack - m.mg - m.po;
@@ -132,6 +266,27 @@ NavApp.register('dwg', (api) => {
     for (const k of [].concat(kids)) if (k) g.append(...[].concat(k));
     L.body.append(g);
     return g;
+  }
+
+  // 地面の下の据え台と締めた砕石を横から見た長方形 [横 0, y0, 横 1, y1]。c は横の位置。
+  const padBelow = (M, c) => [
+    [c - M.ps / 2, M.yPad - M.ph, c + M.ps / 2, 0],
+    [c - M.pit / 2, M.yPad - M.ph - M.pg, c + M.pit / 2, M.yPad - M.ph],
+  ];
+
+  // 足の積み上げを横から見た形。下から敷き板、全ねじ、頭のナット 2 個、ナット B と A、底板。
+  // c は横の位置（正面図では x、断面図では z）。rc は図ごとの長方形の描き方。
+  function footEls(rc, c, M) {
+    const yS = M.yPad + SHIM;
+    return [
+      rc(c - M.rod / 2, yS, c + M.rod / 2, M.yPlateBot, 'sh fp'),
+      rc(c - SHIM_W / 2, M.yPad, c + SHIM_W / 2, yS, 'sh fp'),
+      rc(c - NUT_R, yS, c + NUT_R, yS + NUT_H, 'sh fp'),
+      rc(c - NUT_R, yS + NUT_H, c + NUT_R, yS + 2 * NUT_H, 'sh fp'),
+      rc(c - NUT_R, M.yPlateBot - 2 * NUT_H, c + NUT_R, M.yPlateBot - NUT_H, 'sh fp'),
+      rc(c - NUT_R, M.yPlateBot - NUT_H, c + NUT_R, M.yPlateBot, 'sh fp'),
+      rc(c - M.fpw / 2, M.yPlateBot, c + M.fpw / 2, M.yLeg, 'sh fp'),
+    ];
   }
 
   function text(L, x, y, s, o = {}) {
@@ -225,8 +380,6 @@ NavApp.register('dwg', (api) => {
       [e('rect', { width: s, height: s, class: 'pbg' }), ...kids]);
     const dot = (x, y, r) => circEl(x, y, r, 'pd');
     return [
-      // コンクリート: 斜線と粗い点
-      pat('dwg-p-conc', 8, [pathEl('M0 8 L8 0 M-1 1 L1 -1 M7 9 L9 7', 'pl'), dot(2, 2, 0.5), dot(6, 6, 0.5)]),
       // パーライト: 細かい点
       pat('dwg-p-perl', 2.4, [dot(0.6, 0.6, 0.2), dot(1.8, 1.8, 0.2)]),
       // 耐火レンガ: 45 度の斜線
@@ -287,7 +440,7 @@ NavApp.register('dwg', (api) => {
       y += 4;
       t(x0, y, '材料の記号', 'tv');
       y += 4;
-      const mats = [['fconc', 'コンクリート'], ['fperl', 'パーライト（断熱）'], ['fbrick', '耐火レンガ'], ['fclay', '粘土と砂'], ['fshell', '外殻'], ['fdoor', '扉']];
+      const mats = [['fsteel', '鋼（角パイプと鋼板）'], ['fperl', 'パーライト（断熱）'], ['fbrick', '耐火レンガ'], ['fclay', '粘土と砂'], ['fshell', '外殻'], ['fdoor', '扉']];
       for (const [cls, label] of mats) {
         g.append(rectEl(x0, y, x0 + 14, y + 6, `sh ${cls}`));
         t(x0 + 18, y + 4.3, label);
@@ -309,10 +462,17 @@ NavApp.register('dwg', (api) => {
     const X = (x) => ox + x * S;
     const Z = (z) => oy + z * S;
     const rc = (x0, z0, x1, z1, cls) => rectEl(X(x0), Z(z0), X(x1), Z(z1), cls);
-    const { sz, sd, sw, fw, fd, Ro, R, zBack, zFront } = M;
+    const { W, D, zb, zf, Ro, R, zBack, zFront } = M;
+    const sq = (x, z, a, cls) => rc(x - a / 2, z - a / 2, x + a / 2, z + a / 2, cls);
 
-    part(L, 'foundation', rc(-fw / 2, sz - fd / 2, fw / 2, sz + fd / 2, 'sh fp'));
-    part(L, 'slab', rc(-sw / 2 - M.so, sz - sd / 2 - M.so, sw / 2 + M.so, sz + sd / 2 + M.so, 'sh fp'));
+    // 据え台。天板より外へ出る所だけが見える（天板の下の所は、あとで隠れ線を重ねる）。
+    part(L, 'foundation', M.feet.map((f) => sq(f.x, f.z, M.ps, 'sh fp')));
+    // 天板。縞鋼板 6 枚の継ぎ目を細線で描く（炉床の断熱の下は隠れる）。
+    part(L, 'slab', [
+      rc(-W / 2, zb, W / 2, zf, 'sh fp'),
+      ...M.seamX.map((x) => lineEl(X(x), Z(zb), X(x), Z(zf), 'sh tn')),
+      ...M.seamZ.map((z) => lineEl(X(-W / 2), Z(z), X(W / 2), Z(z), 'sh tn')),
+    ]);
     part(L, 'hearthIns', rc(-Ro, zBack, Ro, zFront, 'sh fp'));
     part(L, 'shell', circEl(X(0), Z(0), Ro * S, 'sh fp'));
     // ドームの各層の境（上からは隠れる）
@@ -333,11 +493,20 @@ NavApp.register('dwg', (api) => {
     part(L, 'hood', rc(-M.hoodW / 2, zFront, M.hoodW / 2, zFront + M.hoodD * Math.cos(M.hoodTilt), 'sh fp'));
     part(L, 'vent', [circEl(X(0), Z(0), (M.vr + 0.03) * S, 'sh fp'), circEl(X(0), Z(0), M.vr * S, 'sh')]);
 
-    // 薪置きと台の内側（床版の下で隠れる）
-    const wz1 = sz + sd / 2 - 0.05;
-    part(L, 'wood', hid(rc(-M.innerW / 2 + 0.02, wz1 - M.logLen, M.innerW / 2 - 0.02, wz1)));
-    const ux = sw / 2 - M.wt;
-    part(L, 'stand', hid(pathEl(`M ${P2([X(-ux), Z(sz + sd / 2)], [X(-ux), Z(sz - sd / 2 + M.wt)], [X(ux), Z(sz - sd / 2 + M.wt)], [X(ux), Z(sz + sd / 2)])}`)));
+    // 天板の下に隠れる薪置き、鉄のテーブル、据え台
+    part(L, 'wood', hidRects([[-M.wx, M.wz0, M.wx, M.wz1]], X, Z));
+    const st = M.joistZ.map((z) => [-M.jl / 2, z - M.jt / 2, M.jl / 2, z + M.jt / 2]); // 根太
+    for (const s of [-1, 1]) {
+      st.push([s * M.bx - M.bw / 2, M.sbz0, s * M.bx + M.bw / 2, M.sbz1]); // 側梁
+      st.push([s * M.brx - M.lg / 2, M.brZt0, s * M.brx + M.lg / 2, M.brZb]); // 方杖
+    }
+    st.push([-M.fxl / 2, M.fz - M.lg / 2, M.fxl / 2, M.fz + M.lg / 2]); // 前の横梁
+    st.push([-M.rlen / 2, M.rz - M.bw / 2, M.rlen / 2, M.rz + M.bw / 2]); // 後ろの横梁
+    st.push([-M.balL / 2, M.rz - M.bw / 2, M.balL / 2, M.rz + M.bw / 2]); // 天秤
+    part(L, 'stand', hidRects(st, X, Z));
+    // 据え台の天板の下の所と、地面の下の穴
+    const sqR = (f, a) => [f.x - a / 2, f.z - a / 2, f.x + a / 2, f.z + a / 2];
+    part(L, 'foundation', hidRects(M.feet.flatMap((f) => [sqR(f, M.ps), sqR(f, M.pit)]), X, Z));
 
     // 屋根と柱（roof.use が 0 なら描かない）
     if (M.roofUse) {
@@ -357,10 +526,10 @@ NavApp.register('dwg', (api) => {
     // 寸法
     dimH(L, X(-R), X(R), Z(0), `内径 ${mm(2 * R)}`);
     dimH(L, X(-Ro), X(Ro), Z(0.27), `外径 ${mm(2 * Ro)}`, { ext: [Z(0), Z(0)] });
-    dimH(L, X(-sw / 2), X(sw / 2), Z(-1.2), `台の幅 ${mm(sw)}`, { ext: [Z(sz - sd / 2), Z(sz - sd / 2)] });
+    dimH(L, X(-W / 2), X(W / 2), Z(-1.2), `天板の幅 ${mm(W)}`, { ext: [Z(zb), Z(zb)] });
     if (M.roofUse) dimH(L, X(-M.px), X(M.px), Z(-1.75), `柱の間隔 ${mm(2 * M.px)}`, { ext: [Z(M.pz0), Z(M.pz0)] });
     dimV(L, Z(Ro), Z(zFront), X(1.75), `前室の奥行 ${mm(zFront - Ro)}`, { ext: [X(hw), X(hw)] });
-    dimV(L, Z(sz - sd / 2), Z(sz + sd / 2), X(1.95), `台の奥行 ${mm(sd)}`, { ext: [X(sw / 2), X(sw / 2)] });
+    dimV(L, Z(zb), Z(zf), X(1.95), `天板の奥行 ${mm(D)}`, { ext: [X(W / 2), X(W / 2)] });
     if (M.roofUse) dimV(L, Z(M.pz0), Z(M.pz1), X(2.15), `柱の間隔 ${mm(M.pz1 - M.pz0)}`, { ext: [X(M.px), X(M.px)] });
     L.extra.push(caption('平面図  S=1:20'));
   }
@@ -373,26 +542,56 @@ NavApp.register('dwg', (api) => {
     const X = (x) => ox + x * S;
     const Y = (y) => gy - y * S;
     const rc = (x0, y0, x1, y1, cls) => rectEl(X(x0), Y(y0), X(x1), Y(y1), cls);
-    const { sw, fw, Ro, R, H, yFt, yFb, yStandTop, ySlabTop, yInsTop, yFloor } = M;
+    const { W, Ro, R, H, yInsBase, yInsTop, yFloor } = M;
     const top = M.outerTop;
+    const front = M.feet.filter((f) => f.front);
+    const rear = M.feet.filter((f) => !f.front);
 
     groundLine(L, X(-2.0), X(2.0), Y(0));
 
-    // 基礎。地面の下は隠れ線。
-    part(L, 'foundation', [rc(-fw / 2, 0, fw / 2, yFt, 'sh fp'), ...hid(rc(-fw / 2, yFb, fw / 2, 0))]);
-    // 台。前は薪置きの開口。
-    const ux = sw / 2 - M.wt;
-    part(L, 'stand', [rc(-sw / 2, yFt, sw / 2, yStandTop, 'sh fp'), rc(-ux, yFt, ux, yStandTop, 'sh fo')]);
+    // 奥から手前へ描き、手前の面で奥の形を隠す。
+    // 後ろの据え台（地面より上の所）
+    part(L, 'foundation', rear.map((f) => rc(f.x - M.ps / 2, 0, f.x + M.ps / 2, M.yPad, 'sh fp')));
+    // 後ろの組。後ろの横梁、天秤、止め、天秤の脚、足、当て板、吊り板。
+    const back = [
+      rc(-M.rlen / 2, M.yRxB, M.rlen / 2, M.ySb, 'sh fp'),
+      rc(-M.balL / 2, M.yBb, M.balL / 2, M.yBt, 'sh fp'),
+    ];
+    for (const s of [-1, 1]) {
+      back.push(rc(s * M.stx - STOP_W / 2, M.yBt, s * M.stx + STOP_W / 2, M.yStopTop, 'sh fp'));
+      back.push(rc(s * M.rlx - M.rl / 2, M.yLeg, s * M.rlx + M.rl / 2, M.yBb, 'sh fp'));
+    }
+    for (const f of rear) back.push(...footEls(rc, f.x, M));
+    back.push(rc(-TAB_W / 2, M.yRxB, TAB_W / 2, M.ySb, 'sh fp'));
+    back.push(rc(-HANG_W / 2, M.yHang, HANG_W / 2, M.ySb, 'sh fp'));
+    part(L, 'stand', back);
+    // 薪置き
     const logs = [];
     for (let row = 0; row < 3; row++) {
-      for (let i = 0; i < M.nPer - (row % 2); i++) {
-        const x0 = -M.innerW / 2 + 0.02 + M.logR + (row % 2) * M.logR;
-        logs.push(circEl(X(x0 + i * 2 * M.logR), Y(yFt + M.logR + row * M.logR * 1.75), M.logR * S, 'sh fw'));
+      const n = M.nPer - (row % 2);
+      for (let i = 0; i < n; i++) {
+        const x = (i - (n - 1) / 2) * 2 * M.logR;
+        logs.push(circEl(X(x), Y(M.logR + row * M.logR * 1.75), M.logR * S, 'sh fw'));
       }
     }
     part(L, 'wood', logs);
-    part(L, 'slab', rc(-sw / 2 - M.so, yStandTop, sw / 2 + M.so, ySlabTop, 'sh fp'));
-    part(L, 'hearthIns', rc(-Ro, ySlabTop, Ro, yInsTop, 'sh fp'));
+    // 前の据え台。地面の下の据え台と締めた砕石は隠れ線。
+    part(L, 'foundation', [
+      ...front.map((f) => rc(f.x - M.ps / 2, 0, f.x + M.ps / 2, M.yPad, 'sh fp')),
+      ...hidRects(front.flatMap((f) => padBelow(M, f.x)), X, Y),
+    ]);
+    // 手前の組。方杖、前の足、前の門形（横梁と脚 2 本）、側梁の小口、根太。天秤は隠れ線。
+    const fr = [];
+    for (const s of [-1, 1]) fr.push(rc(s * M.brx - M.lg / 2, M.brYb0, s * M.brx + M.lg / 2, M.brTop, 'sh fp'));
+    for (const f of front) fr.push(...footEls(rc, f.x, M));
+    for (const s of [-1, 1]) fr.push(rc(s * M.flx - M.lg / 2, M.yLeg, s * M.flx + M.lg / 2, M.yFxB, 'sh fp'));
+    fr.push(rc(-M.fxl / 2, M.yFxB, M.fxl / 2, M.ySb, 'sh fp'));
+    for (const s of [-1, 1]) fr.push(rc(s * M.bx - M.bw / 2, M.ySb, s * M.bx + M.bw / 2, M.yJb, 'sh fp'));
+    fr.push(rc(-M.jl / 2, M.yJb, M.jl / 2, M.yJt, 'sh fp'));
+    fr.push(...hid(rc(-M.balL / 2, M.yBb, M.balL / 2, M.yBt)));
+    part(L, 'stand', fr);
+    part(L, 'slab', rc(-W / 2, M.yJt, W / 2, yInsBase, 'sh fp'));
+    part(L, 'hearthIns', rc(-Ro, yInsBase, Ro, yInsTop, 'sh fp'));
 
     // ドーム。外形は外殻の半楕円。内側の層は前室の後ろに隠れる。
     const arc = (r, h) => hid(pathEl(`M ${P2([X(-r), Y(yFloor)])} ${halfArc(X(-r), X(r), Y(yFloor), r * S, h * S, 1)}`));
@@ -435,12 +634,12 @@ NavApp.register('dwg', (api) => {
 
     // 寸法。右に GL からの高さ。
     const cx = X(1.85);
-    const ys = [Y(0), Y(yFt), Y(yStandTop), Y(yFloor), Y(top), Y(M.yChimTop)];
-    L.dim.append(lineEl(cx, ys[0], cx, ys[5]));
+    L.dim.append(lineEl(cx, Y(0), cx, Y(M.yChimTop)));
+    const padOut = Math.max(...M.feet.map((f) => Math.abs(f.x))) + M.ps / 2;
     const lv = [
       [0, 'GL 0', null, 2.8],
-      [yFt, `基礎の天端 GL+${mm(yFt)}`, X(fw / 2), 0.8],
-      [yStandTop, `台の天端 GL+${mm(yStandTop)}`, X(sw / 2), 1],
+      [M.yPad, `据え台の上面 GL+${mm(M.yPad)}`, X(padOut), 0.8],
+      [yInsBase, `天板の上面 GL+${mm(yInsBase)}`, X(W / 2), 1],
       [yFloor, `炉床の面 GL+${mm(yFloor)}`, X(hw), 1],
       [top, `ドームの頂 GL+${mm(top)}`, X(0.09), 1],
       [M.yChimTop, `煙突の頂 GL+${mm(M.yChimTop)}`, X(M.rc), 1],
@@ -450,8 +649,10 @@ NavApp.register('dwg', (api) => {
       if (ex != null) L.dim.append(lineEl(ex + 1, Y(y), cx + 2, Y(y)));
       text(L, cx + 3, Y(y) + dy, s, { anchor: 'start' });
     }
-    dimH(L, X(-sw / 2), X(sw / 2), Y(-0.34), `台の幅 ${mm(sw)}`, { ext: [Y(-0.12), Y(-0.12)] });
-    dimH(L, X(-fw / 2), X(fw / 2), Y(-0.52), `基礎の幅 ${mm(fw)}`, { ext: [Y(yFb), Y(yFb)] });
+    // 足の間は全ねじの中心で測る。
+    dimH(L, X(-M.rlx), X(M.rlx), Y(-0.40), `足の間 ${mm(2 * M.rlx)}（後ろ）`, { ext: [Y(M.yPad), Y(M.yPad)] });
+    dimH(L, X(-M.flx), X(M.flx), Y(-0.50), `足の間 ${mm(2 * M.flx)}（前）`, { ext: [Y(M.yPad), Y(M.yPad)] });
+    dimH(L, X(-W / 2), X(W / 2), Y(-0.60), `天板の幅 ${mm(W)}`, { ext: [Y(M.yJt), Y(M.yJt)] });
     // 焚き口の幅と高さ
     dimH(L, X(-dw), X(dw), Y(yFloor + 0.07), `焚き口の幅 ${mm(2 * dw)}`, { at: 'right' });
     dimV(L, Y(yFloor + M.door.hd), Y(yFloor), X(-0.52), `焚き口の高さ ${mm(M.door.hd)}`, { ext: [X(0), X(-dw)] });
@@ -466,9 +667,7 @@ NavApp.register('dwg', (api) => {
     const X = (z) => ox + z * S;
     const Y = (y) => gy - y * S;
     const rc = (z0, y0, z1, y1, cls) => rectEl(X(z0), Y(y0), X(z1), Y(y1), cls);
-    const { R, H, sz, sd, fd, Ro, zBack, zFront, yFt, yFb, yStandTop, ySlabTop, yInsTop, yFloor } = M;
-    const zb = sz - sd / 2;
-    const zf = sz + sd / 2;
+    const { R, H, zf, Ro, zBack, zFront, yInsBase, yInsTop, yFloor } = M;
     const hd = M.door.hd;
 
     // 焚き口の穴の外では層を切らないための切り抜き（穴は z > 0 で、窯の床から焚き口の高さまで）
@@ -481,17 +680,45 @@ NavApp.register('dwg', (api) => {
 
     groundLine(L, X(-1.9), X(2.0), Y(0));
 
-    part(L, 'foundation', rc(sz - fd / 2, yFb, sz + fd / 2, yFt, 'sh fconc'));
-    // 台。奥の壁は切った面、手前に見える側の壁は面のまま。前は開いている。
-    part(L, 'stand', [rc(zb, yFt, zf, yStandTop, 'sh fo'), rc(zb, yFt, zb + M.wt, yStandTop, 'sh fconc')]);
+    // 切り口は x = 0（方杖と方杖の上の板だけは x = 0.495）。角パイプと鋼板は、切れた所を塗り、奥に見える所を外形線で描く。
+    // 据え台は切り口より奥にあるので、地面より上は外形線、地面の下は隠れ線。左右の 2 つは重なる。
+    part(L, 'foundation', [
+      ...[M.rz, M.fz].map((z) => rc(z - M.ps / 2, 0, z + M.ps / 2, M.yPad, 'sh fp')),
+      ...hidRects([M.rz, M.fz].flatMap((z) => padBelow(M, z)), X, Y),
+    ]);
+    // 薪置き（x = 0 で切れる）
     const logs = [];
-    const wz1 = zf - 0.05;
     for (let row = 0; row < 3; row++) {
-      logs.push(rc(wz1 - M.logLen, yFt + row * M.logR * 1.75, wz1, yFt + 2 * M.logR + row * M.logR * 1.75, 'sh fw'));
+      logs.push(rc(M.wz0, row * M.logR * 1.75, M.wz1, 2 * M.logR + row * M.logR * 1.75, 'sh fw'));
     }
     part(L, 'wood', logs);
-    part(L, 'slab', rc(zb - M.so, yStandTop, zf + M.so, ySlabTop, 'sh fconc'));
-    part(L, 'hearthIns', rc(zBack, ySlabTop, zFront, yInsTop, 'sh fperl'));
+    // 鉄のテーブル
+    const st = [];
+    // 切り口より奥に見える所。側梁、足、前の脚、天秤の脚、止め。
+    st.push(rc(M.sbz0, M.ySb, M.sbz1, M.yJb, 'sh fp'));
+    for (const z of [M.rz, M.fz]) st.push(...footEls(rc, z, M));
+    st.push(rc(M.fz - M.lg / 2, M.yLeg, M.fz + M.lg / 2, M.yFxB, 'sh fp'));
+    st.push(rc(M.rz - M.rl / 2, M.yLeg, M.rz + M.rl / 2, M.yBb, 'sh fp'));
+    st.push(rc(M.rz - M.bw / 2, M.yBt, M.rz + M.bw / 2, M.yStopTop, 'sh fp'));
+    // 切れた所。方杖と上の板、前の横梁、後ろの横梁、当て板、吊り板、天秤、ピンのさや管、根太。
+    st.push(pathEl(`M ${P2([X(M.brZt0), Y(M.brTop)], [X(M.brZt1), Y(M.brTop)], [X(M.brZb), Y(M.brYb1)], [X(M.brZb), Y(M.brYb0)])} Z`, 'sh fsteel'));
+    st.push(rc(M.brz - 0.015 - BR_PLATE_D / 2, M.brTop, M.brz - 0.015 + BR_PLATE_D / 2, M.ySb, 'sh fsteel'));
+    st.push(rc(M.fz - M.lg / 2, M.yFxB, M.fz + M.lg / 2, M.ySb, 'sh fsteel'));
+    st.push(rc(M.rz - M.bw / 2, M.yRxB, M.rz + M.bw / 2, M.ySb, 'sh fsteel'));
+    for (const s of [-1, 1]) {
+      const z0 = M.rz + s * (M.bw / 2);
+      st.push(rc(z0, M.yRxB, z0 + s * PL, M.ySb, 'sh fsteel'));
+      st.push(rc(z0 + s * PL, M.yHang, z0 + s * 2 * PL, M.ySb, 'sh fsteel'));
+    }
+    st.push(rc(M.rz - M.bw / 2, M.yBb, M.rz + M.bw / 2, M.yBt, 'sh fsteel'));
+    st.push(rc(M.rz - SLEEVE_L / 2, M.yPin - SLEEVE_R, M.rz + SLEEVE_L / 2, M.yPin + SLEEVE_R, 'sh fsteel'));
+    // ピンは長手の向きに切らずに外形で描く。
+    st.push(rc(M.rz - PIN_L / 2, M.yPin - PIN_R, M.rz + PIN_L / 2, M.yPin + PIN_R, 'sh fp'));
+    for (const z of M.joistZ) st.push(rc(z - M.jt / 2, M.yJb, z + M.jt / 2, M.yJt, 'sh fsteel'));
+    part(L, 'stand', st);
+    // 天板（縞鋼板の 2 段が切れる）
+    part(L, 'slab', M.plateZ.map(([z0, z1]) => rc(z0, M.yJt, z1, yInsBase, 'sh fsteel')));
+    part(L, 'hearthIns', rc(zBack, yInsBase, zFront, yInsTop, 'sh fperl'));
 
     // ドームの層。外側から内側へ、半楕円の輪。
     const ringD = (a, b) => {
@@ -558,10 +785,11 @@ NavApp.register('dwg', (api) => {
     dimH(L, X(Ro), X(zFront), Y(1.68), `前室奥行 ${mm(zFront - Ro)}`, { ext: [Y(yFloor + hd), Y(yFloor + M.tunH)], at: 'right' });
     // 右の連続寸法（厚さと高さ）。柱の外に出す。
     const col = X(1.8);
-    const lv = [yFb, yFt, yStandTop, ySlabTop, yInsTop, yFloor, yFloor + hd];
-    const ex = [X(sz + fd / 2), X(sz + fd / 2), X(zf), X(zf), X(zFront), X(zFront), X(zFront)];
+    const padF = M.fz + M.ps / 2;
+    const lv = [M.yPad - M.ph, M.yPad, yInsBase, yInsTop, yFloor, yFloor + hd];
+    const ex = [X(padF), X(padF), X(zf), X(zFront), X(zFront), X(zFront)];
     chainV(L, col, lv.map(Y), [
-      `基礎 ${mm(yFt - yFb)}`, `台 ${mm(M.sh2)}`, `床版 ${mm(M.hs)}`, `炉床の断熱 ${mm(M.hi)}`, `炉床 ${mm(M.th)}`, `焚き口の高さ ${mm(hd)}`,
+      `据え台 ${mm(M.ph)}`, `テーブル ${mm(yInsBase - M.yPad)}`, `炉床の断熱 ${mm(M.hi)}`, `炉床 ${mm(M.th)}`, `焚き口の高さ ${mm(hd)}`,
     ], ex);
     // 層の厚さの引出線
     const lay = [
@@ -593,6 +821,7 @@ NavApp.register('dwg', (api) => {
 #mode-dwg svg .paper { fill: var(--dwg-paper); }
 #mode-dwg svg .fr { fill: none; stroke: var(--dwg-ink); stroke-width: .5; }
 #mode-dwg svg .sh { stroke: var(--dwg-ink); stroke-width: .5; stroke-linejoin: round; }
+#mode-dwg svg .tn { stroke-width: .2; }
 #mode-dwg svg .hid { stroke: var(--dwg-ink); stroke-width: .25; stroke-dasharray: 2 1; fill: none; pointer-events: none; }
 #mode-dwg svg .ctr, #mode-dwg svg .rf { stroke: var(--dwg-ink); stroke-width: .18; stroke-dasharray: 8 1.2 1.2 1.2; fill: none; pointer-events: none; }
 #mode-dwg svg .rf { stroke-width: .25; }
@@ -614,7 +843,7 @@ NavApp.register('dwg', (api) => {
 #mode-dwg svg .fw { fill: var(--dwg-paper); }
 #mode-dwg svg .fi { fill: var(--dwg-ink); stroke: none; }
 #mode-dwg svg .hitf { fill: transparent; stroke: none; }
-#mode-dwg svg .fconc { fill: url(#dwg-p-conc); }
+#mode-dwg svg .fsteel { fill: var(--dwg-ink); fill-opacity: .5; }
 #mode-dwg svg .fperl { fill: url(#dwg-p-perl); }
 #mode-dwg svg .fbrick { fill: url(#dwg-p-brick); }
 #mode-dwg svg .fclay { fill: url(#dwg-p-clay); }

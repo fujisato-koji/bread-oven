@@ -5,14 +5,14 @@
 meta:
   title: パン窯 ナビゲータ
   rev: "0.1"
-  date: "2026-10-17"
+  date: "2026-10-18"
 
 # 物（3D と図面に出る部品）。dims は oven.json の params の鍵。doc は設計書の文書。
 parts:
-  - {id: foundation, name: 基礎, mat: 砕石と鉄筋コンクリート（仮）, dims: [foundation.thickness, foundation.top, frost.depth], doc: 02-configuration.md}
-  - {id: stand, name: 台, mat: コンクリートブロック（仮）, dims: [stand.height, stand.wall], doc: 02-configuration.md}
-  - {id: slab, name: 床版, mat: 鉄筋コンクリート（仮）。台より外へ出して水切りにする, dims: [hearth.slab, slab.overhang], doc: 02-configuration.md}
-  - {id: hearthIns, name: 炉床の断熱, mat: セメントとパーライト 体積で 1:5（仮）, dims: [hearth.insulation], doc: 02-configuration.md}
+  - {id: foundation, name: 据え台, mat: 締めた砕石 20 cm の上にコンクリートピンコロ 200 角（4 か所）。粘土質なら穴を 80 cm 角にし、砕石 35 cm と平板 40 角を足す, dims: [pad.size, pad.height, pad.top, pad.gravel, pad.pit, frost.depth], doc: 03-structural-design.md}
+  - {id: stand, name: 鉄のテーブル, mat: 角パイプ（STKR400、肉厚 2.3 mm）を溶接とボルトで組む。後ろの 2 本は天秤で受けて 3 点で支え、前の脚に方杖を入れる。足は M20 の全ねじ（溶融亜鉛めっき）, dims: [table.top, table.offset_z, table.joist, table.joist_n, table.beam_h, table.beam_x, table.front_z, table.leg, table.front_leg_x, table.brace_z, table.rear_z, table.rear_leg_x, table.rear_gap, table.stop_gap, foot.rod, foot.stack, foot.free], doc: 03-structural-design.md}
+  - {id: slab, name: 天板, mat: 縞鋼板 3.2 × 450 × 900 mm を 6 枚。ボルトで留め、水抜きの穴をあけ、全面に不織布を敷く, dims: [deck.thickness, table.width, table.depth, table.overhang], doc: 03-structural-design.md}
+  - {id: hearthIns, name: 炉床の断熱, mat: セメントとパーライト 体積で 1:5。天板 1 枚ごとの 6 区画に分けて打つ, dims: [hearth.insulation], doc: 02-configuration.md}
   - {id: hearth, name: 炉床, mat: 耐火粘土レンガを縦に立てて並べる, dims: [hearth.firebrick, dome.inner_diameter], doc: 03-structural-design.md}
   - {id: chamber, name: 窯壁（ドーム）, mat: 耐火粘土レンガ 114 mm（蓄熱を兼ねる）, dims: [wall.firebrick, dome.inner_diameter, dome.inner_height], doc: 02-configuration.md}
   - {id: mass, name: 蓄熱層, mat: 第一案 B では置かない（土窯の型式で使う粘土と砂）, dims: [dome.mass], doc: 02-configuration.md}
@@ -24,7 +24,7 @@ parts:
   - {id: hood, name: 焚き口のひさし, mat: ガルバリウム鋼板を曲げる（仮）, dims: [hood.depth], doc: 02-configuration.md}
   - {id: vent, name: 頂部のベント, mat: ステンレスのフード付きガラリ 100 mm, dims: [vent.diameter], doc: 02-configuration.md}
   - {id: roof, name: 屋根と柱, mat: 架けない（2026-10-18、施主の判断）, dims: [roof.use], doc: 02-configuration.md}
-  - {id: wood, name: 薪置き, mat: 乾いた広葉樹, dims: [], doc: 06-operation.md}
+  - {id: wood, name: 薪置き, mat: 乾いた広葉樹。テーブルの下に置くときは天板から 0.25 m 以上離す, dims: [], doc: 06-operation.md}
   - {id: person, name: 人（大きさの目安）, mat: 目安, dims: [person.height], doc: ""}
   - {id: frost, name: 凍結深度, mat: 地盤, dims: [frost.depth], doc: 01-requirements.md}
 
@@ -195,9 +195,10 @@ alloc:
   R-05: {parts: [chamber, insulation, shell], steps: [dry]}
   R-06: {parts: [wood], steps: [burn]}
   R-07: {parts: [stand, slab, foundation], steps: []}
-  R-08: {parts: [shell, vent, hood, chimney, slab, foundation, insulation, frost], steps: [prep, cover]}
+  R-08: {parts: [shell, vent, hood, chimney, slab, stand, foundation, insulation, frost], steps: [prep, cover]}
   R-09: {parts: [], steps: []}
   R-10: {parts: [], steps: []}
   R-11: {parts: [chimney], steps: []}
   R-12: {parts: [door, insulation, shell, chimney], steps: []}
   R-13: {parts: [foundation, stand], steps: []}
+  R-14: {parts: [stand, slab, foundation, hearthIns, hearth, chamber, insulation, shell], steps: []}

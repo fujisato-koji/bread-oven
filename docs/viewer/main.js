@@ -30,9 +30,9 @@ const P = (k) => {
 
 // 部品の一覧。色は図と凡例で共通に使う。
 const PARTS = [
-  { key: 'foundation', label: '基礎', color: 0x8e9093, mat: '鉄筋コンクリート（仮）' },
-  { key: 'stand', label: '台', color: 0xa9abae, mat: 'コンクリートブロック（仮）' },
-  { key: 'slab', label: '床版', color: 0xc2c4c6, mat: '鉄筋コンクリート（仮）' },
+  { key: 'foundation', label: '据え台', color: 0xa9abae, mat: 'コンクリートピンコロと締めた砕石' },
+  { key: 'stand', label: '鉄のテーブル', color: 0x6f757c, mat: '角パイプ（STKR400、2.3 mm）' },
+  { key: 'slab', label: '天板', color: 0x4f555c, mat: '縞鋼板 3.2 mm' },
   { key: 'hearthIns', label: '炉床の断熱', color: 0xeee6cc, mat: 'セメントとパーライト 体積で 1:5（仮）' },
   { key: 'hearth', label: '炉床', color: 0xb85f3c, mat: '耐火粘土レンガを縦に立てて並べる' },
   { key: 'chamber', label: '窯壁', color: 0xc8734a, mat: '耐火粘土レンガ 114 mm' },
@@ -225,18 +225,43 @@ const GAP = 0.002;
 
 const f2 = (v) => (v == null ? '未定' : Number(v).toFixed(2));
 const f3 = (v) => (v == null ? '未定' : Number(v).toFixed(3));
+const mm = (v) => String(+(v * 1000).toFixed(1));
+
+// ---------- 鉄のテーブルの小さな部材
+// oven.json に鍵の無い寸法で、構造設計の部材表の値を図を描くためだけに使う。
+const DECK_JOINT = 0.002;                               // 天板の板と板のすきま
+const DECK_COLS = 3;                                    // 天板の左右の枚数
+const DECK_ROWS = 2;                                    // 天板の前後の枚数
+const DECK_HOLES = 36;                                  // 天板の水抜きの穴の数
+const JOIST_TRIM = 0.002;                               // 根太を天板より短くする量。左右の出は 27 mm になる
+const BRACE_PLATE = { w: 0.10, t: 0.006, d: 0.12, back: 0.015 };  // 方杖の上の板。中心は方杖の上の端より back だけ後ろ
+const BRACE_CUT = 0.025;                                // 方杖の下の端を切る面の、前の脚の中心から前への距離
+const BACKING = { w: 0.13, t: 0.006 };                  // 後ろの横梁の当て板
+const HANGER = { w: 0.10, t: 0.006, below: 0.045 };     // 吊り板。下の端はピンの中心から below だけ下
+const STOP_W = 0.10;                                    // 止めの左右の幅
+const SLEEVE = { r: 0.0136, len: 0.060 };               // ピンのさや管（SGP 20A）
+const PIN = { r: 0.010, len: 0.10 };                    // ピン（M20 × 100 の六角ボルト）
+const NUT = { r: 0.017, h: 0.016 };                     // M20 のナット（6 角）
+const SHIM = { w: 0.098, t: 0.0128 };                   // 敷き板 4 枚の重ね
+const ZINC = 0x9ea4aa;                                  // 全ねじとナットの色（溶融亜鉛めっき）
+const GRAVEL = 0x8e9093;                                // 締めた砕石の色
+// 薪置き。テーブルの下の地面に 3 段に積み、上は地面から 0.40 m までにする。
+const WOOD = { top: 0.40, rows: 3, len: 0.45, back: 0.05, side: 0.02 };
 
 // ---------- 窯を組む
 
 // ---------- 断面の切り口を埋める
 // 中身の詰まった部品は、切った面に部品の色の蓋を描く（stencil で切り口の内側だけを塗る）。
 // 煙突は管なので蓋を付けない。人と凍結深度の面も付けない。
+// 切る面 x = 0 をまたがない形には切り口が無いので、蓋を付けない（鉄のテーブルの足のような小さな部材が多いため）。
 const CAP_SKIP = new Set(['chimney', 'frost', 'person']);
 
 function addCaps(b) {
   const objs = [];
   const mats = [];
   const capGeom = new THREE.PlaneGeometry(12, 12);
+  const bb = new THREE.Box3();
+  b.root.updateMatrixWorld(true);
   let order = 1;
   for (const p of PARTS) {
     if (CAP_SKIP.has(p.key)) continue;
@@ -246,6 +271,8 @@ function addCaps(b) {
       if (o.isMesh && !o.material.transparent && !o.userData.passThrough) meshes.push(o);
     });
     for (const m of meshes) {
+      bb.setFromObject(m);
+      if (bb.max.x <= 1e-6 || bb.min.x >= -1e-6) continue;
       const common = {
         colorWrite: false, depthWrite: false, depthTest: false,
         stencilWrite: true, stencilFunc: THREE.AlwaysStencilFunc, clippingPlanes: [cutPlane],
@@ -300,14 +327,24 @@ function build(type) {
   }));
   const info = (key, dims, mat) => ({ key, name: PART[key].label, mat: mat || PART[key].mat, dims });
 
-  // 高さの基準
-  const yFt = P('foundation.top');
-  const yFb = yFt - P('foundation.thickness');
-  const yStandTop = yFt + P('stand.height');
-  const ySlabTop = yStandTop + P('hearth.slab');
-  const yInsTop = ySlabTop + P('hearth.insulation');
+  // 高さの基準。炉床の断熱は鉄のテーブルの天板の上面に載る。
+  const yInsBase = P('table.top');            // 天板の上面。ここに炉床の断熱が載る
+  const yInsTop = yInsBase + P('hearth.insulation');
   const th = P('hearth.firebrick');
   const yFloor = yInsTop + th;
+  const tz = P('table.offset_z');             // 天板の中心の z
+  const W = P('table.width'), D = P('table.depth'), ov = P('table.overhang');
+  const yJt = P('table.top') - P('deck.thickness');   // 根太の上面
+  const yJb = yJt - P('table.joist');                 // 根太の下面と側梁の上面
+  const ySb = yJb - P('table.beam_h');                // 側梁の下面と横梁の上面
+  const yFxB = ySb - P('table.leg');                  // 前の横梁の下面
+  const yRxB = ySb - P('table.beam_h');               // 後ろの横梁の下面
+  const yBt = yRxB - P('table.rear_gap');             // 天秤の上面
+  const yBb = yBt - P('table.beam_h');                // 天秤の下面
+  const yPin = yBb + P('table.beam_h') / 2;           // ピンの中心
+  const yPad = P('pad.top');
+  const yPlateBot = yPad + P('foot.stack');           // 底板の下面
+  const yLeg = yPlateBot + P('foot.plate');           // 脚の下端
 
   const t = P('wall.firebrick');
   const ins = P('insulation.thickness');
@@ -505,64 +542,171 @@ function build(type) {
   ventCap.position.set(0, outerTop + 0.09, 0);
   groups.vent.add(ventPipe, ventCap);
 
-  // 炉床の断熱、床版、台、基礎
-  const fx = Ro;
+  // 炉床の断熱、天板、鉄のテーブル、据え台
   const fz0 = zBack;
   const fz1 = zFront;
+  const sz = (fz0 + fz1) / 2;
   const hi = P('hearth.insulation');
-  const insBox = box(2 * fx, hi - GAP, fz1 - fz0, 0, ySlabTop + GAP + (hi - GAP) / 2, (fz0 + fz1) / 2,
+  const insBox = box(2 * Ro, hi - GAP, fz1 - fz0, 0, yInsBase + GAP + (hi - GAP) / 2, sz,
     material('hearthIns'), info('hearthIns', `厚さ ${f3(P('hearth.insulation'))} m`));
   groups.hearthIns.add(insBox);
 
-  const mg = P('stand.margin');
-  const sw = 2 * (fx + mg);
-  const sd = fz1 - fz0 + 2 * mg;
-  const sz = (fz0 + fz1) / 2;
-  const hs2 = P('hearth.slab');
-  // 床版は台より外へ出して水切りにする。
-  const so = P('slab.overhang') || 0;
-  groups.slab.add(box(sw + 2 * so, hs2 - GAP, sd + 2 * so, 0, yStandTop + GAP + (hs2 - GAP) / 2, sz,
-    material('slab'), info('slab', `${f2(sw + 2 * so)} m × ${f2(sd + 2 * so)} m、厚さ ${f3(P('hearth.slab'))} m、台からの張り出し ${f3(so)} m`)));
+  // 天板。縞鋼板を左右と前後に割って並べ、板と板のあいだをあける。
+  const deckT = P('deck.thickness');
+  const dkW = (W - (DECK_COLS - 1) * DECK_JOINT) / DECK_COLS;
+  const dkD = (D - (DECK_ROWS - 1) * DECK_JOINT) / DECK_ROWS;
+  const dkMat = material('slab');
+  const dkInfo = info('slab',
+    `縞鋼板 ${mm(deckT)} × ${mm(dkW)} × ${mm(dkD)} mm を ${DECK_COLS * DECK_ROWS} 枚。水抜きの穴 ${DECK_HOLES} 個。全面に不織布`);
+  for (let i = 0; i < DECK_COLS; i++) {
+    for (let j = 0; j < DECK_ROWS; j++) {
+      groups.slab.add(box(dkW, deckT, dkD, (i - (DECK_COLS - 1) / 2) * (dkW + DECK_JOINT), yInsBase - deckT / 2,
+        tz + (j - (DECK_ROWS - 1) / 2) * (dkD + DECK_JOINT), dkMat, dkInfo));
+    }
+  }
 
-  const wt = P('stand.wall');
-  const sh2 = P('stand.height');
+  // 鉄のテーブル。後ろの 2 本の脚は天秤に付け、天秤の中央をピン 1 本で後ろの横梁から吊って、3 点で支える。
   const stMat = material('stand');
-  const stInfo = info('stand', `${f2(sw)} m × ${f2(sd)} m、高さ ${f2(sh2)} m、壁の厚さ ${f3(wt)} m、前は薪置きに開ける`);
-  groups.stand.add(
-    box(wt, sh2, sd, -sw / 2 + wt / 2, yFt + sh2 / 2, sz, stMat, stInfo),
-    box(wt, sh2, sd, sw / 2 - wt / 2, yFt + sh2 / 2, sz, stMat, stInfo),
-    box(sw - 2 * wt, sh2, wt, 0, yFt + sh2 / 2, sz - sd / 2 + wt / 2, stMat, stInfo),
-  );
+  const znMat = material('stand', { color: ZINC });
+  const stInfo = info('stand',
+    `角パイプ 2.3 mm。後ろの 2 本は天秤で受け、ピン 1 本で 3 点に支える。前の脚に方杖。天板の上面は地面から ${f3(P('table.top'))} m`);
+  const znInfo = info('stand', stInfo.dims, 'M20 の全ねじ、ボルト、ナット（溶融亜鉛めっき）');
+  const jt = P('table.joist');
+  const bh = P('table.beam_h');
+  const bw = P('table.beam_w');
+  const legW = P('table.leg');
+  const zF = P('table.front_z');
+  const xF = P('table.front_leg_x');
+  const zR = P('table.rear_z');
+  const xR = P('table.rear_leg_x');
+  const legR = P('table.rear_leg');
 
-  const fm = P('foundation.margin');
-  const fw = sw + 2 * fm;
-  const fd = sd + 2 * fm;
-  groups.foundation.add(box(fw, yFt - yFb, fd, 0, (yFt + yFb) / 2, sz,
-    material('foundation'), info('foundation', `${f2(fw)} m × ${f2(fd)} m、厚さ ${f3(yFt - yFb)} m、天端は地面から ${f2(yFt)} m`)));
+  // 根太。天板の前後の列ごとに等しい間隔で並べるので、継ぎ目の下には 2 本が並ぶ。
+  const nJ = Math.max(2, Math.round(P('table.joist_n') / 2));
+  const jl = W - 2 * ov - JOIST_TRIM;
+  for (const [z0, z1] of [[tz - D / 2 + ov + jt / 2, tz - jt / 2], [tz + jt / 2, tz + D / 2 - ov - jt / 2]]) {
+    for (let i = 0; i < nJ; i++) {
+      groups.stand.add(box(jl, jt, jt, 0, yJb + jt / 2, z0 + ((z1 - z0) * i) / (nJ - 1), stMat, stInfo));
+    }
+  }
+
+  // 側梁。前と後ろの横梁の上に重ねる。
+  for (const s of [-1, 1]) {
+    groups.stand.add(box(bw, bh, D - 2 * ov, s * P('table.beam_x'), ySb + bh / 2, tz, stMat, stInfo));
+  }
+
+  // 前の門形。前の横梁の下に脚 2 本を付ける。
+  groups.stand.add(box(2 * xF + legW, legW, legW, 0, ySb - legW / 2, zF, stMat, stInfo));
+  for (const s of [-1, 1]) {
+    groups.stand.add(box(legW, yFxB - yLeg, legW, s * xF, (yFxB + yLeg) / 2, zF, stMat, stInfo));
+  }
+
+  // 方杖。45 度の帯を、上は板の下面で水平に、下は前の脚の前の面の少し内で縦に切り、x の向きに押し出す。
+  // 上の端の中心は z = table.brace_z に置く。
+  const yBr = ySb - BRACE_PLATE.t;
+  const zBr = P('table.brace_z');
+  const zCut = zF + BRACE_CUT;
+  const kBr = legW / Math.SQRT2;      // 45 度の帯の、縦と横に測った半幅
+  const cBr = yBr + zBr;              // 帯の中心線は y + z = cBr
+  for (const s of [-1, 1]) {
+    const xc = s * (xF - legW);
+    const shp = new THREE.Shape();    // 形の x を z に、形の y を y に取る
+    shp.moveTo(zBr - kBr, yBr);
+    shp.lineTo(zBr + kBr, yBr);
+    shp.lineTo(zCut, cBr + kBr - zCut);
+    shp.lineTo(zCut, cBr - kBr - zCut);
+    shp.closePath();
+    const br = mesh(extrude(shp, legW), stMat, stInfo);
+    br.rotation.y = -Math.PI / 2;     // 形の x を z へ、押し出しを -x へ向ける
+    br.position.x = xc + legW / 2;
+    groups.stand.add(br);
+    groups.stand.add(box(BRACE_PLATE.w, BRACE_PLATE.t, BRACE_PLATE.d, xc, ySb - BRACE_PLATE.t / 2, zBr - BRACE_PLATE.back,
+      stMat, stInfo));
+  }
+
+  // 後ろの横梁。前と後ろの腹板に当て板を付け、その外に吊り板を付ける。
+  groups.stand.add(box(P('table.rear_len'), bh, bw, 0, ySb - bh / 2, zR, stMat, stInfo));
+  const yHb = yPin - HANGER.below;    // 吊り板の下端
+  for (const s of [-1, 1]) {
+    groups.stand.add(box(BACKING.w, bh, BACKING.t, 0, ySb - bh / 2, zR + s * (bw / 2 + BACKING.t / 2), stMat, stInfo));
+    groups.stand.add(box(HANGER.w, ySb - yHb, HANGER.t, 0, (ySb + yHb) / 2, zR + s * (bw / 2 + BACKING.t + HANGER.t / 2),
+      stMat, stInfo));
+  }
+
+  // 天秤と天秤の脚。天秤はピンで後ろの横梁から吊る。
+  groups.stand.add(box(2 * xR + legR, bh, bw, 0, yBb + bh / 2, zR, stMat, stInfo));
+  for (const s of [-1, 1]) {
+    groups.stand.add(box(legR, yBb - yLeg, legR, s * xR, (yBb + yLeg) / 2, zR, stMat, stInfo));
+  }
+
+  // ピンのさや管とピン。軸を前後（z）に向ける。
+  for (const [r, len, mt, inf] of [[SLEEVE.r, SLEEVE.len, stMat, stInfo], [PIN.r, PIN.len, znMat, znInfo]]) {
+    const cy = mesh(new THREE.CylinderGeometry(r, r, len, 24), mt, inf);
+    cy.rotation.x = Math.PI / 2;
+    cy.position.set(0, yPin, zR);
+    groups.stand.add(cy);
+  }
+
+  // 止め。天秤の上面に付け、後ろの横梁の下面とのあいだをあける。
+  const hStop = P('table.rear_gap') - P('table.stop_gap');
+  for (const s of [-1, 1]) {
+    groups.stand.add(box(STOP_W, hStop, bw, s * P('table.stop_x'), yBt + hStop / 2, zR, stMat, stInfo));
+  }
+
+  // 足。脚の下端に底板を付け、M20 の全ねじを通す。
+  // 頭の 2 個のナットは敷き板に載せ、ナット A と B で底板を受ける。
+  const feet = [[-xF, zF], [xF, zF], [-xR, zR], [xR, zR]];
+  const plW = P('foot.plate_w');
+  const plT = P('foot.plate');
+  const rr = P('foot.rod') / 2;
+  for (const [x, z] of feet) {
+    groups.stand.add(box(plW, plT, plW, x, yPlateBot + plT / 2, z, stMat, stInfo));
+    groups.stand.add(box(SHIM.w, SHIM.t, SHIM.w, x, yPad + SHIM.t / 2, z, stMat, stInfo));
+    const rod = mesh(new THREE.CylinderGeometry(rr, rr, yPlateBot - yPad, 16), znMat, znInfo);
+    rod.position.set(x, (yPad + yPlateBot) / 2, z);
+    groups.stand.add(rod);
+    for (const yb of [yPad + SHIM.t, yPad + SHIM.t + NUT.h, yPlateBot - 2 * NUT.h, yPlateBot - NUT.h]) {
+      const nut = mesh(new THREE.CylinderGeometry(NUT.r, NUT.r, NUT.h, 6), znMat, znInfo);
+      nut.position.set(x, yb + NUT.h / 2, z);
+      groups.stand.add(nut);
+    }
+  }
+
+  // 据え台。足ごとにピンコロを置き、その下に締めた砕石を敷く。砕石は地面の下なので、地面を透かすと見える。
+  const ps = P('pad.size');
+  const ph = P('pad.height');
+  const pg = P('pad.gravel');
+  const pp = P('pad.pit');
+  const padMat = material('foundation');
+  const grMat = material('foundation', { color: GRAVEL });
+  const padInfo = info('foundation',
+    `ピンコロ ${f2(ps)} m 角、高さ ${f2(ph)} m、上面は地面から ${f2(yPad)} m。下に締めた砕石 ${f2(pg)} m`);
+  for (const [x, z] of feet) {
+    groups.foundation.add(box(ps, ph, ps, x, yPad - ph / 2, z, padMat, padInfo));
+    groups.foundation.add(box(pp, pg, pp, x, yPad - ph - pg / 2, z, grMat, padInfo));
+  }
 
   const frost = P('frost.depth');
   if (frost != null) {
-    const fp = mesh(new THREE.PlaneGeometry(fw + 1.5, fd + 1.5),
+    const fp = mesh(new THREE.PlaneGeometry(W + 1.5, D + 1.5),
       material('frost', { transparent: true, opacity: 0.35, depthWrite: false }),
       info('frost', `地面から ${f2(frost)} m`));
     fp.rotation.x = -Math.PI / 2;
-    fp.position.set(0, -frost, sz);
+    fp.position.set(0, -frost, tz);
     fp.castShadow = false;
     groups.frost.add(fp);
   }
 
-  // 薪置き
+  // 薪置き。テーブルの下の地面に置き、方杖より内に収めて、天板から離す。
   const wm = material('wood');
-  const logR = 0.05;
-  const innerW = sw - 2 * wt;
-  const nPer = Math.max(1, Math.floor((innerW - 0.04) / (2 * logR)));
-  const logLen = Math.min(0.45, sd - wt - 0.1);
-  for (let row = 0; row < 3; row++) {
+  const logR = WOOD.top / (2 + (WOOD.rows - 1) * 1.75);
+  const wx = xF - 1.5 * legW - WOOD.side;    // 薪を置ける左右の半幅
+  const nPer = Math.max(1, Math.floor(wx / logR));
+  for (let row = 0; row < WOOD.rows; row++) {
     for (let i = 0; i < nPer - (row % 2); i++) {
-      const lg = mesh(new THREE.CylinderGeometry(logR, logR, logLen, 10), wm, info('wood', `長さ ${f2(logLen)} m の薪`));
+      const lg = mesh(new THREE.CylinderGeometry(logR, logR, WOOD.len, 10), wm, info('wood', `長さ ${f2(WOOD.len)} m の薪`));
       lg.rotation.x = Math.PI / 2;
-      const x0 = -innerW / 2 + 0.02 + logR + (row % 2) * logR;
-      lg.position.set(x0 + i * 2 * logR, yFt + logR + row * logR * 1.75, sz + sd / 2 - logLen / 2 - 0.05);
+      lg.position.set((2 * i + 1 + (row % 2) - nPer) * logR, logR + row * logR * 1.75, zF - WOOD.back - WOOD.len / 2);
       groups.wood.add(lg);
     }
   }
@@ -570,9 +714,9 @@ function build(type) {
   // 屋根と柱（roof.use が 0 なら作らない）
   const roofUse = !!P('roof.use');
   const po = P('roof.post_offset');
-  const px = fx + mg + po;
-  const pz0 = fz0 - mg - po;
-  const pz1 = fz1 + mg + po;
+  const px = W / 2 + po;
+  const pz0 = tz - D / 2 - po;
+  const pz1 = tz + D / 2 + po;
   const eave = P('roof.eave');
   const ridge = P('roof.ridge');
   const oh = P('roof.overhang');
@@ -602,15 +746,15 @@ function build(type) {
   const pm = material('person');
   const pInfo = info('person', `背丈 ${f2(hp)} m`);
   const body = mesh(new THREE.CapsuleGeometry(0.17, hp * 0.85 - 0.34, 6, 16), pm, pInfo);
-  body.position.set(-(sw / 2 + 0.7), (hp * 0.85) / 2, fz1 + 0.6);
+  body.position.set(-(W / 2 + 0.7), (hp * 0.85) / 2, fz1 + 0.6);
   const head = mesh(new THREE.SphereGeometry(0.11, 20, 14), pm, pInfo);
   head.position.set(body.position.x, hp - 0.11, body.position.z);
   groups.person.add(body, head);
 
   Object.assign(d, {
     type, innerHeight, door, outerTop, zFront, zBack,
-    outerW: 2 * Ro, outerD: zFront - zBack, standW: sw, standD: sd,
-    roofUse, roofW: roofUse ? 2 * px : sw, roofD: roofUse ? pz1 - pz0 : sd, centerZ: sz,
+    outerW: 2 * Ro, outerD: zFront - zBack, standW: W, standD: D,
+    roofUse, roofW: roofUse ? 2 * px : W, roofD: roofUse ? pz1 - pz0 : D, centerZ: sz,
   });
   return { root, groups, d };
 }
@@ -782,7 +926,7 @@ function renderDerived(d) {
     ['窯の内高', `${f2(d.innerHeight)} m`],
     ['焚き口', `幅 ${f2(2 * d.door.halfW)} m、高さ ${f2(d.door.height)} m`],
     ['窯の外形', `幅 ${f2(d.outerW)} m、奥行 ${f2(d.outerD)} m、頂部 ${f2(d.outerTop)} m`],
-    ['台の大きさ', `${f2(d.standW)} m × ${f2(d.standD)} m`],
+    ['天板の大きさ', `${f2(d.standW)} m × ${f2(d.standD)} m`],
     ['屋根の柱の間', d.roofUse ? `${f2(d.roofW)} m × ${f2(d.roofD)} m` : '屋根なし'],
   ];
   $('derived').innerHTML = rows.map(([k, v]) => `<tr><td>${k}</td><td class="num">${v}</td><td>${chip('算出')}</td></tr>`).join('');

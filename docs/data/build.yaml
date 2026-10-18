@@ -5,7 +5,7 @@
 # after: 前の工程。すべて終わってから始める。
 # side: 合間の作業。主の流れの工程に日を割り当てたあとで、空いた日に入れる。
 # cont: 続けて行う作業。作業できる日に始め、暦日で続ける（土日だけの日程では平日も使う）。
-# temp: その気温（℃）以上の日に行う。左官とブロックの目地は 5（P86）、耐火モルタルは練った温度 10（P94）。
+# temp: その気温（℃）以上の日に行う。左官は 5（P86）、耐火モルタルは練った温度 10（P94）。
 # parts は docs/data/model.yaml の部品の id、reqs は要求の番号、src は sources.md の記号。
 # 日数の根拠は、付録 B（docs/07-build.md）の表に書く。出典の無い作業の日数は推定で、desc に「推定」と書く。
 meta:
@@ -13,14 +13,14 @@ meta:
   rev: "0.1"
   start: "2027-05-01"
   start_note: 始める日は仮。据える地点の気候が分かったら決める。待ちの日数は気温 15℃ 以上の値で、寒い時期は延びる（付録 B）。
-  temp_note: 左官とブロックの目地は気温 5℃ 以下で行わない（P86）。耐火モルタルは練った温度を 10〜30℃ にする（P94）。コンクリートは打ってから 5 日以上 2℃ 以上に保つ（P86）。
+  temp_note: 左官は気温 5℃ 以下で行わない（P86）。耐火モルタルは練った温度を 10〜30℃ にする（P94）。さび止めは気温 5℃ 以上、湿度 85% 以下で塗る（M103）。
   note: 製作の工程を、前後の関係と養生や乾燥の待ちから日程に組んだもの。作業の日数の多くは推定（付録 B）。
   first_bake: m-firstbake
 
 phases:
   - {id: prep, name: 準備と調達}
-  - {id: base, name: 基礎と台}
-  - {id: slab, name: 床版と炉床}
+  - {id: base, name: 据え台と鉄のテーブル}
+  - {id: slab, name: 炉床の断熱と炉床}
   - {id: dome, name: ドームと前室}
   - {id: skin, name: 断熱と外殻}
   - {id: fire, name: 養生焚きと仕上げ}
@@ -29,44 +29,50 @@ tasks:
   # 準備と調達
   - {id: b-site, phase: prep, kind: work, days: 1, after: [], name: 据える場所を決め、消防に確かめる, parts: [], reqs: [R-11], src: [],
      desc: 据える場所と、煙突や薪置きのまわりの離隔を決める。火災予防条例の扱いを消防に確かめる（要求 1.4 の 8）。日数は推定。}
-  - {id: b-buy1, phase: prep, kind: work, days: 1, after: [b-site], name: 基礎と台の材料を買う, parts: [foundation, stand, slab], reqs: [], src: [],
-     desc: 砕石、セメント、砂、ブロック、鉄筋、型枠の合板、パーライト、水抜きの管を店で買う（調達モード）。日数は推定。}
-  - {id: b-order, phase: prep, kind: wait, days: 14, after: [b-site], name: 耐火レンガと耐火モルタルの取り寄せ, parts: [hearth, chamber, landing], reqs: [], src: [M90, M91],
-     desc: 耐火レンガ 161 個と耐火モルタルを取り寄せる。コメリの宅配は北海道へ 7 日以上（M90、抜粋）、取り寄せ品は発送まで 9〜11 日の表示がある（M91）。14 日は推定。}
+  - {id: b-buy1, phase: prep, kind: work, days: 1, after: [b-site], name: 据え台と台と炉床の断熱の材料を買う, parts: [foundation, stand, hearthIns], reqs: [], src: [],
+     desc: 砕石、ピンコロ、鋼板 300 角、上塗りの塗料、角パイプのキャップ、セメント、砂、パーライト、合板、不織布を店で買う。角パイプ、平鋼、鋼管は鋼材店で買い、長さに切ってもらう（調達モード）。日数は推定。}
+  - {id: b-order, phase: prep, kind: wait, days: 14, after: [b-site], name: 耐火レンガ、耐火モルタル、縞鋼板の取り寄せ, parts: [hearth, chamber, landing, slab], reqs: [], src: [M90, M91, M95],
+     desc: コメリで取り寄せる。宅配は北海道へ 7 日以上（M90、抜粋）、耐火モルタルは発送まで 9〜11 日（M91）。縞鋼板はネットで注文して店で受け取る（M95）。14 日は推定。}
+  - {id: b-mail2, phase: prep, kind: wait, days: 7, after: [b-site], name: ねじとさび止めを通販で取り寄せる, parts: [stand, slab], reqs: [], src: [M96, M103],
+     desc: 溶融亜鉛めっきの全ねじ、ナット、ボルトをエスコの取扱店の通販で、ローバルを直販で頼む。届くまでの日数は未確認で、7 日は推定。}
   - {id: b-buy2, phase: prep, kind: work, days: 1, after: [b-site], side: true, name: 煙突、鋼板、防水材などを買う, parts: [chimney, door, hood], reqs: [], src: [],
      desc: 煙突、H 笠、支持金具、鋼板、ケイカル板、取っ手、灰入れ、防水材、シート、ガルバの平板、金網を店で買う（調達モード）。日数は推定。}
   - {id: b-mail, phase: prep, kind: wait, days: 7, after: [b-site], name: 通販で取り寄せる（コーナン）, parts: [vent], reqs: [], src: [M88],
      desc: 放射温度計と頂部のベントをコーナンの通販で頼む。出荷の予定は品ごとに表示があり、出荷から北海道へ 3 日以上かかる（M88）。7 日は推定。}
 
-  # 基礎と台
-  - {id: b-dig, phase: base, kind: work, days: 2, after: [b-buy1], name: 掘って砕石を敷き、締める, parts: [foundation], reqs: [R-08], src: [P81],
-     desc: 台より広く掘り、砕石を 150 mm 敷いて締める。日数は推定（Forno Bravo の例は基礎の工事全体で 8 時間、P81）。}
-  - {id: b-found, phase: base, kind: work, days: 1, after: [b-dig], temp: 5, name: 基礎のコンクリートを打つ, parts: [foundation], reqs: [R-08], src: [P81],
-     desc: 型枠を組み、鉄筋を入れて基礎を打つ。日数は推定。}
-  - {id: w-found, phase: base, kind: wait, days: 2, after: [b-found], name: 基礎の養生（上に積むまで）, parts: [foundation], reqs: [], src: [P81, P86],
-     desc: 打ってから少なくとも 1 日は上で作業しない（P86 の 6.7.3）。Forno Bravo は 1〜2 日置く（P81）。湿潤養生は 5 日以上続ける（P86 の 6.7.2）。}
-  - {id: b-block, phase: base, kind: work, days: 2, after: [w-found], temp: 5, name: ブロックを 3 段積む, parts: [stand], reqs: [], src: [P86],
-     desc: ブロック 43 個を 3 面に 3 段積み、縦の穴に鉄筋を入れて充填する。前は薪置きに開ける。日数は推定。}
-  - {id: w-block, phase: base, kind: wait, days: 1, after: [b-block], name: 目地の養生, parts: [stand], reqs: [], src: [P86, F56],
-     desc: 目地と充填が固まるまで荷重を掛けない（P86 の 8.2.11、日数の規定は無い）。型枠を組むあいだに固まるという経験則がある（F56）。1 日は推定。}
+  # 据え台と鉄のテーブル
+  - {id: b-dig, phase: base, kind: work, days: 1, after: [b-buy1], name: 据え台の穴を掘り、砕石を締める, parts: [foundation], reqs: [R-08, R-14], src: [P98],
+     desc: 足の 4 か所に 50 cm 角、深さ 30 cm の穴を掘り、底に外への勾配を付ける。砕石を 2 層に分けて 20 cm 入れ、タンパーで締める。土が粘土質なら 80 cm 角、深さ 51 cm にし、砕石を 35 cm にする（構造設計 3.5）。日数は推定。}
+  - {id: b-pad, phase: base, kind: work, days: 1, after: [b-dig], name: 据え台を据え、穴をあける, parts: [foundation], reqs: [R-08, R-14], src: [],
+     desc: ピンコロ 4 個を砕石の上に据え（粘土質なら 40 cm 角の平板の上に据え）、水糸と水平器で上面を地面から 50 mm に、4 個の差を 5 mm 以内にそろえる。中心に径 22 mm、深さ 75 mm の穴をあけ、まわりを砕石で埋め戻す。固めずに置くので手で撤去できる。日数は推定。}
+  - {id: b-steelcut, phase: base, kind: work, days: 3, after: [b-order, b-mail2, b-buy1], name: 角パイプと板と全ねじを切り、穴をあける, parts: [stand, slab], reqs: [R-07], src: [],
+     desc: 切り出しの一覧のとおり角パイプ、平鋼、鋼板、鋼管、全ねじを切り、交点、天板、ピン、方杖、水抜きの穴、約 250 個をあける。敷き板に切り欠きを入れる。切り口のばりを取る。日数は推定。}
+  - {id: b-weld, phase: base, kind: work, days: 2, after: [b-steelcut], name: 溶接する, parts: [stand], reqs: [R-07], src: [],
+     desc: 施主が自分で 22 か所を溶接する。先に作業台で底板にさや管を、方杖の上の端に板を付け、次に前の門形、天秤の組、後ろの横梁の当て板と吊り板、止めを付ける。めっきの品は溶接しない。日数は推定。}
+  - {id: b-prime, phase: base, kind: work, days: 1, after: [b-weld], temp: 5, name: さび止めを塗る, parts: [stand, slab], reqs: [R-08], src: [P100, M103],
+     desc: 溶接の跡、切り口、穴の縁と、黒皮の板（天板の下面と縁、底板、吊り板、当て板、止め、方杖の上の板、敷き板）を地金まで磨き、ローバルを 2 回塗る。乾燥は 23℃ で 30 分（P100）。気温 5℃ 以上、湿度 85% 以下で塗る（M103、抜粋）。日数は推定。}
+  - {id: w-prime, phase: base, kind: wait, days: 1, after: [b-prime], name: さび止めの乾燥, parts: [stand, slab], reqs: [], src: [P100],
+     desc: ローバルの乾燥は 23℃ で 30 分（P100）。上塗りまでに置く日数は未確認で、1 日は推定。}
+  - {id: b-top1, phase: base, kind: work, days: 1, after: [w-prime], temp: 5, name: 上塗りの 1 回目, parts: [stand], reqs: [R-08], src: [M104],
+     desc: 塗装品の角パイプの工場のさび止めを紙やすりで足付けし、油性の鉄部用塗料を塗る。塗る気温の下限は缶の注意で確かめる（未確認。5℃ は推定）。日数は推定。}
+  - {id: w-top1, phase: base, kind: wait, days: 1, after: [b-top1], name: 塗り重ねの待ち, parts: [stand], reqs: [], src: [M109],
+     desc: 同じ系統の油性塗料で、塗り重ねは夏 1 日後、冬 2 日後の例がある（M109）。使う塗料の値は未確認。}
+  - {id: b-top2, phase: base, kind: work, days: 1, after: [w-top1], temp: 5, name: 上塗りの 2 回目, parts: [stand], reqs: [R-08], src: [M104],
+     desc: 2 回目を塗る。日数は推定。}
+  - {id: w-top2, phase: base, kind: wait, days: 2, after: [b-top2], name: 上塗りの乾燥, parts: [stand], reqs: [], src: [M109],
+     desc: 部材を重ねる前に乾かす。乾燥は夏 4〜6 時間、冬 6〜15 時間の例がある（M109）。2 日は推定。}
+  - {id: b-frame, phase: base, kind: work, days: 1, after: [w-top2, b-pad], name: 枠を据えて高さをそろえる, parts: [stand, foundation], reqs: [R-07, R-08, R-14], src: [],
+     desc: 据え台に敷き板と全ねじを立て、前の門形と天秤の組を載せ、後ろの横梁をピンで吊る。側梁と根太を重ね、交点を全ねじで留め、方杖を前の脚と側梁に留める。ナットで高さを直し、天板の面を水平器で 2 mm 以内にそろえ、止めのすきまを左右とも 6 mm にする。角パイプの端にキャップをはめる。ボルトで組むので手で撤去できる。日数は推定。}
+  - {id: b-deck, phase: base, kind: work, days: 1, after: [b-frame], name: 天板を留め、不織布を敷く, parts: [slab], reqs: [R-08, R-14], src: [F50],
+     desc: 縞鋼板 6 枚を根太に載せ、交点の全ねじと M8 のボルトで留める。天板の全面に水を通す不織布を敷き、板の継ぎ目の上で切る。日数は推定。}
 
-  # 床版と炉床
-  - {id: b-form, phase: slab, kind: work, days: 2, after: [w-block], name: 型枠と支柱を組み、鉄筋を並べる, parts: [slab], reqs: [], src: [P91],
-     desc: 台の上に合板の型枠を載せ、台の内側から支柱で支える。縁は台より約 4 cm 外へ出す（水切り）。日数は推定。}
-  - {id: b-pour, phase: slab, kind: work, days: 1, after: [b-form], temp: 5, name: 床版のコンクリートを打つ, parts: [slab], reqs: [R-08], src: [],
-     desc: 水抜きの管を 4 本入れて、厚さ 100 mm で打つ。}
-  - {id: w-slab, phase: slab, kind: wait, days: 1, after: [b-pour], name: 床版の上で作業するまで, parts: [slab], reqs: [], src: [P86, P91],
-     desc: 打ってから少なくとも 1 日は上で作業しない（P86 の 6.7.3）。断熱層は床版と同じ日でも後の日でも打てる（P91）。湿潤養生は 5 日以上続ける（P86 の 6.7.2）。}
-  - {id: w-shore, phase: slab, kind: wait, days: 17, after: [b-pour], name: 床版の支柱を残す, parts: [slab], reqs: [], src: [P86],
-     desc: スラブ下の支柱は平均気温 15℃ 以上で 17 日残す（5℃ 以上は 25 日、P86 の表 6.8.3）。上でドームを積むので、外すのは前室を積んだあと。}
-  - {id: b-hins, phase: slab, kind: work, days: 1, after: [w-slab], temp: 5, name: 炉床の断熱を打つ, parts: [hearthIns], reqs: [], src: [P55, P91],
-     desc: セメントとパーライトを体積で 1:5 に練り、100 mm 打つ（P55）。}
+  # 炉床の断熱と炉床
+  - {id: b-hins, phase: slab, kind: work, days: 2, after: [b-deck], temp: 5, name: 炉床の断熱を区画に分けて打つ, parts: [hearthIns], reqs: [R-14], src: [P55, P91],
+     desc: 不織布の上に合板の帯で外まわりの型枠と区画の仕切りを組み、天板 1 枚ごとの 6 区画にする。1 日目に互い違いの 3 区画、2 日目に残りの 3 区画を、セメントとパーライト 1:5 で 100 mm 打つ（P55）。継ぎ目には薄いシートを挟む。型枠は固まってから外す（P91）。日数は推定。}
   - {id: w-hins, phase: slab, kind: wait, days: 7, after: [b-hins], name: 炉床の断熱の乾燥, parts: [hearthIns], reqs: [], src: [F57],
      desc: 数値の基準は無い。経験則は「少し乾いてから」から「数週間」まで（F57）。7 日は経験則の短い側。}
   - {id: b-hearth, phase: slab, kind: work, days: 1, after: [w-hins, b-order], name: 炉床のレンガを縦に並べる, parts: [hearth], reqs: [R-04], src: [],
      desc: 耐火レンガを縦に立てて並べ、水平をそろえる。日数は推定。}
-  - {id: b-strip, phase: slab, kind: work, days: 1, after: [w-shore, b-land], side: true, name: 床版の支柱を外す, parts: [slab], reqs: [], src: [P86],
-     desc: 支柱を外し、薪置きを空ける。上の荷重が大きいときは支柱を長めに残す（P86 の 6.8.4）。日数は推定。}
 
   # ドームと前室
   - {id: b-cut, phase: dome, kind: work, days: 1, after: [b-order], side: true, name: レンガを切り、ドームの定規を作る, parts: [chamber], reqs: [], src: [],
@@ -107,5 +113,5 @@ tasks:
      desc: 新しいモルタルは 3 週間以上たってから防水材を塗る（P82）。乾くまで塗らない。シートを掛けて内側が結露すれば乾いていない（F60）。}
   - {id: b-seal, phase: fire, kind: work, days: 2, after: [w-age, b-cure], name: 防水材を 2 回塗る, parts: [shell], reqs: [R-08], src: [P82],
      desc: 乾き切ってから浸透性の防水材を 2 回塗る（P82）。2 回目までの間隔は未確認で、2 日は推定。}
-  - {id: m-done, phase: fire, kind: mile, after: [b-seal, b-strip], name: できあがり, parts: [], reqs: [], src: [],
+  - {id: m-done, phase: fire, kind: mile, after: [b-seal], name: できあがり, parts: [], reqs: [], src: [],
      desc: 覆いと薪置きを整えて、できあがり。}
