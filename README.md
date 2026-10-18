@@ -13,8 +13,9 @@
 | `docs/` | 設計書の本文（MkDocs） |
 | `docs/data/oven.json` | 寸法の正。3D の図と設計書はここを読む |
 | `docs/viewer/` | three.js の 3D の図 |
-| `docs/navigator/` | ナビゲータ（要求、フロー、系統図、図面、3D）。決まりごとは `NAVIGATOR.md` |
+| `docs/navigator/` | ナビゲータ（要求、フロー、系統図、図面、3D、タイムライン）。決まりごとは `NAVIGATOR.md` |
 | `docs/data/model.yaml` | ナビゲータのモデルの正（部品、系統図、工程、要求の割り当て） |
+| `docs/data/build.yaml` | 製作の工程と日数の正（タイムラインが日程に組む） |
 | `tools/gen_nav.py` | ナビゲータのデータを点検して作る。生成物 `docs/navigator/nav.json` はコミットしない |
 | `.github/workflows/pages.yml` | main に push すると Pages へ配る |
 

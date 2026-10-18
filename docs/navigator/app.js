@@ -1,13 +1,13 @@
 // パン窯ナビゲータの外枠。
 // モードの切り替え、URL の状態、選んだものの札、図の拡大縮小を受け持つ。
-// 各モード（req.js、flow.js、sys.js、dwg.js、v3d.js）は NavApp.register(名前, 作る関数) で登録し、
+// 各モード（req.js、flow.js、sys.js、dwg.js、v3d.js、tl.js）は NavApp.register(名前, 作る関数) で登録し、
 // 作る関数は api を受け取って { enter(params), leave(), params(), highlight(sel), escape() } を返す。
 // 決まりごとは NAVIGATOR.md に書く。
 (function () {
   'use strict';
 
-  const MODES = ['req', 'flow', 'sys', 'dwg', 'v3d'];
-  const KIND = { part: '部品', node: '系統図の要素', req: '要求', step: '工程', flow: '流れ' };
+  const MODES = ['req', 'flow', 'sys', 'dwg', 'v3d', 'tl'];
+  const KIND = { part: '部品', node: '系統図の要素', req: '要求', step: '工程', flow: '流れ', task: '製作の工程' };
   const THEME_KEY = 'bread-nav-theme';
   const WIDTH_KEY = 'bread-nav-widths';
 
@@ -17,7 +17,7 @@
   let OVEN = null;
   let mode = null;
   let sel = { kind: null, id: null };
-  const IX = { thing: new Map(), req: new Map(), step: new Map(), flow: new Map(), kids: new Map() };
+  const IX = { thing: new Map(), req: new Map(), step: new Map(), flow: new Map(), task: new Map(), kids: new Map() };
 
   // ---------- 小さな道具
 
@@ -83,6 +83,7 @@
       }
     }
     for (const s of D.steps) IX.step.set(s.id, s);
+    for (const t of (D.build ? D.build.tasks : [])) IX.task.set(t.id, t);
     for (const sh of D.sheets) {
       sh.flows.forEach((f, i) => {
         const id = `${sh.id}:${i}`;
@@ -95,6 +96,7 @@
   const req = (id) => IX.req.get(id);
   const step = (id) => IX.step.get(id);
   const flow = (id) => IX.flow.get(id);
+  const task = (id) => IX.task.get(id);
   const kidsOf = (rid) => IX.kids.get(rid) || [];
   const allocOf = (rid) => D.alloc[rid] || { parts: [], steps: [] };
 
@@ -110,6 +112,12 @@
     for (const r of D.reqs) if (allocOf(r.id).steps.includes(sid)) set.add(r.id);
     return [...set];
   }
+  function tasksOfPart(pid) {
+    return [...IX.task.values()].filter((t) => (t.parts || []).includes(pid)).map((t) => t.id);
+  }
+  function tasksOfReq(rid) {
+    return [...IX.task.values()].filter((t) => (t.reqs || []).includes(rid)).map((t) => t.id);
+  }
   function flowsOf(id) {
     return [...IX.flow.values()].filter((f) => f.from === id || f.to === id);
   }
@@ -117,21 +125,23 @@
     return D.sheets.filter((sh) => id in sh.pos).map((sh) => sh.id);
   }
 
-  // 選んだものに関係する部品、工程、要求、流れ。各モードはこれで光らせる。
+  // 選んだものに関係する部品、工程、要求、流れ、製作の工程。各モードはこれで光らせる。
   function related(s = sel) {
-    const out = { parts: new Set(), steps: new Set(), reqs: new Set(), flows: new Set() };
+    const out = { parts: new Set(), steps: new Set(), reqs: new Set(), flows: new Set(), tasks: new Set() };
     if (!s || !s.kind) return out;
     const addReq = (rid) => {
       out.reqs.add(rid);
       const a = allocOf(rid);
       a.parts.forEach((p) => out.parts.add(p));
       a.steps.forEach((x) => out.steps.add(x));
+      tasksOfReq(rid).forEach((x) => out.tasks.add(x));
     };
     if (s.kind === 'part' || s.kind === 'node') {
       out.parts.add(s.id);
       stepsOfPart(s.id).forEach((x) => out.steps.add(x));
       reqsOfPart(s.id).forEach((r) => out.reqs.add(r));
       flowsOf(s.id).forEach((f) => out.flows.add(f.id));
+      tasksOfPart(s.id).forEach((x) => out.tasks.add(x));
     } else if (s.kind === 'req') {
       addReq(s.id);
       kidsOf(s.id).forEach(addReq);
@@ -147,6 +157,11 @@
         out.parts.add(f.from);
         out.parts.add(f.to);
       }
+    } else if (s.kind === 'task') {
+      out.tasks.add(s.id);
+      const t = task(s.id);
+      (t ? t.parts || [] : []).forEach((p) => out.parts.add(p));
+      (t ? t.reqs || [] : []).forEach((r) => out.reqs.add(r));
     }
     return out;
   }
@@ -155,10 +170,15 @@
 
   // svg を stage に置いたあとに呼ぶ。box は「全体を収める」の範囲 [x, y, w, h]。
   // init を渡すと、最初の表示はその範囲にする（横に長い図で、最初は読める大きさで出すため）。
+  // onChange(f) で、viewBox が変わるたびに f(vb) を呼ぶ（行の見出しを固定して見せるときに使う）。
   function panZoom(svg, stage, box, init) {
     let vb = (init || box).slice();
     let base = box.slice();
-    const set = () => svg.setAttribute('viewBox', vb.map((v) => v.toFixed(2)).join(' '));
+    const subs = [];
+    const set = () => {
+      svg.setAttribute('viewBox', vb.map((v) => v.toFixed(2)).join(' '));
+      for (const f of subs) f(vb.slice());
+    };
     const toSvg = (cx, cy) => {
       const r = svg.getBoundingClientRect();
       const s = Math.max(vb[2] / r.width, vb[3] / r.height);
@@ -234,7 +254,7 @@
     }
     function reset(newBox, newInit) { base = newBox.slice(); vb = (newInit || newBox).slice(); set(); }
     set();
-    return { fit, reveal, reset, zoomAt };
+    return { fit, reveal, reset, zoomAt, onChange(f) { subs.push(f); f(vb.slice()); } };
   }
 
   // ---------- 選んだものの札
@@ -246,6 +266,7 @@
   const partName = (id) => (thing(id) ? thing(id).name : id);
   const reqName = (id) => `${id} ${req(id) ? req(id).text : ''}`.trim();
   const stepName = (id) => (step(id) ? step(id).name : id);
+  const taskName = (id) => (task(id) ? task(id).name : id);
 
   function goButtons(kind, id) {
     const b = [];
@@ -256,6 +277,7 @@
       if (sheetsOf(id).length) go('sys', '系統図で見る');
       go('dwg', '図面で見る');
       go('v3d', '3D で見る');
+      if (tasksOfPart(id).length) go('tl', 'タイムラインで見る');
       const p = thing(id);
       if (p && p.doc) b.push(`<a href="${esc(docHref(p.doc))}" target="_blank" rel="noopener">設計書で読む</a>`);
     } else if (kind === 'node') {
@@ -270,6 +292,10 @@
       b.push(`<a href="${esc(docHref('06-operation.md'))}" target="_blank" rel="noopener">手順を読む</a>`);
     } else if (kind === 'flow') {
       go('sys', '系統図で見る');
+    } else if (kind === 'task') {
+      go('tl', 'タイムラインで見る');
+      if ((task(id).parts || []).length) go('v3d', '3D で見る');
+      b.push(`<a href="${esc(docHref('07-build.md'))}" target="_blank" rel="noopener">製作の手順を読む</a>`);
     }
     return `<div class="go">${b.join('')}</div>`;
   }
@@ -284,6 +310,7 @@
         <h3>寸法（oven.json）</h3>${dims}
         <h3>この部品で満たす要求</h3>${pillsHtml('req', reqsOfPart(s.id), reqName)}
         <h3>この部品を使う工程</h3>${pillsHtml('step', stepsOfPart(s.id), stepName)}
+        <h3>この部品を作る製作の工程</h3>${pillsHtml('task', tasksOfPart(s.id), taskName)}
         ${goButtons('part', s.id)}`;
     }
     if (s.kind === 'node') {
@@ -317,6 +344,21 @@
         <h3>出典</h3><p>${(st.src || []).map((c) => srcHtml(c)).join('、') || 'なし'}</p>
         ${goButtons('step', s.id)}`;
     }
+    if (s.kind === 'task') {
+      const t = task(s.id);
+      const ph = D.build.phases.find((x) => x.id === t.phase);
+      const kindText = t.kind === 'mile' ? '節目' : t.kind === 'wait' ? `待ち ${t.days} 日（暦日）`
+        : `作業 ${t.days} 日${t.cont ? '（続けて行う）' : ''}${t.side ? '、合間の作業' : ''}`;
+      const next = D.build.tasks.filter((x) => (x.after || []).includes(t.id)).map((x) => x.id);
+      return `<h2>${esc(t.name)}</h2><p class="muted">${esc(ph ? ph.name : '')}、${esc(kindText)}${t.temp ? `、${t.temp}℃ 以上の日に行う` : ''}</p>
+        <p>${srcHtml(t.desc || '')}</p>
+        <h3>前の工程</h3>${pillsHtml('task', t.after || [], taskName)}
+        <h3>次の工程</h3>${pillsHtml('task', next, taskName)}
+        <h3>作る部品</h3>${pillsHtml('part', t.parts || [], partName)}
+        ${(t.reqs || []).length ? `<h3>関わる要求</h3>${pillsHtml('req', t.reqs, reqName)}` : ''}
+        <h3>出典</h3><p>${(t.src || []).map((c) => srcHtml(c)).join('、') || 'なし'}</p>
+        ${goButtons('task', s.id)}`;
+    }
     if (s.kind === 'flow') {
       const f = flow(s.id);
       const sh = D.sheets.find((x) => x.id === f.sheet);
@@ -346,7 +388,7 @@
 
   function select(kind, id, opts = {}) {
     const valid = kind && ((kind === 'part' || kind === 'node') ? thing(id) && thing(id).kind === kind
-      : kind === 'req' ? req(id) : kind === 'step' ? step(id) : kind === 'flow' ? flow(id) : false);
+      : kind === 'req' ? req(id) : kind === 'step' ? step(id) : kind === 'flow' ? flow(id) : kind === 'task' ? task(id) : false);
     sel = valid ? { kind, id } : { kind: null, id: null };
     renderDetail();
     for (const m of Object.values(mods)) if (m && m.highlight) m.highlight(sel, opts);
@@ -418,7 +460,7 @@
     try {
       if (params.k && params.i) {
         const valid = (params.k === 'part' || params.k === 'node') ? thing(params.i) : params.k === 'req' ? req(params.i)
-          : params.k === 'step' ? step(params.i) : params.k === 'flow' ? flow(params.i) : null;
+          : params.k === 'step' ? step(params.i) : params.k === 'flow' ? flow(params.i) : params.k === 'task' ? task(params.i) : null;
         sel = valid ? { kind: params.k, id: params.i } : { kind: null, id: null };
       } else {
         sel = { kind: null, id: null };
@@ -605,8 +647,8 @@
     get sel() { return sel; },
     get mode() { return mode; },
     $, el, esc, chip, statusClass, srcHtml, docHref,
-    thing, req, step, flow, kidsOf, allocOf,
-    reqsOfPart, stepsOfPart, reqsOfStep, flowsOf, sheetsOf, related,
+    thing, req, step, flow, task, kidsOf, allocOf,
+    reqsOfPart, stepsOfPart, reqsOfStep, flowsOf, sheetsOf, tasksOfPart, related,
     select, goto, writeUrl, panZoom,
     tip(html, x, y) {
       const t = $('#tip');

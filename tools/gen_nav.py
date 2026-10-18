@@ -1,7 +1,8 @@
 """ナビゲータのデータを作る。
 
-正は次の 4 つ。
+正は次の 5 つ。
 - docs/data/model.yaml（部品、系統図、流れ、要求の割り当て）
+- docs/data/build.yaml（製作の工程と日数。タイムラインモードが日程に組む）
 - docs/01-requirements.md（1.2 の要求の表と、設計点の根拠の読み方）
 - docs/data/oven.json（寸法）
 - docs/sources.md（出典の表）
@@ -14,6 +15,7 @@
     python tools/gen_nav.py --check    # 点検だけ
 """
 
+import datetime
 import json
 import re
 import sys
@@ -24,6 +26,7 @@ import yaml
 ROOT = Path(__file__).resolve().parent.parent
 DOCS = ROOT / "docs"
 MODEL = DOCS / "data" / "model.yaml"
+BUILD = DOCS / "data" / "build.yaml"
 OVEN = DOCS / "data" / "oven.json"
 REQS_MD = DOCS / "01-requirements.md"
 SOURCES_MD = DOCS / "sources.md"
@@ -127,6 +130,66 @@ def viewer_parts():
     return re.findall(r"\{ key: '(\w+)', label:", text)
 
 
+def check_build(build, part_ids, req_ids, sources, errors):
+    """製作の工程（build.yaml）を点検する。E11 から E14。"""
+    phases = {p["id"] for p in build["phases"]}
+    tasks = build["tasks"]
+    ids = set()
+    for t in tasks:
+        if t["id"] in ids:
+            errors.append(f"E11 製作の工程 {t['id']} が重複している")
+        ids.add(t["id"])
+        if t.get("phase") not in phases:
+            errors.append(f"E11 製作の工程 {t['id']} の段階 {t.get('phase')} が phases に無い")
+        kind = t.get("kind")
+        days = t.get("days", 0)
+        if kind not in ("work", "wait", "mile"):
+            errors.append(f"E11 製作の工程 {t['id']} の種類 {kind} は work、wait、mile のどれでもない")
+        elif kind == "mile" and days:
+            errors.append(f"E11 節目 {t['id']} に日数がある")
+        elif kind != "mile" and not (isinstance(days, int) and days >= 1):
+            errors.append(f"E11 製作の工程 {t['id']} の日数 {days} は 1 以上の整数でない")
+        if "temp" in t and not isinstance(t["temp"], int):
+            errors.append(f"E11 製作の工程 {t['id']} の気温 {t['temp']} が整数（℃）でない")
+    for t in tasks:
+        for a in t.get("after", []):
+            if a not in ids:
+                errors.append(f"E12 製作の工程 {t['id']} の前の工程 {a} が無い")
+        for p in t.get("parts", []):
+            if p not in part_ids:
+                errors.append(f"E14 製作の工程 {t['id']} の部品 {p} が無い")
+        for r in t.get("reqs", []):
+            if r not in req_ids:
+                errors.append(f"E14 製作の工程 {t['id']} の要求 {r} が要求の表に無い")
+        for c in t.get("src", []):
+            if c not in sources:
+                errors.append(f"E10 製作の工程 {t['id']} の出典 {c} が sources.md に無い")
+    # 前後の関係が輪になっていないか（輪があると日程が組めない）
+    after = {t["id"]: [a for a in t.get("after", []) if a in ids] for t in tasks}
+    state = {}
+
+    def visit(n, path):
+        if state.get(n) == 1:
+            errors.append(f"E13 製作の工程の前後が輪になっている: {' → '.join(path + [n])}")
+            return
+        if state.get(n) == 2:
+            return
+        state[n] = 1
+        for a in after[n]:
+            visit(a, path + [n])
+        state[n] = 2
+
+    for n in after:
+        visit(n, [])
+    meta = build["meta"]
+    try:
+        datetime.date.fromisoformat(str(meta.get("start")))
+    except ValueError:
+        errors.append(f"E11 build.yaml の始める日 {meta.get('start')} が日付でない")
+    if meta.get("first_bake") and meta["first_bake"] not in ids:
+        errors.append(f"E11 build.yaml の first_bake {meta['first_bake']} が工程に無い")
+
+
 def check_and_build():
     errors, warnings = [], []
     model = yaml.safe_load(MODEL.read_text(encoding="utf-8"))
@@ -221,6 +284,10 @@ def check_and_build():
         if rid not in alloc:
             errors.append(f"E9 要求 {rid} の割り当てが model.yaml に無い")
 
+    build = yaml.safe_load(BUILD.read_text(encoding="utf-8"))
+    build["meta"]["start"] = str(build["meta"]["start"])
+    check_build(build, part_ids, req_ids, sources, errors)
+
     for r in reqs:
         for c in SRC_CODE.findall(r["basis"] + " " + r["note"]):
             if c not in sources:
@@ -249,6 +316,7 @@ def check_and_build():
         "edges": model["edges"],
         "reqs": reqs,
         "alloc": alloc,
+        "build": build,
         "sources": sources,
     }
     return data, errors, warnings
@@ -269,7 +337,7 @@ def main():
         return
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
-    print(f"{OUT.relative_to(ROOT)} を書いた（要求 {len(data['reqs'])}、部品 {len(data['parts'])}、工程 {len(data['steps'])}）。")
+    print(f"{OUT.relative_to(ROOT)} を書いた（要求 {len(data['reqs'])}、部品 {len(data['parts'])}、工程 {len(data['steps'])}、製作の工程 {len(data['build']['tasks'])}）。")
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 # 出典
 
 本文の数値は、ここの記号で引く。
-取得日は 2026-10-17。P77 から P85、M64 から M89、F48 から F55 は 2026-10-18。
+取得日は 2026-10-17。P77 から P94、M64 から M91、F48 から F61 は 2026-10-18。
 
 | 記号 | 種別 |
 |------|------|
@@ -83,11 +83,20 @@ P1 と P41 は Google Books の抜粋で該当の頁を確かめた。
 | P78 | Forno Bravo「Pompeii Oven: Curing」（養生焚き。左官を仕上げてから 5 日で段階的に上げる） | <https://www.fornobravo.com/pompeii-oven/curing/> |
 | P79 | Forno Bravo「Winter wood-fired cooking tips」（冬の焚き方、外装の点検と補修） | <https://www.fornobravo.com/blog/winter-wood-fired-cooking-tips/> |
 | P80 | Forno Bravo「Outdoor pizza oven in winter」（火の入った窯に天幕を張らない、笠と扉、雪と氷）。笠と扉と雪と氷と逆圧の注意は、P79 と P80 のどちらの記述かを確かめていない（2026-10-18 に頁の取得を断られた） | <https://www.fornobravo.com/pizza-oven-gallery/outdoor-pizza-oven-winter/> |
-| P81 | Forno Bravo「Pompeii Oven: Foundation Slab」（台より 8 インチ広く、前に 6 インチ、下は砕石 3 インチとポリシート） | <https://www.fornobravo.com/article-series/pompeii-oven/foundation-slab/> |
+| P81 | Forno Bravo「Pompeii Oven: Foundation Slab」（台より 8 インチ広く、前に 6 インチ、下は砕石 3 インチとポリシート。打ってから 1〜2 日置く。基礎の工事は 8 時間の例） | <https://www.fornobravo.com/article-series/pompeii-oven/foundation-slab/> |
 | P82 | アサヒペン 防水塗料（透明、油性アクリル、強力浸透タイプ）製品頁 | <https://www.asahipen.jp/products/view/14015> |
 | P83 | 日本ペイント アクアシール 製品頁（シラン系、水蒸気を通す、凍害の抑制。業務用 16 L 缶） | <https://www.nipponpaint.co.jp/products/building/35/> |
 | P84 | 日本製鉄 ガルバリウム鋼板の解説頁（アルカリに触れると腐食が進む） | <https://www.nipponsteel.com/product/sheet/list/automotive/superdyma/material/galvalume.html> |
 | P85 | Fontana Forni USA「Winter outdoor oven care」（中の雪を取り、乾いてから点火、火は少しずつ） | <https://fontanaforniusa.com/blogs/news-1/winter-outdoor-oven-care> |
+| P86 | 国土交通省「公共建築工事標準仕様書（建築工事編）令和 7 年版」。6.7 養生（湿潤養生 5 日以上、打込み後 1 日は上で作業しない、5 日以上 2℃ 以上）、6.8.4 表 6.8.3（スラブ下の支柱の存置 15℃ 以上 17 日、5℃ 以上 25 日、0℃ 以上 28 日）、8.2.11（ブロックは目地と充填が硬化するまで荷重を掛けない）、15.1.4（気温 5℃ 以下では左官をしない）、15.3.5（ラス下地の下塗りは 14 日以上置く） | <https://www.mlit.go.jp/gobuild/content/001888816.pdf> |
+| P87 | 国土交通省「土木工事共通仕様書 令和 8 年版」第 1 編 3 章 6 節。表 1-3-3（湿潤養生 普通ポルトランドで 15℃ 以上 5 日、10℃ 以上 7 日、5℃ 以上 9 日） | <https://www.mlit.go.jp/tec/r08dobokukoujikyoutsuusiyousyo/honbun01_syo03_setsu06.html> |
+| P88 | 国土交通省「土木工事共通仕様書 令和 8 年版」第 1 編 3 章 10 節（寒中コンクリート。日平均気温 4℃ 以下が予想されるとき） | <https://www.mlit.go.jp/tec/r08dobokukoujikyoutsuusiyousyo/honbun01_syo03_setsu10.html> |
+| P89 | Forno Bravo「Curing your oven」PDF v2.0（2012、Wayback の保存版）。窯ができてから 1 週間置き、300°F から 1 日 50°F ずつ上げて 5 日目に 500°F。長いほうがよい | <http://web.archive.org/web/20260216223858/https://www.fornobravo.com/PDF/curing.pdf> |
+| P90 | Forno Bravo「Brick oven table of contents」（Pompeii の手順の順序。基礎、台、床版と断熱、炉床、ドーム、ベント、煙突、断熱、仕上げ、養生焚き） | <https://www.fornobravo.com/pompeii-oven/brick-oven-table-of-contents/> |
+| P91 | Forno Bravo「Pompeii Oven: Insulating Hearth」（構造の床版と断熱層は同じ日でも後の日でも打てる。型枠は固まってから外す） | <https://www.fornobravo.com/pompeii-oven/insulating-hearth/> |
+| P92 | Forno Bravo「Pompeii Oven: Chimney」（煙突は断熱の前に付ける） | <https://www.fornobravo.com/pompeii-oven/chimney/> |
+| P93 | トーヨーマテラン「耐火モルタル キャスタブル」SDS（成分は珪砂、ポルトランドセメント、混和材等の混合物） | <https://matelan.co.jp/wp/wp-content/uploads/2021/12/418b3b21b01113daad78581fa18f0647.pdf> |
+| P94 | トーヨーマテラン「耐火モルタル キャスタブル」カタログ（養生は 24 時間以上、練った温度は 10〜30℃、凍るおそれがあれば施工しない、加熱は 50℃/時で上げて 200℃ と 350℃ で保持） | <https://matelan.co.jp/wp/wp-content/uploads/2021/07/c09635c141675d4b349cd097dd898d9d.pdf> |
 
 ## 二次資料
 
@@ -204,6 +213,8 @@ P1 と P41 は Google Books の抜粋で該当の頁を確かめた。
 | M87 | コーナン e ショップ ステン丸型フード付ガラリ WFGN-100 | <https://www.kohnan-eshop.com/shop/g/g4515161026852/> |
 | M88 | コーナン e ショップ 配送の案内（送料 7,700 円未満 660 円、以上無料） | <https://www.kohnan-eshop.com/shop/pages/delivery.aspx> |
 | M89 | ホームセンターコーナン 店舗検索（北海道に店舗が無い） | <https://www.hc-kohnan.com/shop/> |
+| M90 | コメリ よくある質問 配送（入金確認の翌日から 7 日前後、北海道は 7 日以上。検索結果の抜粋） | <https://www.komeri.com/shop/pg/1faq-delivery/> |
+| M91 | コメリ Yahoo! 店 耐火モルタル 2 kg（9〜11 日以内に発送、取り寄せの表示） | <https://store.shopping.yahoo.co.jp/komeri/4975160100135.html> |
 
 ## フォーラム（経験則）
 
@@ -254,3 +265,9 @@ P1 と P41 は Google Books の抜粋で該当の頁を確かめた。
 | F53 | Forno Bravo「Open or closed wood storage」。薪置き | <https://community.fornobravo.com/forum/pizza-oven-design-and-installation/design-styles-chimneys-and-finish/4277-open-or-closed-wood-storage> |
 | F54 | Forno Bravo「Winter cooking」2008。1℃の窯を 1 時間で本焼きまで上げてレンガが割れた | <https://community.fornobravo.com/forum/oven-management/heat-management/3355-winter-cooking> |
 | F55 | Forno Bravo「Warning on hearth design」。炉床の水平と張り出し | <https://community.fornobravo.com/forum/pizza-oven-design-and-installation/pompeii-oven-construction/10408-warning-on-hearth-design> |
+| F56 | Forno Bravo「On the brink」2015。床版の型枠を作るあいだにブロックは固まる。休暇を使って約 3 か月で製作 | <https://community.fornobravo.com/forum/pizza-oven-design-and-installation/getting-started/19399-on-the-brink> |
+| F57 | Forno Bravo「My first attempt for 42 oven changed to 36」2014。断熱層の乾燥は「日でなく週」 | <https://community.fornobravo.com/forum/pizza-oven-design-and-installation/pompeii-oven-construction/18977-my-first-attempt-for-42-oven-changed-to-36/page9> |
+| F58 | Forno Bravo「A few questions from a beginner」2009。ドームは 1 日数時間の作業で 10 日から 6 週 | <https://community.fornobravo.com/forum/good-background-information/newbie-forum/6248-a-few-questions-from-a-beginner> |
+| F59 | Forno Bravo「What brand of oven to buy」2008。週末の作業で焼けるまで計 50〜60 時間 | <https://community.fornobravo.com/forum/good-background-information/newbie-forum/5255-what-brand-of-oven-to-buy> |
+| F60 | Forno Bravo「When can I cure oven」2015。養生焚きは 7 日で 7 回が普通。左官の仕上げと防水の前に養生焚きを済ませる意見。シートを掛けて結露を見る | <https://community.fornobravo.com/forum/oven-management/firing-your-oven/383516-when-can-i-cure-oven> |
+| F61 | Forno Bravo「Insulate before curing」2011。手順は完成後 1 週間置く。左官は 1 週間湿らせて強くする | <https://community.fornobravo.com/forum/pizza-oven-design-and-installation/pompeii-oven-construction/13677-insulate-before-curing> |

@@ -11,6 +11,7 @@
 <script src="sys.js" defer></script>
 <script src="dwg.js" defer></script>
 <script src="v3d.js" defer></script>
+<script src="tl.js" defer></script>
 <script src="boot.js" defer></script>
 </head>
 <body>
@@ -22,6 +23,7 @@
     <button type="button" role="tab" id="tab-sys" data-mode="sys" aria-controls="mode-sys">系統図</button>
     <button type="button" role="tab" id="tab-dwg" data-mode="dwg" aria-controls="mode-dwg">図面</button>
     <button type="button" role="tab" id="tab-v3d" data-mode="v3d" aria-controls="mode-v3d">3D</button>
+    <button type="button" role="tab" id="tab-tl" data-mode="tl" aria-controls="mode-tl">タイムライン</button>
   </nav>
   <div class="meta">
     <span id="rev"></span>
@@ -68,6 +70,14 @@
       <div class="modebar"><h1 class="mtitle">3D</h1><p class="mnote" id="v3d-note"></p></div>
       <div class="work">
         <div class="stage" id="v3d-stage"></div>
+      </div>
+    </section>
+
+    <section class="mode" id="mode-tl" role="tabpanel" aria-labelledby="tab-tl">
+      <div class="modebar"><h1 class="mtitle">製作の日程</h1><p class="mnote" id="tl-note"></p></div>
+      <div class="work">
+        <aside class="side" id="tl-side" aria-label="日程の決め方と工程の一覧"></aside>
+        <div class="stage" id="tl-stage" tabindex="0"></div>
       </div>
     </section>
 

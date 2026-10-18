@@ -1,0 +1,109 @@
+# 製作の工程と日数。タイムラインモード（docs/navigator/tl.js）が日程に組む。
+# kind: work は人の手が要る作業で、作業する日で数える。1 人で行うので、同じ日に 2 つの作業は入れない。
+#       wait は養生や乾燥の待ちで、暦日で数える。その間にほかの作業を入れられる。
+#       mile は節目（日数なし）。
+# after: 前の工程。すべて終わってから始める。
+# side: 合間の作業。主の流れの工程に日を割り当てたあとで、空いた日に入れる。
+# cont: 続けて行う作業。作業できる日に始め、暦日で続ける（土日だけの日程では平日も使う）。
+# temp: その気温（℃）以上の日に行う。左官とブロックの目地は 5（P86）、耐火モルタルは練った温度 10（P94）。
+# parts は docs/data/model.yaml の部品の id、reqs は要求の番号、src は sources.md の記号。
+# 日数の根拠は、付録 B（docs/07-build.md）の表に書く。出典の無い作業の日数は推定で、desc に「推定」と書く。
+meta:
+  title: 製作の日程
+  rev: "0.1"
+  start: "2027-05-01"
+  start_note: 始める日は仮。据える地点の気候が分かったら決める。待ちの日数は気温 15℃ 以上の値で、寒い時期は延びる（付録 B）。
+  temp_note: 左官とブロックの目地は気温 5℃ 以下で行わない（P86）。耐火モルタルは練った温度を 10〜30℃ にする（P94）。コンクリートは打ってから 5 日以上 2℃ 以上に保つ（P86）。
+  note: 製作の工程を、前後の関係と養生や乾燥の待ちから日程に組んだもの。作業の日数の多くは推定（付録 B）。
+  first_bake: m-firstbake
+
+phases:
+  - {id: prep, name: 準備と調達}
+  - {id: base, name: 基礎と台}
+  - {id: slab, name: 床版と炉床}
+  - {id: dome, name: ドームと前室}
+  - {id: skin, name: 断熱と外殻}
+  - {id: fire, name: 養生焚きと仕上げ}
+
+tasks:
+  # 準備と調達
+  - {id: b-site, phase: prep, kind: work, days: 1, after: [], name: 据える場所を決め、消防に確かめる, parts: [], reqs: [R-11], src: [],
+     desc: 据える場所と、煙突や薪置きのまわりの離隔を決める。火災予防条例の扱いを消防に確かめる（要求 1.4 の 8）。日数は推定。}
+  - {id: b-buy1, phase: prep, kind: work, days: 1, after: [b-site], name: 基礎と台の材料を買う, parts: [foundation, stand, slab], reqs: [], src: [M67, M68],
+     desc: 砕石、セメント、砂、ブロック、鉄筋、型枠の合板を買う（部品リスト 5.2）。日数は推定。}
+  - {id: b-order, phase: prep, kind: wait, days: 14, after: [b-site], name: 耐火レンガと耐火モルタルの取り寄せ, parts: [hearth, chamber, landing], reqs: [], src: [M90, M91],
+     desc: 耐火レンガ 161 個と耐火モルタルを取り寄せる。コメリの宅配は北海道へ 7 日以上（M90、抜粋）、取り寄せ品は発送まで 9〜11 日の表示がある（M91）。14 日は推定。}
+  - {id: b-buy2, phase: prep, kind: work, days: 1, after: [b-site], side: true, name: 煙突、鋼板、防水材などを買う, parts: [chimney, door, hood, vent], reqs: [], src: [M88],
+     desc: 煙突、H 笠、支持金具、鋼板、ケイカル板、防水材、ガラリ、ガルバの平板、シートを買う。コーナンの通販は出荷から北海道へ 3 日以上（M88）。日数は推定。}
+
+  # 基礎と台
+  - {id: b-dig, phase: base, kind: work, days: 2, after: [b-buy1], name: 掘って砕石を敷き、締める, parts: [foundation], reqs: [R-08], src: [P81],
+     desc: 台より広く掘り、砕石を 150 mm 敷いて締める。日数は推定（Forno Bravo の例は基礎の工事全体で 8 時間、P81）。}
+  - {id: b-found, phase: base, kind: work, days: 1, after: [b-dig], temp: 5, name: 基礎のコンクリートを打つ, parts: [foundation], reqs: [R-08], src: [P81],
+     desc: 型枠を組み、鉄筋を入れて基礎を打つ。日数は推定。}
+  - {id: w-found, phase: base, kind: wait, days: 2, after: [b-found], name: 基礎の養生（上に積むまで）, parts: [foundation], reqs: [], src: [P81, P86],
+     desc: 打ってから少なくとも 1 日は上で作業しない（P86 の 6.7.3）。Forno Bravo は 1〜2 日置く（P81）。湿潤養生は 5 日以上続ける（P86 の 6.7.2）。}
+  - {id: b-block, phase: base, kind: work, days: 2, after: [w-found], temp: 5, name: ブロックを 3 段積む, parts: [stand], reqs: [], src: [P86],
+     desc: ブロック 43 個を 3 面に 3 段積み、縦の穴に鉄筋を入れて充填する。前は薪置きに開ける。日数は推定。}
+  - {id: w-block, phase: base, kind: wait, days: 1, after: [b-block], name: 目地の養生, parts: [stand], reqs: [], src: [P86, F56],
+     desc: 目地と充填が固まるまで荷重を掛けない（P86 の 8.2.11、日数の規定は無い）。型枠を組むあいだに固まるという経験則がある（F56）。1 日は推定。}
+
+  # 床版と炉床
+  - {id: b-form, phase: slab, kind: work, days: 2, after: [w-block], name: 型枠と支柱を組み、鉄筋を並べる, parts: [slab], reqs: [], src: [P91],
+     desc: 台の上に合板の型枠を載せ、台の内側から支柱で支える。縁は台より約 4 cm 外へ出す（水切り）。日数は推定。}
+  - {id: b-pour, phase: slab, kind: work, days: 1, after: [b-form], temp: 5, name: 床版のコンクリートを打つ, parts: [slab], reqs: [R-08], src: [],
+     desc: 水抜きの管を 4 本入れて、厚さ 100 mm で打つ。}
+  - {id: w-slab, phase: slab, kind: wait, days: 1, after: [b-pour], name: 床版の上で作業するまで, parts: [slab], reqs: [], src: [P86, P91],
+     desc: 打ってから少なくとも 1 日は上で作業しない（P86 の 6.7.3）。断熱層は床版と同じ日でも後の日でも打てる（P91）。湿潤養生は 5 日以上続ける（P86 の 6.7.2）。}
+  - {id: w-shore, phase: slab, kind: wait, days: 17, after: [b-pour], name: 床版の支柱を残す, parts: [slab], reqs: [], src: [P86],
+     desc: スラブ下の支柱は平均気温 15℃ 以上で 17 日残す（5℃ 以上は 25 日、P86 の表 6.8.3）。上でドームを積むので、外すのは前室を積んだあと。}
+  - {id: b-hins, phase: slab, kind: work, days: 1, after: [w-slab], temp: 5, name: 炉床の断熱を打つ, parts: [hearthIns], reqs: [], src: [P55, P91],
+     desc: セメントとパーライトを体積で 1:5 に練り、100 mm 打つ（P55）。}
+  - {id: w-hins, phase: slab, kind: wait, days: 7, after: [b-hins], name: 炉床の断熱の乾燥, parts: [hearthIns], reqs: [], src: [F57],
+     desc: 数値の基準は無い。経験則は「少し乾いてから」から「数週間」まで（F57）。7 日は経験則の短い側。}
+  - {id: b-hearth, phase: slab, kind: work, days: 1, after: [w-hins, b-order], name: 炉床のレンガを縦に並べる, parts: [hearth], reqs: [R-04], src: [],
+     desc: 耐火レンガを縦に立てて並べ、水平をそろえる。日数は推定。}
+  - {id: b-strip, phase: slab, kind: work, days: 1, after: [w-shore, b-land], side: true, name: 床版の支柱を外す, parts: [slab], reqs: [], src: [P86],
+     desc: 支柱を外し、薪置きを空ける。上の荷重が大きいときは支柱を長めに残す（P86 の 6.8.4）。日数は推定。}
+
+  # ドームと前室
+  - {id: b-cut, phase: dome, kind: work, days: 1, after: [b-order], side: true, name: レンガを切り、ドームの定規を作る, parts: [chamber], reqs: [], src: [],
+     desc: 半割りのレンガを切り、中心で回す定規を作る。日数は推定。}
+  - {id: b-dome, phase: dome, kind: work, days: 6, after: [b-hearth, b-cut], temp: 10, name: ドームのレンガを積む, parts: [chamber], reqs: [], src: [F58, P94],
+     desc: 耐火モルタルでドームを積む。1 日数時間の作業で 10 日から 6 週かかった例がある（F58）。丸 1 日の作業で 6 日は推定。}
+  - {id: b-land, phase: dome, kind: work, days: 2, after: [b-dome], temp: 10, name: 前室と焚き口を積む, parts: [landing], reqs: [], src: [P94],
+     desc: 前室と焚き口のアーチを積み、煙突の台を作る。日数は推定。}
+  - {id: w-dome, phase: dome, kind: wait, days: 2, after: [b-land], name: 目地の養生, parts: [chamber, landing], reqs: [], src: [P94],
+     desc: 耐火モルタルは 24 時間以上養生し、急な乾燥と凍結を避ける（P94）。2 日は推定。}
+  - {id: b-chim, phase: dome, kind: work, days: 1, after: [w-dome, b-buy2], name: 煙突を立てる, parts: [chimney], reqs: [R-11], src: [P92],
+     desc: 煙突を前室の上に立て、支持金具で留め、H 笠を付ける。断熱の前に付ける（P92）。日数は推定。}
+  - {id: b-door, phase: dome, kind: work, days: 2, after: [b-buy2], side: true, name: 扉とダンパーを作る, parts: [door, chimney], reqs: [], src: [],
+     desc: 縞鋼板とケイカル板で扉を作り、鋼板でダンパーを作る。日数は推定。}
+
+  # 断熱と外殻
+  - {id: b-ins, phase: skin, kind: work, days: 1, after: [b-chim], temp: 5, name: ドームの断熱を盛る, parts: [insulation], reqs: [], src: [P55, P92],
+     desc: セメントとパーライトを体積で 1:5 に練り、100 mm 盛る（P55）。}
+  - {id: w-ins, phase: skin, kind: wait, days: 7, after: [b-ins], name: ドームの断熱の乾燥, parts: [insulation], reqs: [], src: [P77, F57],
+     desc: 断熱が乾いてから金網と左官に進む（P77、日数は書かれていない）。雨の日は覆う。7 日は推定。}
+  - {id: b-lath, phase: skin, kind: work, days: 1, after: [w-ins], name: 金網を張り、ベントとひさしを付ける, parts: [shell, vent, hood], reqs: [R-08], src: [P77],
+     desc: 断熱の上に金網を張る。頂部にベントを付け、焚き口の上にひさしを付ける。日数は推定。}
+  - {id: b-render1, phase: skin, kind: work, days: 1, after: [b-lath], temp: 5, name: 左官の 1 層目, parts: [shell], reqs: [R-08], src: [P77, P86],
+     desc: 金網の上に下塗りをする。乾かないよう水で湿らせ、シートを掛ける（P86 の 15.1.4）。}
+  - {id: w-render1, phase: skin, kind: wait, days: 14, after: [b-render1], name: 下塗りのひび割れを出し切る, parts: [shell], reqs: [], src: [P86],
+     desc: ラスの上の下塗りは 14 日以上置き、ひび割れを出し切ってから次を塗る。接着が確保できれば短くできる（P86 の 15.3.5）。}
+  - {id: b-render2, phase: skin, kind: work, days: 1, after: [w-render1], temp: 5, name: 左官の 2 層目, parts: [shell], reqs: [R-08], src: [P77, P86],
+     desc: 仕上げを塗り、水で湿らせて養生する。}
+  - {id: w-render2, phase: skin, kind: wait, days: 7, after: [b-render2], name: 養生焚きまで 1 週間置く, parts: [shell], reqs: [], src: [P89, F61],
+     desc: 窯ができてから 1 週間置いて養生焚きを始める（P89）。左官は 1 週間湿らせて強くするという経験則もある（F61）。}
+
+  # 養生焚きと仕上げ
+  - {id: b-cure, phase: fire, kind: work, days: 5, cont: true, after: [w-render2, b-door], name: 養生焚き, parts: [chamber, hearth, insulation, shell], reqs: [R-08], src: [P78, P89, F60],
+     desc: 1 日目は 300°F（約 150℃）、以後 1 日 50°F ずつ上げ、5 日目に 500°F（約 260℃）。長いほうがよい（P89）。7 日で 7 回焚くのが普通という経験則もある（F60）。}
+  - {id: m-firstbake, phase: fire, kind: mile, after: [b-cure], name: 初めて焼ける, parts: [], reqs: [], src: [],
+     desc: 養生焚きが終われば焼ける。防水材を塗るまでは、冷めたら覆いを掛ける。}
+  - {id: w-age, phase: fire, kind: wait, days: 21, after: [b-render2], name: 左官が 3 週間たつのを待つ, parts: [shell], reqs: [], src: [P82, F60],
+     desc: 新しいモルタルは 3 週間以上たってから防水材を塗る（P82）。乾くまで塗らない。シートを掛けて内側が結露すれば乾いていない（F60）。}
+  - {id: b-seal, phase: fire, kind: work, days: 2, after: [w-age, b-cure], name: 防水材を 2 回塗る, parts: [shell], reqs: [R-08], src: [P82],
+     desc: 乾き切ってから浸透性の防水材を 2 回塗る（P82）。2 回目までの間隔は未確認で、2 日は推定。}
+  - {id: m-done, phase: fire, kind: mile, after: [b-seal, b-strip], name: できあがり, parts: [], reqs: [], src: [],
+     desc: 覆いと薪置きを整えて、できあがり。}

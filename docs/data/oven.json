@@ -18,7 +18,7 @@
     "insulation.thickness": {"v": 0.10, "unit": "m", "label": "窯壁の外の断熱の厚さ", "status": "仮", "basis": "断熱 3〜4 in（S2）。パーライトとセメント 1:5、乾燥密度 448〜544 kg/m³、熱伝導率 0.09〜0.10 W/(m K)（常温、P55）"},
     "shell.thickness": {"v": 0.03, "unit": "m", "label": "外殻の厚さ", "status": "仮", "basis": "仮定"},
     "hearth.firebrick": {"v": 0.114, "unit": "m", "label": "炉床の耐火レンガの厚さ", "status": "決定", "basis": "R-04b。レンガを縦に立てて並べる。炉床を縦置きで厚くすると焼ける回数が増える（P41）。窯全体の組積の目安は 4 in 以上（P1）。熱の収支は構造設計 3.2。施主の了承 2026-10-17"},
-    "hearth.insulation": {"v": 0.10, "unit": "m", "label": "炉床の下の断熱の厚さ", "status": "仮", "basis": "パーライトとセメント 1:5、乾燥密度 448〜544 kg/m³、熱伝導率 0.09〜0.10 W/(m K)（常温、P55）"},
+    "hearth.insulation": {"v": 0.10, "unit": "m", "label": "炉床の下の断熱の厚さ", "status": "仮", "basis": "セメントとパーライト 体積で 1:5（セメント 1 にパーライト 5）、乾燥密度 448〜544 kg/m³、熱伝導率 0.09〜0.10 W/(m K)（常温、P55）"},
     "hearth.slab": {"v": 0.10, "unit": "m", "label": "炉床を受ける床版の厚さ", "status": "仮", "basis": "構造設計で決める"},
     "stand.height": {"v": 0.60, "unit": "m", "label": "台の高さ", "status": "仮", "basis": "ブロック 3 段。費用を下げるため施主の判断で 4 段から減らした（2026-10-18）。炉床の面は約 0.9 m"},
     "stand.wall": {"v": 0.15, "unit": "m", "label": "台の壁の厚さ", "status": "仮", "basis": "コンクリートブロックを仮定"},

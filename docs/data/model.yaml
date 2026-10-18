@@ -12,11 +12,11 @@ parts:
   - {id: foundation, name: 基礎, mat: 砕石と鉄筋コンクリート（仮）, dims: [foundation.thickness, foundation.top, frost.depth], doc: 02-configuration.md}
   - {id: stand, name: 台, mat: コンクリートブロック（仮）, dims: [stand.height, stand.wall], doc: 02-configuration.md}
   - {id: slab, name: 床版, mat: 鉄筋コンクリート（仮）。台より外へ出して水切りにする, dims: [hearth.slab, slab.overhang], doc: 02-configuration.md}
-  - {id: hearthIns, name: 炉床の断熱, mat: パーライトとセメント 1:5（仮）, dims: [hearth.insulation], doc: 02-configuration.md}
+  - {id: hearthIns, name: 炉床の断熱, mat: セメントとパーライト 体積で 1:5（仮）, dims: [hearth.insulation], doc: 02-configuration.md}
   - {id: hearth, name: 炉床, mat: 耐火粘土レンガを縦に立てて並べる, dims: [hearth.firebrick, dome.inner_diameter], doc: 03-structural-design.md}
   - {id: chamber, name: 窯壁（ドーム）, mat: 耐火粘土レンガ 114 mm（蓄熱を兼ねる）, dims: [wall.firebrick, dome.inner_diameter, dome.inner_height], doc: 02-configuration.md}
   - {id: mass, name: 蓄熱層, mat: 第一案 B では置かない（土窯の型式で使う粘土と砂）, dims: [dome.mass], doc: 02-configuration.md}
-  - {id: insulation, name: 断熱, mat: パーライトとセメント 1:5（仮）, dims: [insulation.thickness], doc: 02-configuration.md}
+  - {id: insulation, name: 断熱, mat: セメントとパーライト 体積で 1:5（仮）, dims: [insulation.thickness], doc: 02-configuration.md}
   - {id: shell, name: 外殻, mat: 金網と左官 2 層、浸透性の防水材（仮）, dims: [shell.thickness], doc: 02-configuration.md}
   - {id: landing, name: 前室と焚き口, mat: 耐火粘土レンガ, dims: [door.width, door.height_ratio, landing.depth, landing.wall], doc: 03-structural-design.md}
   - {id: door, name: 扉, mat: 内側を耐火材、外側を断熱にした板（仮）, dims: [door.thickness, door.width], doc: 02-configuration.md}
