@@ -29,12 +29,14 @@ tasks:
   # 準備と調達
   - {id: b-site, phase: prep, kind: work, days: 1, after: [], name: 据える場所を決め、消防に確かめる, parts: [], reqs: [R-11], src: [],
      desc: 据える場所と、煙突や薪置きのまわりの離隔を決める。火災予防条例の扱いを消防に確かめる（要求 1.4 の 8）。日数は推定。}
-  - {id: b-buy1, phase: prep, kind: work, days: 1, after: [b-site], name: 基礎と台の材料を買う, parts: [foundation, stand, slab], reqs: [], src: [M67, M68],
-     desc: 砕石、セメント、砂、ブロック、鉄筋、型枠の合板を買う（部品リスト 5.2）。日数は推定。}
+  - {id: b-buy1, phase: prep, kind: work, days: 1, after: [b-site], name: 基礎と台の材料を買う, parts: [foundation, stand, slab], reqs: [], src: [],
+     desc: 砕石、セメント、砂、ブロック、鉄筋、型枠の合板、パーライト、水抜きの管を店で買う（調達モード）。日数は推定。}
   - {id: b-order, phase: prep, kind: wait, days: 14, after: [b-site], name: 耐火レンガと耐火モルタルの取り寄せ, parts: [hearth, chamber, landing], reqs: [], src: [M90, M91],
      desc: 耐火レンガ 161 個と耐火モルタルを取り寄せる。コメリの宅配は北海道へ 7 日以上（M90、抜粋）、取り寄せ品は発送まで 9〜11 日の表示がある（M91）。14 日は推定。}
-  - {id: b-buy2, phase: prep, kind: work, days: 1, after: [b-site], side: true, name: 煙突、鋼板、防水材などを買う, parts: [chimney, door, hood, vent], reqs: [], src: [M88],
-     desc: 煙突、H 笠、支持金具、鋼板、ケイカル板、防水材、ガラリ、ガルバの平板、シートを買う。コーナンの通販は出荷から北海道へ 3 日以上（M88）。日数は推定。}
+  - {id: b-buy2, phase: prep, kind: work, days: 1, after: [b-site], side: true, name: 煙突、鋼板、防水材などを買う, parts: [chimney, door, hood], reqs: [], src: [],
+     desc: 煙突、H 笠、支持金具、鋼板、ケイカル板、取っ手、灰入れ、防水材、シート、ガルバの平板、金網を店で買う（調達モード）。日数は推定。}
+  - {id: b-mail, phase: prep, kind: wait, days: 7, after: [b-site], name: 通販で取り寄せる（コーナン）, parts: [vent], reqs: [], src: [M88],
+     desc: 放射温度計と頂部のベントをコーナンの通販で頼む。出荷の予定は品ごとに表示があり、出荷から北海道へ 3 日以上かかる（M88）。7 日は推定。}
 
   # 基礎と台
   - {id: b-dig, phase: base, kind: work, days: 2, after: [b-buy1], name: 掘って砕石を敷き、締める, parts: [foundation], reqs: [R-08], src: [P81],
@@ -85,7 +87,7 @@ tasks:
      desc: セメントとパーライトを体積で 1:5 に練り、100 mm 盛る（P55）。}
   - {id: w-ins, phase: skin, kind: wait, days: 7, after: [b-ins], name: ドームの断熱の乾燥, parts: [insulation], reqs: [], src: [P77, F57],
      desc: 断熱が乾いてから金網と左官に進む（P77、日数は書かれていない）。雨の日は覆う。7 日は推定。}
-  - {id: b-lath, phase: skin, kind: work, days: 1, after: [w-ins], name: 金網を張り、ベントとひさしを付ける, parts: [shell, vent, hood], reqs: [R-08], src: [P77],
+  - {id: b-lath, phase: skin, kind: work, days: 1, after: [w-ins, b-mail], name: 金網を張り、ベントとひさしを付ける, parts: [shell, vent, hood], reqs: [R-08], src: [P77],
      desc: 断熱の上に金網を張る。頂部にベントを付け、焚き口の上にひさしを付ける。日数は推定。}
   - {id: b-render1, phase: skin, kind: work, days: 1, after: [b-lath], temp: 5, name: 左官の 1 層目, parts: [shell], reqs: [R-08], src: [P77, P86],
      desc: 金網の上に下塗りをする。乾かないよう水で湿らせ、シートを掛ける（P86 の 15.1.4）。}

@@ -1,0 +1,109 @@
+# 部品リストと道具の一覧の正。調達モード（docs/navigator/proc.js）と、部品リスト（docs/05-parts-list.md の 5.2 と 5.3 の表）がここから作られる。
+# 05 の表は python tools/gen_bom.py で書き直す。手で直すと gen_nav の点検（E16）で落ちる。
+# items（10 万円に含める品）
+#   cat: 費用の分け方（categories の id）
+#   shop、how: 買う所と買い方（店頭、取り寄せ、通販）
+#   batch: 届く工程（build.yaml の準備と調達の工程）。use の工程より前に終わること（E15）
+#   use: 使う工程（build.yaml の id）、parts: 使う部品（model.yaml の id）
+#   tentative: 値段が仮の値のとき true
+#   status: 未手配、注文済み、入手済み（書かなければ未手配）。paid: 払った額（円）
+# tools（10 万円の外。値段は書かない）
+#   group: build（組むとき）か bake（焼くとき）、use: 最初に使う工程、have: 持っている、借りる、買う、未確認（書かなければ未確認）
+meta:
+  budget: 100000
+  date: "2026-10-18"
+  note: 耐火レンガのドーム、内径 0.8 m、台 3 段、屋根なし、ダンパー自作に、屋根なしの備えを足した案。値段はコメリの店頭を基準にし、コメリに無い品はコーナンの通販にした。
+
+categories:
+  - {id: brick, name: レンガと目地}
+  - {id: ins, name: 断熱}
+  - {id: base, name: 台と床版と基礎}
+  - {id: chim, name: 煙突とダンパー}
+  - {id: door, name: 扉、温度計、灰入れ}
+  - {id: weather, name: 屋根なしの備え}
+  - {id: ship, name: 送料}
+
+items:
+  - {id: i-brick, name: 耐火レンガ 230 × 114 × 65 mm, qty: 161, unit: 個, price: 248, cat: brick, shop: コメリ, how: 取り寄せ, batch: b-order,
+     use: [b-hearth, b-dome, b-land], parts: [hearth, chamber, landing], src: [M64], note: 228 円の表示もある}
+  - {id: i-mortar, name: 耐火モルタル 25 kg（トーヨーマテラン）, qty: 1, unit: 袋, price: 5680, cat: brick, shop: コメリ, how: 取り寄せ, batch: b-order,
+     use: [b-dome, b-land], parts: [chamber, landing], src: [M65, P93], note: "5,180 円、5,480 円の表示もある。2 袋要るかもしれない。水で固まる型と読める"}
+  - {id: i-perlite, name: パーライト 50 L, qty: 6, unit: 袋, price: 1780, cat: ins, shop: コメリ, how: 店頭, batch: b-buy1,
+     use: [b-hins, b-ins], parts: [hearthIns, insulation], src: [M66], note: "1,680 円の表示もある"}
+  - {id: i-block, name: コンクリートブロック, qty: 43, unit: 個, price: 278, cat: base, shop: コメリ, how: 店頭, batch: b-buy1,
+     use: [b-block], parts: [stand], src: [M67], note: C-12。北海道では扱わない表示で、北海道の値は未確認}
+  - {id: i-rebar, name: 異形鉄筋 D10 5.5 m, qty: 8, unit: 本, price: 458, cat: base, shop: コメリ, how: 店頭, batch: b-buy1,
+     use: [b-found, b-block, b-form], parts: [foundation, stand, slab], src: [M71]}
+  - {id: i-plywood, name: JAS コンパネ 12 mm（型枠）, qty: 1, unit: 枚, price: 2680, cat: base, shop: コメリ, how: 店頭, batch: b-buy1,
+     use: [b-found, b-form], parts: [foundation, slab], src: [M72]}
+  - {id: i-cement, name: セメント 25 kg, qty: 11, unit: 袋, price: 838, cat: base, shop: コメリ, how: 店頭, batch: b-buy1,
+     use: [b-found, b-block, b-pour, b-hins, b-ins, b-render1, b-render2], parts: [foundation, stand, slab, hearthIns, insulation, shell], src: [M68],
+     note: 北海道店舗向け。798 円の表示もある。床版の張り出し（水切り）の分と余裕で 1 袋足した}
+  - {id: i-sand, name: 砂 20 kg, qty: 23, unit: 袋, price: 300, cat: base, shop: 未定, how: 店頭, batch: b-buy1, tentative: true,
+     use: [b-found, b-block, b-pour, b-render1, b-render2], parts: [foundation, stand, slab, shell], src: [M69, M70], note: 北海道の店の値が未確認}
+  - {id: i-gravel, name: 砕石 20 kg, qty: 57, unit: 袋, price: 298, cat: base, shop: カインズ, how: 店頭, batch: b-buy1,
+     use: [b-dig, b-found, b-pour], parts: [foundation, slab], src: [M38], note: 北海道の値は未確認。ばらで買えれば下がる}
+  - {id: i-flue, name: ステン煙突 直筒 φ120, qty: 3, unit: 本, price: 1880, cat: chim, shop: コメリ, how: 店頭, batch: b-buy2,
+     use: [b-chim], parts: [chimney], src: [M73]}
+  - {id: i-cap, name: 煙突 H 笠 φ120, qty: 1, unit: 個, price: 2880, cat: chim, shop: コメリ, how: 店頭, batch: b-buy2,
+     use: [b-chim], parts: [chimney], src: [M74]}
+  - {id: i-bracket, name: 煙突の自在支持金具, qty: 1, unit: 個, price: 1380, cat: chim, shop: コメリ, how: 店頭, batch: b-buy2,
+     use: [b-chim], parts: [chimney], src: [M75]}
+  - {id: i-damper, name: 自作ダンパーの鋼板 3.2 × 300 × 300 mm, qty: 1, unit: 枚, price: 898, cat: chim, shop: コメリ, how: 店頭, batch: b-buy2,
+     use: [b-door], parts: [chimney], src: [M76], note: 丸棒は未計上}
+  - {id: i-doorplate, name: 扉の縞鋼板 3.2 × 450 × 600 mm, qty: 1, unit: 枚, price: 2980, cat: door, shop: コメリ, how: 店頭, batch: b-buy2,
+     use: [b-door], parts: [door], src: [M77]}
+  - {id: i-cal, name: 扉のケイカル板 6 mm, qty: 1, unit: 枚, price: 1580, cat: door, shop: コメリ, how: 店頭, batch: b-buy2,
+     use: [b-door], parts: [door], src: [M78]}
+  - {id: i-handle, name: 扉の取っ手, qty: 1, unit: 個, price: 248, cat: door, shop: コメリ, how: 店頭, batch: b-buy2,
+     use: [b-door], parts: [door], src: [M79]}
+  - {id: i-thermo, name: 放射温度計 CUSTOM IR-212, qty: 1, unit: 台, price: 5478, cat: door, shop: コーナン, how: 通販, batch: b-mail,
+     use: [b-cure], parts: [], src: [M80], note: "コメリは 7,200 円"}
+  - {id: i-vent, name: 頂部のベント ステン丸型フード付ガラリ 100 mm, qty: 1, unit: 個, price: 932, cat: weather, shop: コーナン, how: 通販, batch: b-mail,
+     use: [b-lath], parts: [vent], src: [M87], note: 網なし。防虫の網は未計上}
+  - {id: i-ship, name: コーナン通販の送料, qty: 1, unit: 回, price: 660, cat: ship, shop: コーナン, how: 通販, batch: b-mail,
+     use: [], parts: [], src: [M88], note: "7,700 円未満の額"}
+  - {id: i-pail, name: 蓋付きの灰入れ ペール缶 20 L スチール, qty: 1, unit: 個, price: 1280, cat: door, shop: コメリ, how: 店頭, batch: b-buy2,
+     use: [b-cure], parts: [], src: [M81], note: 火災予防条例で要る（R-12）}
+  - {id: i-lid, name: 灰入れの蓋, qty: 1, unit: 個, price: 348, cat: door, shop: コメリ, how: 店頭, batch: b-buy2,
+     use: [b-cure], parts: [], src: [M82]}
+  - {id: i-seal, name: 防水材 アサヒペン 防水塗料 1 L, qty: 1, unit: 缶, price: 3280, cat: weather, shop: コメリ, how: 店頭, batch: b-buy2,
+     use: [b-seal], parts: [shell], src: [M83, P82], note: 外殻約 3.2 m² に 2 回}
+  - {id: i-sheet, name: "覆い K+BUILD タフ UV シート #4000 2.7 × 3.6 m", qty: 1, unit: 枚, price: 2780, cat: weather, shop: コメリ, how: 店頭, batch: b-buy2,
+     use: [w-ins], parts: [], src: [M84], note: 耐用約 3 年の目安。断熱を盛ってからの雨の日に使う}
+  - {id: i-band, name: 覆いのゴムバンド フック付 20 mm × 3 m, qty: 1, unit: 本, price: 598, cat: weather, shop: コメリ, how: 店頭, batch: b-buy2,
+     use: [w-ins], parts: [], src: [M85]}
+  - {id: i-hood, name: 焚き口のひさし ガルバ平板 0.27 × 914 × 1829 mm, qty: 1, unit: 枚, price: 2480, cat: weather, shop: コメリ, how: 店頭, batch: b-buy2,
+     use: [b-lath], parts: [hood], src: [M86], note: 在庫切れの表示あり}
+  - {id: i-weep, name: 床版の水抜きの管, qty: 4, unit: 本, price: 75, cat: weather, shop: 未定, how: 店頭, batch: b-buy1, tentative: true,
+     use: [b-pour], parts: [slab], src: [], note: 出典なし}
+  - {id: i-lath, name: 外殻の金網（ラス）, qty: 1, unit: 式, price: 1000, cat: weather, shop: 未定, how: 店頭, batch: b-buy2, tentative: true,
+     use: [b-lath], parts: [shell], src: [], note: 値段は未確認}
+
+tools:
+  - {id: t-grinder, group: build, name: ディスクグラインダーとダイヤモンドカッター, purpose: レンガを切る, use: [b-cut]}
+  - {id: t-trowel, group: build, name: レンガごてと左官ごて, purpose: レンガを積む、外殻を塗る, use: [b-block]}
+  - {id: t-level, group: build, name: 水平器, purpose: 台、炉床、レンガの段の水平を見る, use: [b-block]}
+  - {id: t-tape, group: build, name: メジャー, purpose: 寸法を測る, use: [b-site]}
+  - {id: t-line, group: build, name: 水糸, purpose: 段の高さと通りをそろえる, use: [b-block]}
+  - {id: t-bucket, group: build, name: バケツと練り舟, purpose: モルタルとセメントを練る, use: [b-found]}
+  - {id: t-shovel, group: build, name: スコップ, purpose: 砂、砕石、セメントを混ぜる、運ぶ, use: [b-dig]}
+  - {id: t-mallet, group: build, name: ゴムハンマー, purpose: レンガを据える, use: [b-hearth]}
+  - {id: t-tamper, group: build, name: タンパー, purpose: 砕石を締める, use: [b-dig]}
+  - {id: t-mask, group: build, name: 防じんマスク（DS2）, purpose: 切る、混ぜるときの粉じんを避ける, use: [b-found]}
+  - {id: t-goggles, group: build, name: 保護めがね, purpose: 切る、砕くときの破片を避ける, use: [b-cut]}
+  - {id: t-ear, group: build, name: 耳栓, purpose: グラインダーの音を避ける, use: [b-cut]}
+  - {id: t-gloves, group: build, name: 作業手袋, purpose: 手を守る, use: [b-dig]}
+  - {id: t-drill, group: build, name: 振動ドリルとコンクリート用の刃, purpose: ひさしとベントを留める下穴をあける, use: [b-lath]}
+  - {id: t-saw, group: build, name: のこぎりか丸のこ, purpose: 型枠の合板を切る, use: [b-found]}
+  - {id: t-snips, group: build, name: 金切りばさみ, purpose: ひさしのガルバと外殻の金網を切る, use: [b-lath]}
+  - {id: t-brush, group: build, name: 刷毛, purpose: 外殻に防水材を塗る, use: [b-seal]}
+  - {id: t-ladder, group: build, name: 脚立, purpose: 煙突の頂部の作業, use: [b-chim]}
+  - {id: t-peel, group: bake, name: ピール（木と金属）, purpose: 生地を入れる、パンを出す, use: [m-firstbake]}
+  - {id: t-rake, group: bake, name: 熾火の掻き出し棒, purpose: 熾火を掻き出す, use: [m-firstbake]}
+  - {id: t-hbrush, group: bake, name: 炉床のブラシ, purpose: 炉床の灰を払う, use: [m-firstbake]}
+  - {id: t-mop, group: bake, name: 炉床を拭くモップ, purpose: 炉床を拭く, use: [m-firstbake]}
+  - {id: t-hgloves, group: bake, name: 耐熱手袋, purpose: 熱い物を扱う, use: [b-cure]}
+  - {id: t-meter, group: bake, name: 薪の水分計, purpose: 含水率 20% 以下を確かめる（P64）, use: [b-cure]}
+  - {id: t-bag, group: bake, name: 保温バッグ, purpose: 冬に生地を運ぶ, use: []}
+  - {id: t-snow, group: bake, name: 雪かきのスコップ, purpose: 窯のまわりと足元を除雪する, use: []}

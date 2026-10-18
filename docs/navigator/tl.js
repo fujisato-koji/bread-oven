@@ -1,7 +1,6 @@
 // タイムラインモード。製作の工程を、前後の関係と待ち（養生、乾燥）から日程に組み、横棒の図で見せる。
 // データは nav.json の build（meta、phases、tasks）。日程はこの JS が、始める日と作業する日の決め方から組む。
-// 作業（work）は作業する日で数え、1 人で行うので同じ日に 2 つの作業は入れない。
-// 待ち（wait）は暦日で数え、人の手を使わないので、その間にほかの作業を入れられる。
+// 日程の組み方は外枠（app.js の schedule）にあり、調達モードと同じ日程を使う。
 // 左の工程名と上の日付は、図を動かしても見えるように、図の上に重ねた別の SVG で描く（クリックは下の図が受ける）。
 NavApp.register('tl', (api) => {
   'use strict';
@@ -75,81 +74,16 @@ NavApp.register('tl', (api) => {
   const succOf = new Map(tasks.map((t) => [t.id, []]));
   for (const t of tasks) for (const a of t.after || []) succOf.get(a).push(t.id);
 
-  // ---------- 状態
-  let pattern = 'all'; // all は毎日作業できる、we は土日だけ
-  let start = B.meta.start;
+  // ---------- 状態（始める日と作業する日の決め方は外枠が持ち、調達モードと共有する）
   let showCrit = true;
   let plan = null;
   let entered = false;
+  let dirty = false;
 
-  // ---------- 日付（時差の影響を避けるため UTC で数える）
-  const DAY = 86400000;
-  const WD = '日月火水木金土';
-  const parseDate = (s) => {
-    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || '');
-    return m ? new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])) : null;
-  };
-  const dayAt = (i) => new Date(parseDate(start).getTime() + i * DAY);
-  const md = (dt) => `${dt.getUTCMonth() + 1}/${dt.getUTCDate()}`;
-  const mdw = (dt) => `${md(dt)}（${WD[dt.getUTCDay()]}）`;
+  // ---------- 日付（外枠の日程と同じ数え方）
+  const dayAt = (i) => api.planDay(i);
+  const { md, mdw } = api;
   const isWeekend = (i) => [0, 6].includes(dayAt(i).getUTCDay());
-  const isWorkday = (i) => pattern === 'all' || isWeekend(i);
-
-  // ---------- 日程を組む
-  // 前の工程がそろったものから、主の流れの工程を書いた順に、合間の作業（side）はそのあとに日を割り当てる。
-  function schedule() {
-    const out = new Map();
-    const busy = new Set();
-    const left = new Set(tasks.map((t) => t.id));
-    const ready = (t) => left.has(t.id) && (t.after || []).every((a) => out.has(a));
-    while (left.size) {
-      const t = tasks.find((x) => ready(x) && !x.side) || tasks.find((x) => ready(x));
-      if (!t) break; // 輪になっていれば gen_nav が止めるので、ここには来ない
-      left.delete(t.id);
-      let es = 0;
-      let drive = null;
-      for (const a of t.after || []) {
-        const e = out.get(a).e;
-        if (e >= es) { es = e; drive = a; }
-      }
-      let s;
-      let e;
-      let segs;
-      if (t.kind === 'mile') {
-        s = es; e = es; segs = [];
-      } else if (t.kind === 'wait') {
-        s = es; e = es + t.days; segs = [[s, e]];
-      } else if (t.cont) {
-        // 続けて行う作業。作業できる日に始め、暦日で続ける。その間は人の手がふさがる。
-        let d = es;
-        const free = (x) => { for (let k = 0; k < t.days; k++) if (busy.has(x + k)) return false; return true; };
-        while (!(isWorkday(d) && free(d))) d++;
-        for (let k = 0; k < t.days; k++) busy.add(d + k);
-        s = d; e = d + t.days; segs = [[s, e]];
-      } else {
-        // 作業。作業できる日で、ほかの作業に使っていない日を days 日とる。
-        const used = [];
-        for (let d = es; used.length < t.days; d++) {
-          if (isWorkday(d) && !busy.has(d)) { used.push(d); busy.add(d); }
-        }
-        s = used[0]; e = used[used.length - 1] + 1;
-        segs = [];
-        for (const d of used) {
-          const last = segs[segs.length - 1];
-          if (last && last[1] === d) last[1] = d + 1;
-          else segs.push([d, d + 1]);
-        }
-      }
-      out.set(t.id, { s, e, segs, drive });
-    }
-    // 終わりから、日を決めた前の工程をたどる（日程を決めている流れ）
-    let end = 0;
-    let last = null;
-    for (const [id, p] of out) if (p.e >= end) { end = p.e; last = id; }
-    const crit = new Set();
-    for (let id = last; id; id = out.get(id).drive) crit.add(id);
-    return { out, end, crit, workDays: busy.size };
-  }
 
   // ---------- 行の並び。段階の見出しのあとに、その段階の工程を書いた順に置く。
   const rows = [];
@@ -247,7 +181,8 @@ NavApp.register('tl', (api) => {
   }
 
   function render() {
-    plan = schedule();
+    plan = api.plan();
+    dirty = false;
     days = plan.end + 10;
     W = X(days) + PAD_R;
     rowEls = new Map(tasks.map((t) => [t.id, []]));
@@ -407,15 +342,15 @@ NavApp.register('tl', (api) => {
     kids.push(el('h2', { text: '作業する日' }));
     const seg = el('div', { class: 'seg2', role: 'group', 'aria-label': '作業する日' });
     for (const [k, label] of [['all', '毎日'], ['we', '土日だけ']]) {
-      const b = el('button', { type: 'button', 'aria-pressed': String(pattern === k), text: label });
-      b.addEventListener('click', () => { if (pattern !== k) { pattern = k; render(); api.writeUrl(true); } });
+      const b = el('button', { type: 'button', 'aria-pressed': String(api.planOpts.pattern === k), text: label });
+      b.addEventListener('click', () => api.setPlanOpts({ pattern: k }));
       seg.append(b);
     }
     kids.push(seg);
     kids.push(el('h2', { text: '始める日' }));
-    const inp = el('input', { type: 'date', value: start, 'aria-label': '始める日' });
+    const inp = el('input', { type: 'date', value: api.planOpts.start, 'aria-label': '始める日' });
     inp.addEventListener('change', () => {
-      if (parseDate(inp.value)) { start = inp.value; render(); api.writeUrl(true); }
+      if (api.parseDate(inp.value)) api.setPlanOpts({ start: inp.value });
     });
     kids.push(inp);
     if (B.meta.start_note) kids.push(el('p', { class: 'note', text: B.meta.start_note }));
@@ -514,21 +449,22 @@ NavApp.register('tl', (api) => {
       let changed = false;
       // URL から来たとき（m がある）は URL のとおりにし、タブで戻ったときは前の状態を残す
       if ('m' in params) {
-        const w = params.w === 'we' ? 'we' : 'all';
-        if (w !== pattern) { pattern = w; changed = true; }
-        const s = parseDate(params.s) ? params.s : B.meta.start;
-        if (s !== start) { start = s; changed = true; }
         const cp = params.cp !== '0';
         if (cp !== showCrit) { showCrit = cp; changed = true; }
       }
       // 置き場が見えてから最初の範囲を決める（隠れている間は大きさが 0 のため）
-      if (changed || !entered) render();
+      if (changed || dirty || !entered) render();
       else placeOverlays();
       entered = true;
     },
+    // 始める日か作業する日の決め方が変わった。見えていれば組み直し、隠れていれば入るときに組み直す。
+    planChanged() {
+      if (api.mode === 'tl' && entered) render();
+      else dirty = true;
+    },
     leave() { api.tip(null); },
     params() {
-      return { w: pattern === 'we' ? 'we' : '', s: start !== B.meta.start ? start : '', cp: showCrit ? '' : '0' };
+      return { cp: showCrit ? '' : '0' };
     },
     highlight,
     escape() { return false; },

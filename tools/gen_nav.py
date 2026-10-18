@@ -1,8 +1,9 @@
 """ナビゲータのデータを作る。
 
-正は次の 5 つ。
+正は次の 6 つ。
 - docs/data/model.yaml（部品、系統図、流れ、要求の割り当て）
 - docs/data/build.yaml（製作の工程と日数。タイムラインモードが日程に組む）
+- docs/data/bom.yaml（部品リストと道具。調達モードが読み、tools/gen_bom.py が 05 の表を作る）
 - docs/01-requirements.md（1.2 の要求の表と、設計点の根拠の読み方）
 - docs/data/oven.json（寸法）
 - docs/sources.md（出典の表）
@@ -22,6 +23,8 @@ import sys
 from pathlib import Path
 
 import yaml
+
+import gen_bom
 
 ROOT = Path(__file__).resolve().parent.parent
 DOCS = ROOT / "docs"
@@ -128,6 +131,69 @@ def read_sources():
 def viewer_parts():
     text = VIEWER_JS.read_text(encoding="utf-8")
     return re.findall(r"\{ key: '(\w+)', label:", text)
+
+
+BUILD_KEYS = {"id", "phase", "kind", "days", "after", "name", "parts", "reqs", "src", "desc", "side", "cont", "temp"}
+ITEM_KEYS = {"id", "name", "qty", "unit", "price", "cat", "shop", "how", "batch", "use", "parts", "src", "note",
+             "tentative", "status", "paid", "amount"}
+TOOL_KEYS = {"id", "group", "name", "purpose", "use", "have"}
+
+
+def unknown_keys(rows, allowed, where, errors):
+    """知らない鍵を落とす。YAML の流れの書き方で、半角の , が値を切ると知らない鍵ができる。"""
+    for r in rows:
+        bad = set(r) - allowed
+        if bad:
+            errors.append(f"E17 {where} {r.get('id')} に知らない鍵がある: {', '.join(sorted(map(str, bad)))}（値に半角の , や # があれば引用符で囲む）")
+
+
+def check_bom(bom, build, part_ids, sources, errors):
+    """部品リストと道具（bom.yaml）を点検する。E15。"""
+    tasks = {t["id"]: t for t in build["tasks"]}
+    cats = {c["id"] for c in bom["categories"]}
+    after = {t["id"]: t.get("after", []) for t in build["tasks"]}
+    memo = {}
+
+    def ancestors(n):
+        if n not in memo:
+            memo[n] = set()
+            for a in after.get(n, []):
+                memo[n] |= {a} | ancestors(a)
+        return memo[n]
+
+    seen = set()
+    for i in bom["items"] + bom["tools"]:
+        if i["id"] in seen:
+            errors.append(f"E15 品か道具の id {i['id']} が重複している")
+        seen.add(i["id"])
+    for i in bom["items"]:
+        if i["cat"] not in cats:
+            errors.append(f"E15 品 {i['id']} の分け方 {i['cat']} が categories に無い")
+        if not (isinstance(i["qty"], int) and isinstance(i["price"], int)):
+            errors.append(f"E15 品 {i['id']} の数量か単価が整数でない")
+        if i["status"] not in ("未手配", "注文済み", "入手済み"):
+            errors.append(f"E15 品 {i['id']} の状態 {i['status']} は未手配、注文済み、入手済みのどれでもない")
+        if i["batch"] not in tasks:
+            errors.append(f"E15 品 {i['id']} の届く工程 {i['batch']} が build.yaml に無い")
+        for u in i["use"]:
+            if u not in tasks:
+                errors.append(f"E15 品 {i['id']} の使う工程 {u} が build.yaml に無い")
+            elif i["batch"] in tasks and i["batch"] not in ancestors(u):
+                errors.append(f"E15 品 {i['id']} は {i['batch']} で届くが、それより前に終わらない工程 {u} で使う")
+        for p in i["parts"]:
+            if p not in part_ids:
+                errors.append(f"E15 品 {i['id']} の部品 {p} が無い")
+        for c in i["src"]:
+            if c not in sources:
+                errors.append(f"E10 品 {i['id']} の出典 {c} が sources.md に無い")
+    for t in bom["tools"]:
+        if t["group"] not in ("build", "bake"):
+            errors.append(f"E15 道具 {t['id']} の group {t['group']} は build か bake でない")
+        if t["have"] not in ("持っている", "借りる", "買う", "未確認"):
+            errors.append(f"E15 道具 {t['id']} の have {t['have']} は持っている、借りる、買う、未確認のどれでもない")
+        for u in t["use"]:
+            if u not in tasks:
+                errors.append(f"E15 道具 {t['id']} の使う工程 {u} が build.yaml に無い")
 
 
 def check_build(build, part_ids, req_ids, sources, errors):
@@ -286,7 +352,19 @@ def check_and_build():
 
     build = yaml.safe_load(BUILD.read_text(encoding="utf-8"))
     build["meta"]["start"] = str(build["meta"]["start"])
+    unknown_keys(build["tasks"], BUILD_KEYS, "製作の工程", errors)
     check_build(build, part_ids, req_ids, sources, errors)
+
+    bom, _ = gen_bom.load()
+    unknown_keys(bom["items"], ITEM_KEYS, "品", errors)
+    unknown_keys(bom["tools"], TOOL_KEYS, "道具", errors)
+    check_bom(bom, build, part_ids, sources, errors)
+    parts_md = gen_bom.PARTS_MD.read_text(encoding="utf-8")
+    new_md, missing = gen_bom.expected(parts_md, bom, build)
+    if missing:
+        errors.append(f"E16 05 に表の印が無い: {', '.join(sorted(missing))}")
+    elif new_md != parts_md:
+        errors.append("E16 05 の表が bom.yaml と食い違う。python tools/gen_bom.py を実行する")
 
     for r in reqs:
         for c in SRC_CODE.findall(r["basis"] + " " + r["note"]):
@@ -317,6 +395,7 @@ def check_and_build():
         "reqs": reqs,
         "alloc": alloc,
         "build": build,
+        "bom": bom,
         "sources": sources,
     }
     return data, errors, warnings
@@ -337,7 +416,7 @@ def main():
         return
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
-    print(f"{OUT.relative_to(ROOT)} を書いた（要求 {len(data['reqs'])}、部品 {len(data['parts'])}、工程 {len(data['steps'])}、製作の工程 {len(data['build']['tasks'])}）。")
+    print(f"{OUT.relative_to(ROOT)} を書いた（要求 {len(data['reqs'])}、部品 {len(data['parts'])}、工程 {len(data['steps'])}、製作の工程 {len(data['build']['tasks'])}、品 {len(data['bom']['items'])}、道具 {len(data['bom']['tools'])}）。")
 
 
 if __name__ == "__main__":

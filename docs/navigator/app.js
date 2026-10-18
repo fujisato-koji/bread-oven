@@ -1,13 +1,13 @@
 // パン窯ナビゲータの外枠。
 // モードの切り替え、URL の状態、選んだものの札、図の拡大縮小を受け持つ。
-// 各モード（req.js、flow.js、sys.js、dwg.js、v3d.js、tl.js）は NavApp.register(名前, 作る関数) で登録し、
+// 各モード（req.js、flow.js、sys.js、dwg.js、v3d.js、tl.js、proc.js）は NavApp.register(名前, 作る関数) で登録し、
 // 作る関数は api を受け取って { enter(params), leave(), params(), highlight(sel), escape() } を返す。
 // 決まりごとは NAVIGATOR.md に書く。
 (function () {
   'use strict';
 
-  const MODES = ['req', 'flow', 'sys', 'dwg', 'v3d', 'tl'];
-  const KIND = { part: '部品', node: '系統図の要素', req: '要求', step: '工程', flow: '流れ', task: '製作の工程' };
+  const MODES = ['req', 'flow', 'sys', 'dwg', 'v3d', 'tl', 'proc'];
+  const KIND = { part: '部品', node: '系統図の要素', req: '要求', step: '工程', flow: '流れ', task: '製作の工程', item: '品と道具' };
   const THEME_KEY = 'bread-nav-theme';
   const WIDTH_KEY = 'bread-nav-widths';
 
@@ -17,7 +17,7 @@
   let OVEN = null;
   let mode = null;
   let sel = { kind: null, id: null };
-  const IX = { thing: new Map(), req: new Map(), step: new Map(), flow: new Map(), task: new Map(), kids: new Map() };
+  const IX = { thing: new Map(), req: new Map(), step: new Map(), flow: new Map(), task: new Map(), item: new Map(), kids: new Map() };
 
   // ---------- 小さな道具
 
@@ -84,6 +84,8 @@
     }
     for (const s of D.steps) IX.step.set(s.id, s);
     for (const t of (D.build ? D.build.tasks : [])) IX.task.set(t.id, t);
+    for (const x of (D.bom ? [...D.bom.items, ...D.bom.tools] : [])) IX.item.set(x.id, x);
+    planOpts.start = defaultStart();
     for (const sh of D.sheets) {
       sh.flows.forEach((f, i) => {
         const id = `${sh.id}:${i}`;
@@ -97,6 +99,8 @@
   const step = (id) => IX.step.get(id);
   const flow = (id) => IX.flow.get(id);
   const task = (id) => IX.task.get(id);
+  const item = (id) => IX.item.get(id);
+  const isTool = (x) => !!x && 'group' in x;
   const kidsOf = (rid) => IX.kids.get(rid) || [];
   const allocOf = (rid) => D.alloc[rid] || { parts: [], steps: [] };
 
@@ -118,6 +122,13 @@
   function tasksOfReq(rid) {
     return [...IX.task.values()].filter((t) => (t.reqs || []).includes(rid)).map((t) => t.id);
   }
+  // 品と道具のつながり。届く工程（batch）と使う工程（use）
+  function itemsOfPart(pid) {
+    return [...IX.item.values()].filter((x) => (x.parts || []).includes(pid)).map((x) => x.id);
+  }
+  function itemsOfTask(tid) {
+    return [...IX.item.values()].filter((x) => x.batch === tid || (x.use || []).includes(tid)).map((x) => x.id);
+  }
   function flowsOf(id) {
     return [...IX.flow.values()].filter((f) => f.from === id || f.to === id);
   }
@@ -127,7 +138,7 @@
 
   // 選んだものに関係する部品、工程、要求、流れ、製作の工程。各モードはこれで光らせる。
   function related(s = sel) {
-    const out = { parts: new Set(), steps: new Set(), reqs: new Set(), flows: new Set(), tasks: new Set() };
+    const out = { parts: new Set(), steps: new Set(), reqs: new Set(), flows: new Set(), tasks: new Set(), items: new Set() };
     if (!s || !s.kind) return out;
     const addReq = (rid) => {
       out.reqs.add(rid);
@@ -142,6 +153,7 @@
       reqsOfPart(s.id).forEach((r) => out.reqs.add(r));
       flowsOf(s.id).forEach((f) => out.flows.add(f.id));
       tasksOfPart(s.id).forEach((x) => out.tasks.add(x));
+      itemsOfPart(s.id).forEach((x) => out.items.add(x));
     } else if (s.kind === 'req') {
       addReq(s.id);
       kidsOf(s.id).forEach(addReq);
@@ -162,8 +174,103 @@
       const t = task(s.id);
       (t ? t.parts || [] : []).forEach((p) => out.parts.add(p));
       (t ? t.reqs || [] : []).forEach((r) => out.reqs.add(r));
+      itemsOfTask(s.id).forEach((x) => out.items.add(x));
+    } else if (s.kind === 'item') {
+      out.items.add(s.id);
+      const x = item(s.id);
+      if (x) {
+        (x.parts || []).forEach((p) => out.parts.add(p));
+        if (x.batch) out.tasks.add(x.batch);
+        (x.use || []).forEach((u) => out.tasks.add(u));
+      }
     }
     return out;
+  }
+
+  // ---------- 製作の日程（タイムラインと調達が同じものを使う）
+  // 作業（work）は作業する日で数え、1 人で行うので同じ日に 2 つの作業は入れない。
+  // 待ち（wait）は暦日で数え、人の手を使わないので、その間にほかの作業を入れられる。
+  // 前の工程がそろったものから、主の流れの工程を書いた順に、合間の作業（side）はそのあとに日を割り当てる。
+  // 始める日と作業する日の決め方（毎日か土日だけか）は全モードで共有し、既定と違えば URL の w と s に載せる。
+  const DAY = 86400000;
+  const WD = '日月火水木金土';
+  const planOpts = { pattern: 'all', start: null };
+  let planCache = null;
+  function parseDate(s) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || '');
+    return m ? new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])) : null;
+  }
+  const defaultStart = () => (D && D.build ? D.build.meta.start : '2027-05-01');
+  const planDay = (i) => new Date(parseDate(planOpts.start || defaultStart()).getTime() + i * DAY);
+  const md = (dt) => `${dt.getUTCMonth() + 1}/${dt.getUTCDate()}`;
+  const mdw = (dt) => `${md(dt)}（${WD[dt.getUTCDay()]}）`;
+
+  function schedule() {
+    const tasks = D.build ? D.build.tasks : [];
+    const isWorkday = (i) => planOpts.pattern === 'all' || [0, 6].includes(planDay(i).getUTCDay());
+    const out = new Map();
+    const busy = new Set();
+    const left = new Set(tasks.map((t) => t.id));
+    const ready = (t) => left.has(t.id) && (t.after || []).every((a) => out.has(a));
+    while (left.size) {
+      const t = tasks.find((x) => ready(x) && !x.side) || tasks.find((x) => ready(x));
+      if (!t) break; // 輪になっていれば gen_nav が止めるので、ここには来ない
+      left.delete(t.id);
+      let es = 0;
+      let drive = null;
+      for (const a of t.after || []) {
+        const e = out.get(a).e;
+        if (e >= es) { es = e; drive = a; }
+      }
+      let s;
+      let e;
+      let segs;
+      if (t.kind === 'mile') {
+        s = es; e = es; segs = [];
+      } else if (t.kind === 'wait') {
+        s = es; e = es + t.days; segs = [[s, e]];
+      } else if (t.cont) {
+        // 続けて行う作業。作業できる日に始め、暦日で続ける。その間は人の手がふさがる。
+        let d = es;
+        const free = (x) => { for (let k = 0; k < t.days; k++) if (busy.has(x + k)) return false; return true; };
+        while (!(isWorkday(d) && free(d))) d++;
+        for (let k = 0; k < t.days; k++) busy.add(d + k);
+        s = d; e = d + t.days; segs = [[s, e]];
+      } else {
+        // 作業。作業できる日で、ほかの作業に使っていない日を days 日とる。
+        const used = [];
+        for (let d = es; used.length < t.days; d++) {
+          if (isWorkday(d) && !busy.has(d)) { used.push(d); busy.add(d); }
+        }
+        s = used[0]; e = used[used.length - 1] + 1;
+        segs = [];
+        for (const d of used) {
+          const last = segs[segs.length - 1];
+          if (last && last[1] === d) last[1] = d + 1;
+          else segs.push([d, d + 1]);
+        }
+      }
+      out.set(t.id, { s, e, segs, drive });
+    }
+    // 終わりから、日を決めた前の工程をたどる（日程を決めている流れ）
+    let end = 0;
+    let last = null;
+    for (const [id, p] of out) if (p.e >= end) { end = p.e; last = id; }
+    const crit = new Set();
+    for (let id = last; id; id = out.get(id).drive) crit.add(id);
+    return { out, end, crit, workDays: busy.size };
+  }
+  function plan() {
+    if (!planCache) planCache = schedule();
+    return planCache;
+  }
+  function setPlanOpts(o, push = true) {
+    const next = { ...planOpts, ...o };
+    if (next.pattern === planOpts.pattern && next.start === planOpts.start) return;
+    Object.assign(planOpts, next);
+    planCache = null;
+    for (const m of Object.values(mods)) if (m && m.planChanged) m.planChanged();
+    writeUrl(push);
   }
 
   // ---------- 図の拡大縮小（viewBox を動かす）
@@ -267,6 +374,8 @@
   const reqName = (id) => `${id} ${req(id) ? req(id).text : ''}`.trim();
   const stepName = (id) => (step(id) ? step(id).name : id);
   const taskName = (id) => (task(id) ? task(id).name : id);
+  const itemName = (id) => (item(id) ? item(id).name : id);
+  const yen = (v) => `${Number(v).toLocaleString('ja-JP')} 円`;
 
   function goButtons(kind, id) {
     const b = [];
@@ -278,6 +387,7 @@
       go('dwg', '図面で見る');
       go('v3d', '3D で見る');
       if (tasksOfPart(id).length) go('tl', 'タイムラインで見る');
+      if (itemsOfPart(id).length) go('proc', '調達で見る');
       const p = thing(id);
       if (p && p.doc) b.push(`<a href="${esc(docHref(p.doc))}" target="_blank" rel="noopener">設計書で読む</a>`);
     } else if (kind === 'node') {
@@ -294,8 +404,14 @@
       go('sys', '系統図で見る');
     } else if (kind === 'task') {
       go('tl', 'タイムラインで見る');
+      if (itemsOfTask(id).length) go('proc', '調達で見る');
       if ((task(id).parts || []).length) go('v3d', '3D で見る');
       b.push(`<a href="${esc(docHref('07-build.md'))}" target="_blank" rel="noopener">製作の手順を読む</a>`);
+    } else if (kind === 'item') {
+      go('proc', '調達で見る');
+      go('tl', 'タイムラインで見る');
+      if ((item(id).parts || []).length) go('v3d', '3D で見る');
+      b.push(`<a href="${esc(docHref('05-parts-list.md'))}" target="_blank" rel="noopener">部品リストで読む</a>`);
     }
     return `<div class="go">${b.join('')}</div>`;
   }
@@ -311,6 +427,7 @@
         <h3>この部品で満たす要求</h3>${pillsHtml('req', reqsOfPart(s.id), reqName)}
         <h3>この部品を使う工程</h3>${pillsHtml('step', stepsOfPart(s.id), stepName)}
         <h3>この部品を作る製作の工程</h3>${pillsHtml('task', tasksOfPart(s.id), taskName)}
+        <h3>この部品の材料（調達）</h3>${pillsHtml('item', itemsOfPart(s.id), itemName)}
         ${goButtons('part', s.id)}`;
     }
     if (s.kind === 'node') {
@@ -356,8 +473,39 @@
         <h3>次の工程</h3>${pillsHtml('task', next, taskName)}
         <h3>作る部品</h3>${pillsHtml('part', t.parts || [], partName)}
         ${(t.reqs || []).length ? `<h3>関わる要求</h3>${pillsHtml('req', t.reqs, reqName)}` : ''}
+        ${itemsOfTask(s.id).length ? `<h3>この工程で届く品、使う品と道具</h3>${pillsHtml('item', itemsOfTask(s.id), itemName)}` : ''}
         <h3>出典</h3><p>${(t.src || []).map((c) => srcHtml(c)).join('、') || 'なし'}</p>
         ${goButtons('task', s.id)}`;
+    }
+    if (s.kind === 'item') {
+      const x = item(s.id);
+      const p = plan();
+      const when = (tid) => (p.out.has(tid) ? mdw(planDay(p.out.get(tid).s)) : '');
+      const uses = (x.use || []).filter((u) => p.out.has(u));
+      const firstUse = uses.length ? uses.reduce((a, b) => (p.out.get(a).s <= p.out.get(b).s ? a : b)) : null;
+      if (isTool(x)) {
+        return `<h2>${esc(x.name)}</h2><p class="muted">道具（10 万円の外）、${x.group === 'build' ? '組むとき' : '焼くとき'}、${esc(x.have)}</p>
+          <p>${srcHtml(x.purpose)}</p>
+          <h3>最初に使う工程</h3>${firstUse ? `${pillsHtml('task', [firstUse], taskName)}<p class="muted">${esc(when(firstUse))}</p>` : '<p class="muted">冬（工程の外）</p>'}
+          ${goButtons('item', s.id)}`;
+      }
+      const cat = D.bom.categories.find((c) => c.id === x.cat);
+      const arrive = p.out.has(x.batch) ? p.out.get(x.batch).e : null;
+      const slack = firstUse != null && arrive != null ? p.out.get(firstUse).s - arrive : null;
+      return `<h2>${esc(x.name)}</h2><p class="muted">${esc(cat ? cat.name : '')}、${esc(x.status)}${x.tentative ? '、値段は仮' : ''}</p>
+        <table>
+          <tr><td>数量</td><td class="num">${esc(x.qty)} ${esc(x.unit)}</td></tr>
+          <tr><td>単価</td><td class="num">${yen(x.price)}</td></tr>
+          <tr><td>金額</td><td class="num">${yen(x.amount)}</td></tr>
+          ${x.paid != null ? `<tr><td>払った額</td><td class="num">${yen(x.paid)}</td></tr>` : ''}
+          <tr><td>買う所</td><td>${esc(x.shop)}（${esc(x.how)}）</td></tr>
+        </table>
+        ${x.note ? `<p>${srcHtml(x.note)}</p>` : ''}
+        <h3>届く工程</h3>${pillsHtml('task', [x.batch], taskName)}<p class="muted">${arrive != null ? `届く日 ${esc(mdw(planDay(Math.max(0, arrive - 1))))}` : ''}</p>
+        <h3>使う工程</h3>${pillsHtml('task', x.use || [], taskName)}${firstUse ? `<p class="muted">最初に使う日 ${esc(when(firstUse))}${slack != null ? `、届いてから ${slack} 日` : ''}</p>` : ''}
+        <h3>使う部品</h3>${pillsHtml('part', x.parts || [], partName)}
+        <h3>出典</h3><p>${(x.src || []).map((c) => srcHtml(c)).join('、') || 'なし'}</p>
+        ${goButtons('item', s.id)}`;
     }
     if (s.kind === 'flow') {
       const f = flow(s.id);
@@ -388,7 +536,8 @@
 
   function select(kind, id, opts = {}) {
     const valid = kind && ((kind === 'part' || kind === 'node') ? thing(id) && thing(id).kind === kind
-      : kind === 'req' ? req(id) : kind === 'step' ? step(id) : kind === 'flow' ? flow(id) : kind === 'task' ? task(id) : false);
+      : kind === 'req' ? req(id) : kind === 'step' ? step(id) : kind === 'flow' ? flow(id) : kind === 'task' ? task(id)
+        : kind === 'item' ? item(id) : false);
     sel = valid ? { kind, id } : { kind: null, id: null };
     renderDetail();
     for (const m of Object.values(mods)) if (m && m.highlight) m.highlight(sel, opts);
@@ -440,6 +589,8 @@
     const sp = new URLSearchParams();
     if (mode) sp.set('m', mode);
     if (sel.kind) { sp.set('k', sel.kind); sp.set('i', sel.id); }
+    if (planOpts.pattern === 'we') sp.set('w', 'we');
+    if (planOpts.start && planOpts.start !== defaultStart()) sp.set('s', planOpts.start);
     const mod = mode && mods[mode];
     if (mod && mod.params) for (const [k, v] of Object.entries(mod.params() || {})) if (v != null && v !== '') sp.set(k, v);
     return '#/?' + sp.toString();
@@ -460,10 +611,19 @@
     try {
       if (params.k && params.i) {
         const valid = (params.k === 'part' || params.k === 'node') ? thing(params.i) : params.k === 'req' ? req(params.i)
-          : params.k === 'step' ? step(params.i) : params.k === 'flow' ? flow(params.i) : params.k === 'task' ? task(params.i) : null;
+          : params.k === 'step' ? step(params.i) : params.k === 'flow' ? flow(params.i) : params.k === 'task' ? task(params.i)
+            : params.k === 'item' ? item(params.i) : null;
         sel = valid ? { kind: params.k, id: params.i } : { kind: null, id: null };
       } else {
         sel = { kind: null, id: null };
+      }
+      // 日程の決め方は URL のとおりにする（既定なら載っていない）
+      const w = params.w === 'we' ? 'we' : 'all';
+      const st = parseDate(params.s) ? params.s : defaultStart();
+      if (w !== planOpts.pattern || st !== planOpts.start) {
+        Object.assign(planOpts, { pattern: w, start: st });
+        planCache = null;
+        for (const m of Object.values(mods)) if (m && m.planChanged) m.planChanged();
       }
       renderDetail();
       setMode(params.m || 'req', { params });
@@ -647,8 +807,10 @@
     get sel() { return sel; },
     get mode() { return mode; },
     $, el, esc, chip, statusClass, srcHtml, docHref,
-    thing, req, step, flow, task, kidsOf, allocOf,
-    reqsOfPart, stepsOfPart, reqsOfStep, flowsOf, sheetsOf, tasksOfPart, related,
+    thing, req, step, flow, task, item, isTool, kidsOf, allocOf,
+    reqsOfPart, stepsOfPart, reqsOfStep, flowsOf, sheetsOf, tasksOfPart, itemsOfPart, itemsOfTask, related,
+    plan, setPlanOpts, planDay, parseDate, md, mdw, yen,
+    get planOpts() { return { ...planOpts }; },
     select, goto, writeUrl, panZoom,
     tip(html, x, y) {
       const t = $('#tip');
