@@ -23,7 +23,28 @@ NavApp.register('dwg', (api) => {
   const LINER = 0.032; // 前室の天井の薄いレンガの厚さ（1.4）
   const GROOVE = 0.025; // ダンパーの溝（L25）の高さ（1.6、2.6）
   const DAMPER_Z0 = 0.48; // ダンパーの溝の後ろの端の z（1.6）
-  const FOLD = 0.015; // 前室の天板の水切りの折り下げ（仮）
+  const DRIP_SET = 0.005; // 前室の天板の水切り（平鋼 3 × 25）の、天板の前の縁からの引っ込み（3.9）
+  const FB_T = 0.003; // 水切りの平鋼の厚さ
+  const EAR_OUT = 0.10; // 前室の箱の耳（平鋼 6 × 100 を 60 mm）の袖からの出（3.9）
+  const EAR_H = 0.06; // 同じく高さ
+  const EAR_T = 0.006; // 同じく厚さ
+  const EAR_LIFT = 0.005; // 耳の下の端の、炉床の面からの上がり
+  const SLOT_W = 0.012; // 耳の下から切る長穴の幅
+  const SLOT_D = 0.036; // 同じく深さ
+  const BOLT_IN = 0.016; // 耳の先から引きボルトの軸まで
+  const POST_W = 0.10; // 受け金（平鋼 6 × 100）の幅
+  const POST_T = 0.006; // 同じく厚さ
+  const POST_TOP = 0.021; // 引きボルトの軸から受け金の上の端まで
+  const POST_FOOT = 0.07; // 受け金の足の奥行
+  const POST_GAP = 0.024; // 耳と受け金のすきま
+  const POST_EDGE = 0.010; // 引きボルトの穴の中心から受け金の内の縁まで
+  const BOLT_L = 0.11; // 引きボルト M8 の長さ（耳を上から掛けられる長さ、3.9.2）
+  const SPRING_L = 0.03; // 押しばねの縮めた長さ
+  const SKIRT_BOT = 0.015; // 脇の水切り板の下の端の、天板からの高さ
+  const SKIRT_KICK = 0.006; // 脇の水切り板の下の返しの出
+  const SKIRT_UP = 0.010; // 脇の水切り板の後ろの端の立ち上げ
+  const SKIRT_END = 0.003; // 脇の水切り板の前の端の、前室の前の面からの引っ込み（引き戸の下のレールに当てない）
+  const WEIR_SET = 0.010; // 前室の天板の水返し（平鋼 3 × 25）の、殻の前の妻からの離れ
   const PLUG_W = 0.31; // 差し込みの扉の差し込む部分の幅（1.5）
   const PLUG_H = 0.17; // 同じく高さ（1.5）
   const FACE_W = 0.33; // 差し込みの扉の面の板の幅（1.5）
@@ -197,6 +218,8 @@ NavApp.register('dwg', (api) => {
     m.cw = m.dw + m.t;
     m.ch = m.dh + m.t;
     m.zCol = m.Ro + P('collar.depth');
+    m.ft = P('collar.flange'); // 入口の枠の四角い鍔の厚さ
+    m.fo = P('collar.flange_out'); // 鍔の外形の、前室の箱の外形からの出
 
     // 足元の帯（外の半径はドームの外の半径に帯の厚さの半分を足す）
     m.bandW = P('band.width');
@@ -230,6 +253,24 @@ NavApp.register('dwg', (api) => {
     m.yRoofIn = m.yCeil + LINER; // 鋼板の天井の下の面
     m.yRoofTop = m.yRoofIn + m.pl;
     m.apW = P('apron.width') / 2;
+    m.drip = P('landing.drip');
+    // 前室の箱の耳、受け金、引きボルト（3.9）。耳は袖の外の面から出し、下から切った長穴を受け金の引きボルトに掛ける。
+    m.earZ = P('landing.ear_z');
+    m.earY0 = m.yFloor + EAR_LIFT;
+    m.boltY = m.earY0 + SLOT_D - SLOT_W / 2;
+    m.boltX = m.lo + EAR_OUT - BOLT_IN;
+    m.postX0 = m.boltX - POST_EDGE;
+    m.postZ1 = m.earZ - EAR_T / 2 - POST_GAP;
+    m.postZ0 = m.postZ1 - POST_T;
+    m.postTop = m.boltY + POST_TOP;
+    m.zHead = m.earZ + EAR_T / 2 + 0.0016;
+    // 脇の水切り板（ステンレス 0.5 mm、L 形）。殻の前の妻のすぐ前から、引き戸の下のレールの手前まで。
+    m.skX0 = m.bw * SILL_COLS / 2;
+    m.skX1 = STRIP_L / 2;
+    m.skZ0 = P('shell.width') / 2 + 0.002;
+    m.skZ1 = m.zLF - SKIRT_END;
+    m.zWeir = P('shell.width') / 2 + WEIR_SET; // 天板の水返しの後ろの面
+    m.skY = m.top + SKIRT_BOT;
     m.apD = P('apron.depth');
     m.apRim = P('apron.rim');
 
@@ -731,6 +772,15 @@ NavApp.register('dwg', (api) => {
     for (let i = 1; i < SILL_COLS; i++) sill.push(lineEl(X(-M.sillW + i * M.bw), Z(M.hd), X(-M.sillW + i * M.bw), Z(M.zLF), 'sh tn'));
     sill.push(lineEl(X(-M.sillW), Z(M.hd + M.bl), X(M.sillW), Z(M.hd + M.bl), 'sh tn'));
     part(L, 'landing', sill);
+    // 脇の水切り板（前の縁の帯の上と脇）と、受け金の足（天板の上）。切り口より下なので外形線。
+    const skirt = [];
+    for (const s of [-1, 1]) {
+      const sx = (x) => s * x;
+      skirt.push(rc(Math.min(sx(M.lo), sx(M.skX1)), M.skZ0, Math.max(sx(M.lo), sx(M.skX1)), M.skZ1, 'sh fp'));
+      skirt.push(rc(Math.min(sx(M.skX1), sx(M.skX1 + SKIRT_KICK)), M.skZ0, Math.max(sx(M.skX1), sx(M.skX1 + SKIRT_KICK)), M.skZ1, 'sh fp'));
+      skirt.push(rc(Math.min(sx(M.postX0), sx(M.postX0 + POST_W)), M.postZ1 - POST_FOOT, Math.max(sx(M.postX0), sx(M.postX0 + POST_W)), M.postZ1, 'sh fp'));
+    }
+    part(L, 'landing', skirt);
     // 引き戸の下のレール（切り口より下）
     part(L, 'door', rc(M.railX0, M.zLeaf1 + RAIL_T - RAIL, M.railX1, M.zLeaf1 + RAIL_T, 'sh fp'));
 
@@ -769,8 +819,18 @@ NavApp.register('dwg', (api) => {
       rc(-M.leafW, M.zLF, M.leafW, M.zLeaf1 - M.pl, 'sh fblank'),
       rc(-M.leafW, M.zLeaf1 - M.pl, M.leafW, M.zLeaf1, 'sh fsteel'),
     ]);
-    // 前室の袖（切り口）
-    part(L, 'landing', [-1, 1].map((s) => rc(s * M.lpw, M.zCol, s * M.lo, M.zLF, 'sh fsteel')));
+    // 前室の袖（切り口）と、耳（下から切った長穴の所で切れる）と受け金の立ち（切り口）
+    const earCut = [];
+    for (const s of [-1, 1]) {
+      const r0 = (a, b) => [Math.min(s * a, s * b), Math.max(s * a, s * b)];
+      for (const [a, b] of [[M.lo, M.boltX - SLOT_W / 2], [M.boltX + SLOT_W / 2, M.lo + EAR_OUT]]) {
+        const [x0, x1] = r0(a, b);
+        earCut.push(rc(x0, M.earZ - EAR_T / 2, x1, M.earZ + EAR_T / 2, 'sh fsteel'));
+      }
+      const [p0, p1] = r0(M.postX0, M.postX0 + POST_W);
+      earCut.push(rc(p0, M.postZ0, p1, M.postZ1, 'sh fsteel'));
+    }
+    part(L, 'landing', [...[-1, 1].map((s) => rc(s * M.lpw, M.zCol, s * M.lo, M.zLF, 'sh fsteel')), ...earCut]);
     // 殻の側と妻（切り口）。前の妻は前室の形に切り欠く。
     part(L, 'shell', [
       rc(-M.sw, -M.sw, M.sw, -M.si, 'sh fsteel'),
@@ -786,7 +846,14 @@ NavApp.register('dwg', (api) => {
       ...hid(lineEl(X(0), Z(-M.rov), X(0), Z(M.rov))),
     ]);
     part(L, 'vent', hidRects([[-M.vr - 0.03, -M.sw - VENT_OUT, M.vr + 0.03, -M.sw]], X, Z));
-    part(L, 'landing', hidRects([[-M.lo, M.zCol, M.lo, M.zLF + M.lov]], X, Z));
+    part(L, 'landing', [
+      ...hidRects([[-M.lo, M.zCol, M.lo, M.zLF + M.lov]], X, Z),
+      ...hid(lineEl(X(-M.lo), Z(M.zLF + M.lov - DRIP_SET), X(M.lo), Z(M.zLF + M.lov - DRIP_SET))),
+      ...hidRects([[-M.lo, M.zWeir, M.lo, M.zWeir + FB_T]], X, Z),
+      ...hidRects([-1, 1].map((s) => [s * M.boltX - 0.004, M.zHead - BOLT_L, s * M.boltX + 0.004, M.zHead + 0.0053]), X, Z),
+    ]);
+    // 入口の枠の鍔（切り口より上、隠れ線）
+    part(L, 'chamber', hidRects([[-M.lo - M.fo, M.zCol - M.ft, M.lo + M.fo, M.zCol]], X, Z));
     part(L, 'damper', hidRects([[-M.dpw, M.zDp0, M.dpw, M.zDp1]], X, Z));
     part(L, 'chimney', [...hid(circEl(X(0), Z(M.zCh), M.cr * S)), ...hidRects([[-HCAP_W / 2, M.zCh - M.cr, HCAP_W / 2, M.zCh + M.cr]], X, Z)]);
 
@@ -854,6 +921,9 @@ NavApp.register('dwg', (api) => {
       `炉床のレンガは切らずに ${COLS} 列 × ${ROWS} 個に並べ、列を前後の向きに通す。`,
       '前と後ろの輪の継ぎ目は段付きで、内の半分を z = 0 に置く（段の向きは図で置いた）。',
       '前の帯は入口の枠の脇で止めて描く（焚き口の床を横切らせない）。',
+      '入口の枠の鍔、引きボルトと押しばね、前室の天板の水切りと水返しは切り口より上にあるので、隠れ線で描く。',
+      '入口の枠の鍔は、前室の箱より左右に 10 mm 大きい。',
+      '前室の箱の耳と受け金の立ちは、この高さで切れる。耳は下から切った長穴の所で切れて 2 つに見える。',
     ]));
   }
 
@@ -937,6 +1007,8 @@ NavApp.register('dwg', (api) => {
       [X(M.rov), Y(M.yEdge + dy)], [X(0), Y(M.ridge + dy)], [X(-M.rov), Y(M.yEdge + dy)],
     ], 'sh fp');
     part(L, 'shell', [gable, notch, roof]);
+    // 前室の天板の水返し（殻の前の妻のすぐ前。煙突とダンパーの溝はこの手前にある）
+    part(L, 'landing', rc(-M.lo, M.yRoofTop, M.lo, M.yRoofTop + M.drip, 'sh fp'));
 
     // 煙突と H 笠（ひとつの外形）、支持金具の帯
     const cr = M.cr;
@@ -970,18 +1042,37 @@ NavApp.register('dwg', (api) => {
     // 前室の箱の前の面
     sill.push(rc(-M.lo, M.yFloor, M.lo, M.yRoofTop, 'sh fp'));
     part(L, 'landing', sill);
+    // 受け金、箱の耳（受け金より手前）、引きボルトの頭、脇の水切り板の前の端。引き戸とレールはこの手前にある。
+    const hold = [];
+    for (const s of [-1, 1]) {
+      const sx = (x) => X(s * x);
+      const r2x = (a, b, y0, y1, cls) => rc(Math.min(s * a, s * b), y0, Math.max(s * a, s * b), y1, cls);
+      hold.push(r2x(M.postX0, M.postX0 + POST_W, M.top, M.postTop, 'sh fp'));
+      const u1 = M.boltX - SLOT_W / 2;
+      const u2 = M.boltX + SLOT_W / 2;
+      const y1 = M.earY0 + EAR_H;
+      const ys = M.earY0 + SLOT_D;
+      hold.push(polyEl([[sx(M.lo), Y(M.earY0)], [sx(u1), Y(M.earY0)], [sx(u1), Y(ys)], [sx(u2), Y(ys)], [sx(u2), Y(M.earY0)],
+        [sx(M.lo + EAR_OUT), Y(M.earY0)], [sx(M.lo + EAR_OUT), Y(y1)], [sx(M.lo), Y(y1)]], 'sh fp'));
+      hold.push(circEl(sx(M.boltX), Y(M.boltY), 0.012 * S, 'sh fp'), polyEl(Array.from({ length: 6 }, (_, i) => {
+        const a = Math.PI / 6 + (i * Math.PI) / 3;
+        return [sx(M.boltX) + 0.0075 * S * Math.cos(a), Y(M.boltY) + 0.0075 * S * Math.sin(a)];
+      }), 'sh fp'));
+      hold.push(plineEl([[sx(M.skX0), Y(M.yFloor)], [sx(M.skX1), Y(M.yFloor)], [sx(M.skX1), Y(M.skY)], [sx(M.skX1 + SKIRT_KICK), Y(M.skY)]], 'sh'));
+    }
+    part(L, 'landing', hold);
     // 引き戸（閉）とレール。焚き口は引き戸の奥にあるので隠れ線。
     const dw = M.dw;
     const yS = M.yc + M.spring;
-    const arch = pathEl(`M ${P2([X(-dw), Y(M.yc)], [X(-dw), Y(yS)])} A ${r2(dw * S)} ${r2(dw * S)} 0 0 1 ${P2([X(dw), Y(yS)], [X(dw), Y(M.yc)])}`);
+    const arch = pathEl(`M ${P2([X(-dw), Y(M.yc)], [X(-dw), Y(yS)])} A ${r2(dw * S)} ${r2(dw * S)} 0 0 1 ${P2([X(dw), Y(yS)])} L ${P2([X(dw), Y(M.yc)])}`);
     part(L, 'door', [
       rc(-M.leafW, M.yLeaf0, M.leafW, M.yLeaf1, 'sh fp'),
       rc(M.railX0, M.yLeaf0 - RAIL_T, M.railX1, M.yLeaf0 - RAIL_T + RAIL, 'sh fp'),
       rc(M.railX0, M.yLeaf1 + RAIL_T - RAIL, M.railX1, M.yLeaf1 + RAIL_T, 'sh fp'),
     ]);
     part(L, 'chamber', hid(arch));
-    // 前室の天板の水切り（いちばん手前）
-    part(L, 'landing', rc(-M.lo, M.yRoofTop - FOLD, M.lo, M.yRoofTop, 'sh fp'));
+    // 前室の天板の前の縁と、その下の水切りの平鋼（いちばん手前）
+    part(L, 'landing', [rc(-M.lo, M.yRoofIn - M.drip, M.lo, M.yRoofIn, 'sh fp'), rc(-M.lo, M.yRoofIn, M.lo, M.yRoofTop, 'sh fp')]);
 
     // 中心線
     L.body.append(lineEl(X(0), Y(-0.95), X(0), Y(M.yChTop + 0.12), 'ctr'));
@@ -1006,11 +1097,12 @@ NavApp.register('dwg', (api) => {
     const ly = Y(a1.lugP[1]);
     const aChain = Math.atan2(ly - gyy, lx - gx);
     dimAng(L, gx, gyy, 7, Math.PI, aChain, `鎖の角度 ${Math.round((M.angle * 180) / Math.PI)}°`, { pos: [gx + 2.5, gyy - 4], anchor: 'start' });
-    // 焚き口と引き戸の幅と高さ
+    // 焚き口と引き戸の幅と高さ。縦の寸法は、前室の箱の耳と受け金（x = -0.17〜-0.35 m）と殻の側の板の外に引く。
+    // 内の引き戸の高さの文字は線の下の端より下に置き、外の焚き口の高さの線にかけない。
     dimH(L, X(-dw), X(dw), Y(M.yc + 0.05), `焚き口 ${mm(2 * dw)}`);
-    dimV(L, Y(M.yc + M.dh), Y(M.yc), X(-0.28), `焚き口の高さ ${mm(M.dh)}`, { ext: [X(0), X(-dw)], at: 'left', ty: Y(M.yc + M.dh / 2) });
+    dimV(L, Y(M.yc + M.dh), Y(M.yc), X(-0.62), `焚き口の高さ ${mm(M.dh)}`, { ext: [X(0), X(-dw)], at: 'left', ty: Y(M.yc + M.dh / 2) });
     dimH(L, X(-M.leafW), X(M.leafW), Y(M.yLeaf1 + 0.075), `引き戸の幅 ${mm(2 * M.leafW)}`, { ext: [Y(M.yLeaf1), Y(M.yLeaf1)], tx: X(-0.48), anchor: 'end' });
-    dimV(L, Y(M.yLeaf1), Y(M.yLeaf0), X(-0.36), `引き戸の高さ ${mm(M.leafH)}`, { ext: [X(-M.leafW), X(-M.leafW)], at: 'left', ty: Y(M.yLeaf0) + 0.2 });
+    dimV(L, Y(M.yLeaf1), Y(M.yLeaf0), X(-0.52), `引き戸の高さ ${mm(M.leafH)}`, { ext: [X(-M.leafW), X(-M.leafW)], at: 'left', ty: Y(M.yLeaf0) + 3.5 });
     L.extra.push(caption('正面図  S=1:20'));
     const tilt = Math.round((Math.atan2(Math.abs(a1.d[1]), Math.abs(a1.d[0])) * 180) / Math.PI);
     const seen = Math.round((Math.atan2(Math.tan(M.angle), Math.abs(a1.d[0])) * 180) / Math.PI);
@@ -1021,6 +1113,8 @@ NavApp.register('dwg', (api) => {
       `鎖の角度 ${Math.round((M.angle * 180) / Math.PI)}° は、鎖を含む縦の面で測る。`,
       `後ろの鎖はこの図の面から ${tilt}° 傾くので、図の上では ${seen}° に見える。`,
       '前の鎖は手前へ張るので、図の上では脚に重なる縦の線になる。',
+      '前室の箱の左右に、耳と受け金と引きボルトの頭が見える。右の耳と受け金の下は、引き戸の下のレールに隠れる。',
+      '前室の天板の上に見える帯は、殻の前の妻のすぐ前に立てた水返し（平鋼 3 × 25）である。',
     ]));
   }
 
@@ -1170,8 +1264,10 @@ NavApp.register('dwg', (api) => {
       const z = R * Math.sqrt(Math.max(0, 1 - (x * x) / (R * R) - (y * y) / (H * H)));
       mouth.push([X(z), Y(yc + y)]);
     }
+    // 入口の枠の鍔（x = 0 では入口の枠の上の帯として切れる）
+    const flangeCut = rc(M.zCol - M.ft, yc + M.ch, M.zCol, M.yRoofTop + M.fo, 'sh fcast');
     part(L, 'chamber', [
-      polyEl(backRing, 'sh fcast'), polyEl(cap, 'sh fcast'), polyEl(frontRing, 'sh fcast'), polyEl(collar, 'sh fcast'),
+      polyEl(backRing, 'sh fcast'), polyEl(cap, 'sh fcast'), polyEl(frontRing, 'sh fcast'), polyEl(collar, 'sh fcast'), flangeCut,
       plineEl(mouth, 'sh tn'),
     ]);
     // 継ぎ目。輪と蓋の段（前と後ろ）、入口の枠とドームの外面、ドームの足の下の縄、奥の内の面の継ぎ目（z = 0 と緯度の輪）。
@@ -1218,7 +1314,17 @@ NavApp.register('dwg', (api) => {
       rc(zh1, M.yCeil, M.zLF, M.yRoofIn, 'sh fbrick'),
       rc(M.zCol, M.yRoofIn, zh0, M.yRoofTop, 'sh fsteel'),
       rc(zh1, M.yRoofIn, zTop1, M.yRoofTop, 'sh fsteel'),
-      rc(zTop1 - M.pl, M.yRoofTop - FOLD, zTop1, M.yRoofTop, 'sh fsteel'),
+      rc(zTop1 - DRIP_SET - FB_T, M.yRoofIn - M.drip, zTop1 - DRIP_SET, M.yRoofIn, 'sh fsteel'),
+      rc(M.zWeir, M.yRoofTop, M.zWeir + FB_T, M.yRoofTop + M.drip, 'sh fsteel'),
+    ]);
+    // 奥の耳、受け金、引きボルト（袖と前室の床と下の板の奥にあるので隠れ線）
+    part(L, 'landing', [
+      ...hidRects([
+        [M.earZ - EAR_T / 2, M.earY0, M.earZ + EAR_T / 2, M.earY0 + EAR_H],
+        [M.postZ0, M.top + POST_T, M.postZ1, M.postTop],
+        [M.postZ1 - POST_FOOT, M.top, M.postZ1, M.top + POST_T],
+      ], X, Y),
+      ...hid(lineEl(X(M.zHead - BOLT_L), Y(M.boltY), X(M.zHead + 0.0053), Y(M.boltY))),
     ]);
     // ダンパー。奥の溝（L25）と、切れた差し板。
     part(L, 'damper', [
@@ -1253,11 +1359,11 @@ NavApp.register('dwg', (api) => {
     lv.forEach(([y, ex], i) => {
       L.dim.append(lineEl(col - 1.3, Y(y) + 1.3, col + 1.3, Y(y) - 1.3));
       // 炉床の面の補助線は、前室の高さの一覧の文字を避けてその右から引く。
-      if (ex != null) L.dim.append(lineEl((y === M.yFloor ? X(1.25) : ex) + 1, Y(y), col + 2, Y(y)));
+      if (ex != null) L.dim.append(lineEl((y === M.yFloor ? X(1.31) : ex) + 1, Y(y), col + 2, Y(y)));
       if (i > 0) text(L, col + 3, (Y(lv[i - 1][0]) + Y(y)) / 2 + 1, lv[i][2], { anchor: 'start' });
     });
-    // 前室の内のりと扉の高さ（炉床の面からの高さの一覧）
-    ladder(L, X(0.86), [
+    // 前室の内のりと扉の高さ（炉床の面からの高さの一覧）。天板の水切りの引出線を「炉床の面 0」の文字にかけないよう、z = 0.92 m に置く。
+    ladder(L, X(0.92), [
       [Y(M.yFloor), '炉床の面 0', X(M.zLeaf1 + RAIL_T)],
       [Y(M.yFloor + FACE_H), `差し込みの扉の面 ${mm(FACE_H)}`, X(M.zCol + 0.002)],
       [Y(M.yCeil), `内のり ${mm(M.lph)}（薄いレンガの下）`, X(M.zLF)],
@@ -1292,7 +1398,8 @@ NavApp.register('dwg', (api) => {
     leadR([X(M.zDp1 - 0.02), Y(M.yRoofTop + 0.002)], 61, 'ダンパー（差し板、前へ引いて開ける）');
     leadR([X(M.zCol + 0.03), Y((M.yCeil + M.yRoofIn) / 2)], 68, `天井の薄いレンガ ${mm(LINER)}、縞鋼板 ${(M.pl * 1000).toFixed(1)}`);
     leadR(E(t / 2, sFr), 75, '前の輪（キャスタブル）');
-    leadR([X((zo(M.ch) + M.zCol) / 2), Y(yc + (M.dh + M.ch) / 2)], 82, '入口の枠（キャスタブル）');
+    leadR([X((zo(M.ch) + M.zCol) / 2), Y(yc + (M.dh + M.ch) / 2)], 82, `入口の枠と鍔（キャスタブル、鍔の厚さ ${mm(M.ft)}）`);
+    leadR([X(zTop1 - DRIP_SET - FB_T / 2), Y(M.yRoofIn - M.drip * 0.8)], 110, `天板の水切り（平鋼 3 × ${mm(M.drip)}、溶接）`);
     leadR([X(M.zLeaf1 - 0.01), Y(M.yLeaf0 + 0.04)], 116, `引き戸（閉と ${M.stops} 段で止める）`);
     leadR([X(zr - 0.005), Y(M.yLeaf0 - 0.01)], 122, 'レール L25（上と下）');
     leadR([X(M.zLF - 0.04), Y(M.yInsTop + 0.02)], 128, '敷居と前室の床（耐火レンガ）');
@@ -1305,6 +1412,8 @@ NavApp.register('dwg', (api) => {
       `輪と蓋の継ぎ目は段付きで、内の半分を緯度 ${latDeg}° に置き、外の半分を ${mm(st)} mm 下げる（下げる長さは図で置いた）。`,
       '奥の内の面に見える赤の線は、前と後ろの輪の継ぎ目（z = 0）と、輪と蓋の継ぎ目である。',
       '前の帯は焚き口を横切らないので、この面には出ない。',
+      '入口の枠の鍔は、この面では入口の枠の上の帯として切れる。前室の箱は鍔に毛布の帯を挟んで当てる（帯の厚さは描かない）。',
+      '前室の天板の上の、殻の前の妻のすぐ前の平鋼は水返し（3 × 25）である。天板は水平に描く（仮）。',
       '前の風の留めの平板 2 枚はこの面をはさんで左右に並ぶので、奥の 1 枚を隠れ線で描く。',
       '地面の下で切り口より奥にある物は、隠れ線で描く。',
     ]));

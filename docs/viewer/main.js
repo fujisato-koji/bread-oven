@@ -39,13 +39,13 @@ const PARTS = [
   { key: 'slab', label: '天板', color: 0x4f555c, mat: '鋼板 2.3 mm（2 枚、継ぎ目は z = 0）' },
   { key: 'hearthIns', label: '炉床の下の断熱', color: 0xeee6cc, mat: 'セメントとパーライト 1:5（板 75 mm、縁の帯 65 mm）' },
   { key: 'hearth', label: '炉床', color: 0xb85f3c, mat: '耐火粘土レンガ 65 mm（切らない四角、18 個）' },
-  { key: 'chamber', label: 'ドーム', color: 0xcfc6b5, mat: '耐火キャスタブル CA-13T 40 mm（4 個）' },
+  { key: 'chamber', label: 'ドーム', color: 0xcfc6b5, mat: '耐火キャスタブル CA-13T 40 mm（4 個。入口の枠に前室の箱より 10 mm 大きい四角い鍔）' },
   { key: 'seam', label: '継ぎ目', color: 0xd2462a, mat: '段付き、ペーパー 1 mm、外の薄塗り、ドームの足の下の縄' },
   { key: 'band', label: '足元の帯', color: 0x3d4247, mat: '平鋼 3 × 40' },
   { key: 'insulation', label: '毛布', color: 0xf3f0e8, mat: '生体溶解性の毛布 25 mm を 3 層' },
   { key: 'shell', label: '殻', color: 0xe8ebee, mat: 'L25 の枠、塗った鋼板、塗った波板（45°）' },
   { key: 'vent', label: '頂部のベント', color: 0xb9bec2, mat: 'ステンレスのフード付きガラリ 100 mm' },
-  { key: 'landing', label: '前室と焚き口', color: 0x45484d, mat: '縞鋼板 3.2 mm の箱、敷居と床と天井にレンガ、焚き口の前掛け' },
+  { key: 'landing', label: '前室と焚き口', color: 0x45484d, mat: '縞鋼板 3.2 mm の箱（耳と水切りと水返しを溶接）、敷居と床と天井にレンガ、台の受け金と押しばね、脇の水切り板、焚き口の前掛け' },
   { key: 'door', label: '扉', color: 0x4a3b30, mat: '焚き口の差し込みの扉と、前室の口の引き戸（閉、1/4、1/2、全開）' },
   { key: 'damper', label: 'ダンパー', color: 0x2f3236, mat: '差し板' },
   { key: 'chimney', label: '煙突', color: 0x5d6066, mat: 'ステンレス φ120、H 笠、火の粉止め' },
@@ -110,6 +110,19 @@ const SKIM_W = 0.05;                // 継ぎ目の外の薄塗りの幅
 const BAND_EAR = { out: 0.03, gap: 0.004, bolt: 0.004 };       // 帯の耳の出、耳と耳のすきま、M8 の半径
 const PLUG = { w: 0.31, h: 0.17, faceW: 0.33, faceH: 0.19, faceT: 0.0005 };  // 焚き口の差し込みの扉
 const RAIL = { len: 0.72, leg: 0.025, t: 0.003 };              // 引き戸のレール（L25）
+// 前室の箱の留め（構造設計 3.9）。耳は平鋼 6 × 100 を 60 mm に切り、外へ out 出し、下から長穴（幅 slotW、深さ slotD）を切る。
+// boltIn は耳の先から引きボルトの軸まで、lift は耳の下の端の炉床の面からの上がり。
+const EAR = { out: 0.10, h: 0.06, t: 0.006, lift: 0.005, slotW: 0.012, slotD: 0.036, boltIn: 0.016 };
+// 受け金は平鋼 6 × 100 の立ちと足。top は引きボルトの軸から上の端まで、gap は耳とのすきま、edge は穴の中心から内の縁まで。
+const POST = { w: 0.10, t: 0.006, top: 0.021, foot: 0.07, gap: 0.024, edge: 0.010 };
+// 引きボルト M8 と押しばね。washer は座金の半径、spring はばねの縮めた長さ。
+const DRAW = { r: 0.004, len: 0.11, head: 0.0053, headR: 0.0075, washer: 0.012, washerT: 0.0016, nut: 0.0065, spring: 0.03, springR: 0.007, wire: 0.0008 };
+// 脇の水切り板（ステンレス 0.5 mm、図では 1.5 mm で見せる）。bot は天板からの下の端の高さ、kick は下の返しの出、
+// up は後ろの端の立ち上げ、end は前の端の、前室の前の面からの引っ込み（引き戸の下のレールと引き戸に当てない）。
+const SKIRT = { t: 0.0015, bot: 0.015, kick: 0.006, up: 0.010, end: 0.003 };
+const DRIP_SET = 0.005;            // 前室の天板の水切りの平鋼の、天板の前の縁からの引っ込み
+const WEIR_SET = 0.010;            // 前室の天板の水返しの平鋼の、殻の前の妻からの離れ
+const FB_T = 0.003;                // 水切りの平鋼の厚さ（3 × 25）
 const SHELL_PLATE = 0.002;          // 殻の板を見せる厚さ（板は 0.27 mm、図のための値）
 const ROOF_T = 0.004;               // 波板を見せる厚さ（板は 0.35 mm、図のための値）
 const ROOF_WAVE = 0.07;             // 波板の線の間（図のための値）
@@ -143,10 +156,10 @@ const DOME_PIECES = [
   ['後ろの輪', '17.5〜21.4 kg（帯の半分を含む）'],
   ['前の輪', '13.2〜16.4 kg'],
   ['蓋', '9.9〜12.4 kg'],
-  ['入口の枠', '7.3〜9.1 kg'],
+  ['入口の枠', '6.2〜7.7 kg（鍔を含む）'],
 ];
 const CALC_ROWS = [
-  ['全体の重さ（計算）', '280〜304 kg', '算出'],
+  ['全体の重さ（計算）', '283〜306 kg', '算出'],
   ['ドームの 4 個の重さ（計算）', DOME_PIECES.map(([n, w]) => `${n} ${w}`).join('、'), '算出', true],
   ['雪の合計（計算、殻の上の設計の雪 50 cm）', '1.17 kN', '算出'],
   ['倒れ始める水平震度（計算、雪なし）', '0.40', '算出'],
@@ -672,8 +685,30 @@ function buildCast(ctx) {
     collarGeom.computeVertexNormals();
   }
   const collar = mesh(collarGeom, material('chamber', { color: shade(3) }), pieceInfo(3));
-  for (const o of [back, front, reveal, lid, collar]) o.position.y = yBase;
-  add('chamber', back, front, reveal, lid, collar);
+  // 入口の枠の四角い鍔。前室の箱の外形（半幅 fx、炉床から箱の天板の上の面まで）より左右と上に collar.flange_out だけ大きい四角から、
+  // 入口の枠の輪の外の弧の内を除いた形を、入口の枠の前の面から後ろへ collar.flange だけ押し出す。輪と一体に流すので、同じ個として描く。
+  const ft = P('collar.flange');
+  const fo = P('collar.flange_out');
+  const fx = lw / 2 + lp;                     // 前室の箱の外の半幅（耳、水切り、水返しもこの値で描く）
+  const ffx = fx + fo;                        // 鍔の半幅
+  const fTop = yRoofTop + fo - yBase;
+  const ro = dHalf + t;
+  const fyi = sprL + Math.sqrt(Math.max(0, ro * ro - ffx * ffx));
+  const fa0 = Math.atan2(fyi - sprL, ffx);
+  const flangeShape = new THREE.Shape();
+  flangeShape.moveTo(-ffx, fyi);
+  flangeShape.lineTo(-ffx, fTop);
+  flangeShape.lineTo(ffx, fTop);
+  flangeShape.lineTo(ffx, fyi);
+  flangeShape.absarc(0, sprL, ro, fa0, Math.PI - fa0, false);
+  flangeShape.closePath();
+  const flangeGeom = extrude(flangeShape, ft);
+  flangeGeom.translate(0, 0, collarZ - ft);
+  const flange = mesh(flangeGeom, material('chamber', { color: shade(3) }),
+    info('chamber', `厚さ ${mm(ft)} mm、外形 幅 ${f3(2 * ffx)} m、炉床から ${f3(yRoofTop + fo - yFloor)} m（前室の箱より左右と上に ${mm(fo)} mm 大きい）、z = ${f2(collarZ - ft)}〜${f2(collarZ)} m。入口の枠と合わせて ${DOME_PIECES[3][1]}（計算）`,
+      '入口の枠の四角い鍔（入口の枠と一体に流す）。前室の箱の奥の縁を毛布の帯（幅 12 mm、図は描かない）で受け、箱の奥の上の隅のすきまを塞ぐ', '入口の枠の鍔'));
+  for (const o of [back, front, reveal, lid, collar, flange]) o.position.y = yBase;
+  add('chamber', back, front, reveal, lid, collar, flange);
 
   // ---- 継ぎ目（継ぎ目の線、外の薄塗り、ドームの足の下の縄）
   const seamMat = material('seam');
@@ -769,10 +804,10 @@ function buildCast(ctx) {
     }
   }
 
-  // ---- 毛布とガラスクロス。入口の枠の外形と前室の箱の形を抜く。
+  // ---- 毛布とガラスクロス。入口の枠の外形と、鍔と前室の箱の形を抜く（四角は鍔の裏の面から前）。
   const insWin = {
     arch: { halfW: dHalf + t, spring: yFloor + dSpring, bottom: yFloor - 0.02, z0: 0 },
-    rect: { halfW: lw / 2 + lp, bottom: yFloor - 0.02, top: yRoofTop, z0: collarZ },
+    rect: { halfW: ffx, bottom: yFloor - 0.02, top: yRoofTop + fo, z0: collarZ - ft },
   };
   {
     const insInfo = info('insulation', `厚さ ${f3(ins)} m（25 mm を ${BLANKET_LAYERS} 層）、外の半径 ${f3(rIns)} m`);
@@ -899,7 +934,7 @@ function buildCast(ctx) {
   {
     const lm = material('landing', { metalness: 0.35, roughness: 0.6 });
     const brick = material('landing', { color: PART.hearth.color });
-    const boxInfo = info('landing', `内のり 幅 ${f2(lw)} × 高さ ${f3(lh)}（薄いレンガの下）× 奥行 ${f2(ld)} m、鋼板の天井は床から ${f3(lh + LAND_CEIL)} m`, '縞鋼板 3.2 mm の袖 2 枚と天板。外は 600℃ の耐熱塗料で塗る', '箱');
+    const boxInfo = info('landing', `内のり 幅 ${f2(lw)} × 高さ ${f3(lh)}（薄いレンガの下）× 奥行 ${f2(ld)} m、鋼板の天井は床から ${f3(lh + LAND_CEIL)} m`, '縞鋼板 3.2 mm の袖 2 枚と天板。外は 600℃ の耐熱塗料で塗る。奥の縁は毛布の帯を挟んで入口の枠の鍔に当てる（図は帯の厚さを描かない）', '箱');
     for (const s of [-1, 1]) {
       add('landing', box(lp, yRoof - yFloor, zLF - collarZ, s * (lw / 2 + lp / 2), (yFloor + yRoof) / 2, (collarZ + zLF) / 2, lm, boxInfo));
     }
@@ -914,6 +949,79 @@ function buildCast(ctx) {
     for (let i = -1; i <= 1; i++) {
       for (const [z0, z1] of [[hz, hz + bl], [hz + bl, hz + bl + SILL_SMALL]]) {
         add('landing', box(bw - BRICK_JOINT, th - GAP, z1 - z0 - BRICK_JOINT, i * bw, yIns1 + GAP + (th - GAP) / 2, (z0 + z1) / 2, brick, sillInfo));
+      }
+    }
+    // 天板の水切り。平鋼 3 × 25 を、天板の前の縁から DRIP_SET 内の下の面に立てて溶接する（縞鋼板は折らない）。
+    const drip = P('landing.drip');
+    add('landing', box(2 * fx, drip, FB_T, 0, yRoof - drip / 2, zTop - DRIP_SET - FB_T / 2, lm,
+      info('landing', `平鋼 3 × ${mm(drip)}、長さ ${f3(2 * fx)} m。天板の前の縁から ${mm(DRIP_SET)} mm 内の下の面に溶接する。下の端は炉床から ${f3(yRoof - drip - yFloor)} m`, '天板の水切り（平鋼を溶接する）', '水切り')));
+    // 天板の水返し。天板は水平（仮）なので、殻の前の妻の WEIR_SET 前に同じ平鋼を横に立て、天板の上の水を殻の当て板へ戻さず左右へ落とす。
+    const zWeir = P('shell.width') / 2 + WEIR_SET;
+    add('landing', box(2 * fx, drip, FB_T, 0, yRoofTop + drip / 2, zWeir + FB_T / 2, lm,
+      info('landing', `平鋼 3 × ${mm(drip)}、長さ ${f3(2 * fx)} m。殻の前の妻の ${mm(WEIR_SET)} mm 前（z = ${f3(zWeir)} m）で天板の上に立てて溶接する`, '天板の水返し（天板の上の水を左右へ落とす。天板を水平にするか勾配を付けるかは施主が決める）', '水返し')));
+    // 箱の耳、受け金、引きボルトと押しばね（左右に 1 組ずつ）。耳は袖の外の面の下の前寄りに溶接し、受け金の引きボルトに上から掛ける。
+    const ss = material('landing', { color: 0xa9aeb3, metalness: 0.6, roughness: 0.4 });
+    const earZ = P('landing.ear_z');
+    const press = P('landing.press');
+    const earY0 = yFloor + EAR.lift;
+    const boltY = earY0 + EAR.slotD - EAR.slotW / 2;
+    const boltU = fx + EAR.out - EAR.boltIn;               // 引きボルトの軸の x（右の側）
+    const postX0 = boltU - POST.edge;                      // 受け金の内の縁の x
+    const postZ1 = earZ - EAR.t / 2 - POST.gap;            // 受け金の前の面の z
+    const postZ0 = postZ1 - POST.t;
+    const postTop = boltY + POST.top;
+    const zHead = earZ + EAR.t / 2 + DRAW.washerT;         // 引きボルトの頭の下の面
+    const earInfo = info('landing', `平鋼 6 × 100 を ${mm(EAR.h)} mm に切り、袖の外の面から ${mm(EAR.out)} mm 出す。下から長穴 ${mm(EAR.slotW)} × ${mm(EAR.slotD)} mm（横に ±2 mm 動ける）。z = ${f3(earZ)} m`,
+      '箱の耳（袖の外の面に溶接し、受け金の引きボルトに上から掛ける。焚く間は熱い）', '耳');
+    const postInfo = info('landing', `平鋼 6 × 100 の立ち ${f3(postTop - yT - POST.t)} m と足 ${mm(POST.foot)} mm を溶接する。足は前後の向きの長穴 2 つで天板に M8 で留める。z = ${f3(postZ0)}〜${f3(postZ1)} m（前の面）`,
+      '受け金（台の天板に留める。熱くならない所に置く）', '受け金');
+    const boltInfo = info('landing', `M8 × ${mm(DRAW.len)} の引きボルトを耳の長穴に掛け、受け金の後ろの押しばね（4 N/mm、自由長 40 mm を ${mm(DRAW.spring)} mm に縮める、仮）とナット 2 個で、片側 ${press} N で箱を鍔へ引く`,
+      '引きボルトと押しばね（ステンレス）。ナットを緩めて箱を持ち上げれば、耳の長穴が外れる', '引きボルトと押しばね');
+    for (const s of [-1, 1]) {
+      const es = new THREE.Shape();
+      const u1 = EAR.out - EAR.boltIn - EAR.slotW / 2;
+      const u2 = u1 + EAR.slotW;
+      const pts = [[0, 0], [u1, 0], [u1, EAR.slotD], [u2, EAR.slotD], [u2, 0], [EAR.out, 0], [EAR.out, EAR.h], [0, EAR.h]];
+      pts.forEach(([u, v], i) => (i ? es.lineTo(s * (fx + u), earY0 + v) : es.moveTo(s * (fx + u), earY0 + v)));
+      es.closePath();
+      const eg = extrude(es, EAR.t);
+      eg.translate(0, 0, earZ - EAR.t / 2);
+      add('landing', mesh(eg, lm, earInfo));
+      const pxc = s * (postX0 + POST.w / 2);
+      const pm = material('landing', { color: 0x6f757c, metalness: 0.3, roughness: 0.6 });
+      add('landing', box(POST.w, postTop - (yT + POST.t), POST.t, pxc, (yT + POST.t + postTop) / 2, (postZ0 + postZ1) / 2, pm, postInfo));
+      add('landing', box(POST.w, POST.t, POST.foot, pxc, yT + POST.t / 2, postZ1 - POST.foot / 2, pm, postInfo));
+      const bx = s * boltU;
+      add('landing', cylAlong(DRAW.r, V3(bx, boltY, zHead), V3(bx, boltY, zHead - DRAW.len), ss, boltInfo, 10));
+      add('landing', cylAlong(DRAW.headR, V3(bx, boltY, zHead), V3(bx, boltY, zHead + DRAW.head), ss, boltInfo, 6));
+      add('landing', cylAlong(DRAW.washer, V3(bx, boltY, zHead - DRAW.washerT), V3(bx, boltY, zHead), ss, boltInfo, 16));
+      // 押しばね（受け金の後ろの面から後ろへ）と、座金とナット 2 個
+      const helix = [];
+      const turns = 6;
+      for (let i = 0; i <= turns * 12; i++) {
+        const a = (i / 12) * Math.PI * 2;
+        helix.push(V3(bx + DRAW.springR * Math.cos(a), boltY + DRAW.springR * Math.sin(a), postZ0 - (DRAW.spring * i) / (turns * 12)));
+      }
+      add('landing', mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(helix), turns * 24, DRAW.wire, 6, false), ss, boltInfo));
+      const zw = postZ0 - DRAW.spring;
+      add('landing', cylAlong(DRAW.washer * 0.8, V3(bx, boltY, zw), V3(bx, boltY, zw - DRAW.washerT), ss, boltInfo, 16));
+      add('landing', cylAlong(DRAW.headR, V3(bx, boltY, zw - DRAW.washerT), V3(bx, boltY, zw - DRAW.washerT - 2 * DRAW.nut), ss, boltInfo, 6));
+    }
+    // 脇の水切り板。ステンレス 0.5 mm を L 形に折り、殻の外の前の縁の帯の上（箱の袖の下に挟む）から、帯と前室の下の板の脇を覆う。
+    {
+      const sx0 = hw / 4;                                  // 前の縁の帯の内の縁
+      const sx1 = STRIP_LEN / 2;                           // 帯と前室の下の板の外の面
+      const sz0 = P('shell.width') / 2 + 0.002;            // 殻の前の妻のすぐ前から
+      const sz1 = zLF - SKIRT.end;                         // 前の端は、引き戸の下のレールと引き戸の手前で止める
+      const yb = yT + SKIRT.bot;
+      const ux0 = fx + 0.002;                              // 後ろの立ち上げは、箱の袖の外から
+      const skInfo = info('landing', `ステンレス 0.5 mm を L 形に折る。上の面は x = ${f3(sx0)}〜${f3(sx1)} m（袖の下に挟む）、脇の面は天板から ${mm(SKIRT.bot)} mm 上まで下ろし、外へ ${mm(SKIRT.kick)} mm 返す。後ろの端は袖の外で ${mm(SKIRT.up)} mm 立ち上げる。z = ${f3(sz0)}〜${f3(sz1)} m（図は上の面の外への勾配を描かない）`,
+        '脇の水切り板（殻の外の前の縁の帯と前室の下の板を雨から守る）', '脇の水切り板');
+      for (const s of [-1, 1]) {
+        add('landing', box(sx1 - sx0, SKIRT.t, sz1 - sz0, s * (sx0 + sx1) / 2, yFloor + SKIRT.t / 2, (sz0 + sz1) / 2, ss, skInfo));
+        add('landing', box(SKIRT.t, yFloor - yb, sz1 - sz0, s * (sx1 + SKIRT.t / 2), (yFloor + yb) / 2, (sz0 + sz1) / 2, ss, skInfo));
+        add('landing', box(SKIRT.kick, SKIRT.t, sz1 - sz0, s * (sx1 + SKIRT.kick / 2), yb + SKIRT.t / 2, (sz0 + sz1) / 2, ss, skInfo));
+        add('landing', box(sx1 - ux0, SKIRT.up, SKIRT.t, s * (ux0 + sx1) / 2, yFloor + SKIRT.up / 2, sz0 + SKIRT.t / 2, ss, skInfo));
       }
     }
     // 焚き口の前掛け（焚く日だけ掛ける）
