@@ -103,6 +103,7 @@ const SHELL_PLATE = 0.002;          // 殻の板を見せる厚さ（板は 0.27
 const ROOF_T = 0.004;               // 波板を見せる厚さ（板は 0.35 mm、図のための値）
 const ROOF_WAVE = 0.07;             // 波板の線の間（図のための値）
 const NOTCH_CLEAR = 0.02;           // 前の妻の切り欠きと前室の熱い鋼のすきま
+const NOTCH_OVER = 0.048;           // 前の妻の切り欠きの上の端の、軒からの高さ（1.8）
 const VENT_OUT = 0.05;              // ベントの殻の外への出（図のための値）
 const CHIMNEY_CAP = 0.18;           // H 笠の高さ
 const TUBE_WALL = 0.0023;           // 角パイプの厚さ
@@ -739,7 +740,7 @@ function buildCast(ctx) {
     const gB = BAND_EAR.gap / 2 / Ro;
     const bandMat = material('band', { metalness: 0.4, roughness: 0.6 });
     const frontBandMat = cutWindow(material('band', { metalness: 0.4, roughness: 0.6 }), collarWin);
-    const bInfo = info('band', `平鋼 ${mm(bt)} × ${mm(bwid)} mm、外の半径 ${f3(rO)} m の半円 2 本。耳はステンレスの M8 で締める`);
+    const bInfo = info('band', `平鋼 ${mm(bt)} × ${mm(bwid)} mm、外の半径 ${f3(rO)} m の半円 2 本。前の帯は入口の枠の脚の脇で止め、焚き口の床を横切らせない。耳はステンレスの M8 で締める`);
     const halves = [
       mesh(revolve(pts, Math.PI / 2 + gB, Math.PI - 2 * gB, 64), bandMat, bInfo),
       mesh(revolve(pts, -Math.PI / 2 + gB, Math.PI - 2 * gB, 64), frontBandMat, bInfo),
@@ -975,7 +976,8 @@ function buildCast(ctx) {
   const ov = P('shell.overhang');
   const fr = P('shell.frame');
   const flow = (sw2 + ov) / Math.cos(pitch);
-  const notch = { w: Math.max(lw / 2 + lp + NOTCH_CLEAR, STRIP_LEN / 2), top: yRoofTop + NOTCH_CLEAR };
+  // 切り欠きは、炉床の面より下を縁の帯と前室の下の板の幅にし、上を前室の形から NOTCH_CLEAR 離す（図面とそろえる）。
+  const notch = { w: lw / 2 + lp + NOTCH_CLEAR, wLow: STRIP_LEN / 2, yStep: yFloor, top: Math.max(yE + NOTCH_OVER, yRoofTop + NOTCH_CLEAR) };
   {
     const pm = material('shell', { metalness: 0.2, roughness: 0.7 });
     const rm = material('shell', { color: 0xc9ced3, metalness: 0.3, roughness: 0.6 });
@@ -987,10 +989,14 @@ function buildCast(ctx) {
       const s = new THREE.Shape();
       s.moveTo(-sw2, yS0);
       if (cut) {
-        s.lineTo(-cut.w, yS0);
+        s.lineTo(-cut.wLow, yS0);
+        s.lineTo(-cut.wLow, cut.yStep);
+        s.lineTo(-cut.w, cut.yStep);
         s.lineTo(-cut.w, cut.top);
         s.lineTo(cut.w, cut.top);
-        s.lineTo(cut.w, yS0);
+        s.lineTo(cut.w, cut.yStep);
+        s.lineTo(cut.wLow, cut.yStep);
+        s.lineTo(cut.wLow, yS0);
       }
       s.lineTo(sw2, yS0);
       s.lineTo(sw2, yE);
