@@ -159,7 +159,7 @@ const DOME_PIECES = [
   ['入口の枠', '6.5〜8.1 kg（鍔を含む）'],
 ];
 const CALC_ROWS = [
-  ['全体の重さ（計算）', '283〜306 kg', '算出'],
+  ['全体の重さ（計算）', '282〜306 kg', '算出'],
   ['ドームの 4 個の重さ（計算）', DOME_PIECES.map(([n, w]) => `${n} ${w}`).join('、'), '算出', true],
   ['雪の合計（計算、殻の上の設計の雪 50 cm）', '1.17 kN', '算出'],
   ['倒れ始める水平震度（計算、雪なし）', '0.40', '算出'],
@@ -455,9 +455,11 @@ const chainPairs = (pts) => pts.slice(1).map((p, i) => [pts[i], p]);
 // 層の境で面を少し離す量
 const GAP = 0.002;
 
-const f2 = (v) => (v == null ? '未定' : Number(v).toFixed(2));
-const f3 = (v) => (v == null ? '未定' : Number(v).toFixed(3));
-const mm = (v) => String(+(v * 1000).toFixed(1));
+// 表示の負の記号は、文書とそろえて U+2212（−）にする
+const neg = (s) => s.replace(/^-/, '−');
+const f2 = (v) => (v == null ? '未定' : neg(Number(v).toFixed(2)));
+const f3 = (v) => (v == null ? '未定' : neg(Number(v).toFixed(3)));
+const mm = (v) => neg(String(+(v * 1000).toFixed(1)));
 
 // ---------- 窯を組む
 
@@ -1059,8 +1061,21 @@ function buildCast(ctx) {
     const zTop = zTopL;
     add('landing', slopeUp(mesh(slabXZ(rectXZ(-(lw / 2 + lp), lw / 2 + lp, collarZ, zTop), [{ x: 0, z: cz, r: rc + 0.003 }], yRoof, lp), lm, boxInfo)));
     const zc1 = collarZ + ld;
-    const holeR = Math.max(0.01, Math.min(rc, zc1 - cz - 0.003, cz - collarZ - 0.003));
-    add('landing', slopeUp(mesh(slabXZ(rectXZ(-lw / 2, lw / 2, collarZ, zc1), [{ x: 0, z: cz, r: holeR }], yCeil, LAND_CEIL - 0.0005), brick,
+    // 天井の内張りは煙突の口（すきま 3 mm）を切り欠く。口が内張りの前の縁に届くときは、丸い穴を小さくせず、前の縁から切り欠く
+    // （穴を小さくすると、内張りの切り口が煙突の口にかかって描かれる）。
+    const notchR = rc + 0.003;
+    let linerPts = rectXZ(-lw / 2, lw / 2, collarZ, zc1);
+    let linerHoles = [{ x: 0, z: cz, r: Math.max(0.01, Math.min(notchR, cz - collarZ - 0.003)) }];
+    if (zc1 - cz < notchR) {
+      const t0 = Math.acos(Math.max(-1, (zc1 - cz) / notchR));
+      const arcPts = Array.from({ length: 25 }, (_, i) => {
+        const t = t0 + ((2 * Math.PI - 2 * t0) * i) / 24;
+        return [notchR * Math.sin(t), cz + notchR * Math.cos(t)];
+      });
+      linerPts = [[-lw / 2, collarZ], [lw / 2, collarZ], [lw / 2, zc1], ...arcPts, [-lw / 2, zc1]];
+      linerHoles = [];
+    }
+    add('landing', slopeUp(mesh(slabXZ(linerPts, linerHoles, yCeil, LAND_CEIL - 0.0005), brick,
       info('landing', `厚さ ${mm(LAND_CEIL)} mm。煙突の口を切り欠く。天板と同じ勾配で張る`, '薄いレンガ（SK34 ウス半丁）を天井の内に張る', '天井のレンガ'))));
     // 焚き口の敷居と前室の床に、丸ごと 3 個と、前室の口の小片 3 個を並べる。
     const sillInfo = info('landing', `幅 ${f3(3 * bw)} m、z = ${f3(hz)}〜${f3(hz + bl + SILL_SMALL)} m`, '耐火粘土レンガ（丸ごと 3 個と小片 3 個）', '敷居と前室の床');

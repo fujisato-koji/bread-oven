@@ -26,7 +26,7 @@ categories:
 items:
   # キャスタブルとレンガ
   - {id: i-cast, name: 耐火キャスタブル CA-13T 25 kg, qty: 3, unit: 袋, price: 5550, cat: brick, shop: れんが屋（Amazon）, how: 通販, batch: b-castorder,
-     use: [b-cast1, b-cast2], parts: [chamber], src: [M114, P106], note: "4 個で約 56 kg（入口の枠の鍔を含む。施工所要量 1,750 kg/m³ に損を 15% 見た、P106、計算）。1 個を打ち継がずに仕上げるため、押し付ける 3 個を厚さの許しの上の端（+4 mm）で練ると 61.2 kg で、3 袋の余りは約 14 kg になる。試し塗りに 1〜2 kg 使う（計算）。ヒットネット 5,400 円（M115）、建材ショップ 5,450 円（M116）でもよい。製造から 6〜12 か月で使う（P71、P106）"}
+     use: [b-cast1, b-cast2], parts: [chamber], src: [M114, P106], note: "4 個で約 56 kg（入口の枠の鍔を含む。施工所要量 1,750 kg/m³ に損を 15% 見た、P106、計算）。1 個を打ち継がずに仕上げるため、押し付ける 3 個を厚さの許しの上の端（+4 mm）で練ると 61.2 kg で、3 袋の余りは約 14 kg になる。試し塗りに 1〜2 kg と、練り水の抜けを量るかけらに約 0.4 kg 使う（計算）。ヒットネット 5,400 円（M115）、建材ショップ 5,450 円（M116）でもよい。製造から 6〜12 か月で使う（P71、P106）"}
   - {id: i-brick, name: 耐火レンガ 230 × 114 × 65 mm, qty: 24, unit: 個, price: 248, cat: brick, shop: コメリ, how: 取り寄せ, batch: b-order, tentative: true,
      use: [b-hcut, b-hearth], parts: [hearth, landing], src: [M64], note: "炉床 18 個（切らずに 6 列 × 3 個）、焚き口の敷居と前室の床に丸ごと 3 個、前室の口に 3 つに切って並べる 1 個、予備 2 個（計算）。道内で受け取れるかは未確認。通販なら 1 個 613 円以上"}
   - {id: i-sk34, name: 薄い耐火レンガ SK34 ウス半丁 230 × 114 × 32 mm 10 枚, qty: 1, unit: 組, price: 4900, cat: brick, shop: れんが屋（Amazon）, how: 通販, batch: b-castorder,
@@ -125,7 +125,7 @@ items:
 
   # 前室、扉、温度計、灰入れ
   - {id: i-plate, name: 縞鋼板 3.2 × 450 × 900 mm（前室の箱、ダンパー）, qty: 1, unit: 枚, price: 4480, cat: door, shop: コメリ, how: 取り寄せ, batch: b-order,
-     use: [b-steelcut], parts: [landing, damper], src: [M95], note: "前室の袖 2 枚（奥行 0.243 m、高さが口で 0.232 m、奥で 0.244 m の台形）、天板（0.35 × 0.29 m、折らない）、ダンパーの差し板（0.16 × 0.30 m）で 0.26 m² を取る（板の 65%、計算）。長さの向きに天板と袖 2 枚を並べて 0.78 m で、ダンパーは袖の脇に残る幅 0.204 m から取る。袖を台形にすると、引き戸（0.36 × 0.21 m）と袖を幅に並べられなくなったので、引き戸は前掛けの板の残りから取る（計算）。ネットで注文して店で受け取る。道内の店で受け取れるかは未確認"}
+     use: [b-steelcut], parts: [landing, damper], src: [M95], note: "前室の袖 2 枚（奥行 0.243 m、高さが口で 0.232 m、奥で 0.244 m の台形）、天板（0.35 × 0.29 m、折らない）、ダンパーの差し板（0.16 × 0.30 m）で 0.26 m² を取る（板の 65%、計算）。長さの向きに天板と袖 2 枚を並べて 0.78 m で、ダンパーは袖の脇に残る幅 0.204 m から取る。袖を台形にすると、引き戸（0.36 × 0.21 m）と袖を幅に並べられなくなったので、引き戸は前掛けの板の残りから取る（計算）。引き戸はやめることに決まっている（施主の決定 2026-10-20）ので、割り付けは引き戸をやめる次の変更で確定する。ネットで注文して店で受け取る。道内の店で受け取れるかは未確認"}
   - {id: i-fb3s, name: 平鋼 3 × 25 mm（前室の天板の水切り 0.35 m、めっきの無い鋼）, qty: 1, unit: kg, price: 252, cat: door, shop: 近くの鋼材店, how: 店頭, batch: b-buy1, tentative: true,
      use: [b-steelcut], parts: [landing], src: [M111], note: "天板の前の縁から 5 mm 内の下の面に立てて溶接する（約 0.2 kg、施主の決定 2026-10-20、縞鋼板は折らない）。天板を前へ 1/20 下げるので、水返しは付けない（施主の決定 2026-10-20）。1 kg 252 円は仮（M111）。値段は未確認"}
   - {id: i-spring, name: ステンレスの押しばね（M8 が通る内径 9〜11 mm、自由長 約 40 mm、4 N/mm 前後）, qty: 2, unit: 個, price: 300, cat: door, shop: モノタロウ, how: 通販, batch: b-mail2, tentative: true,
@@ -145,7 +145,7 @@ items:
   - {id: i-lid, name: 灰入れの蓋, qty: 1, unit: 個, price: 348, cat: door, shop: コメリ, how: 店頭, batch: b-buy2,
      use: [b-dry], parts: [], src: [M82]}
   - {id: i-ember, name: 焚き口の前掛けと引き戸 縞鋼板 3.2 × 450 × 600 mm, qty: 1, unit: 枚, price: 2980, cat: door, shop: コメリ, how: 取り寄せ, batch: b-order,
-     use: [b-steelcut, b-land], parts: [landing, door], src: [M77], note: "0.45 × 0.30 m を取り、前と左右に高さ 25 mm の縁を溶接する。残り（約 450 × 213 mm）から前室の口の引き戸 0.36 × 0.21 m を取る（計算）。焚く日に天板の前の縁に掛け、焚き口から落ちる熾火と灰を受ける。使い終わったら外す。道内の店で受け取れるかは未確認"}
+     use: [b-steelcut, b-land], parts: [landing, door], src: [M77], note: "0.45 × 0.30 m を取り、前と左右に高さ 25 mm の縁を溶接する。残り（約 450 × 217 mm）から前室の口の引き戸 0.36 × 0.21 m を取る（計算。引き戸をやめる次の変更で外す）。焚く日に天板の前の縁に掛け、焚き口から落ちる熾火と灰を受ける。使い終わったら外す。道内の店で受け取れるかは未確認"}
   - {id: i-ashpad, name: 灰入れの台 コンクリートピンコロ 200 × 200 × 150 mm, qty: 1, unit: 個, price: 798, cat: door, shop: 道内の店頭, how: 店頭, batch: b-buy1, tentative: true,
      use: [b-dry], parts: [], src: [M105], note: 蓋をした灰入れを地面から離して、この上に置く。台の下と薪から離す}
 
