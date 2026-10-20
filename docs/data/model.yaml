@@ -17,7 +17,7 @@ parts:
   - {id: hearth, name: 炉床, mat: 耐火粘土レンガ 65 mm を切らずに寝かせ、0.684 × 0.69 m の四角に並べる（18 個、6 列 × 3 個、列は前後の向き）。ドームの足はこの上に載る, dims: [hearth.firebrick, hearth.width, hearth.depth, dome.inner_diameter], doc: 03-structural-design.md}
   - {id: chamber, name: ドーム, mat: 耐火キャスタブル CA-13T 40 mm を 4 個に分けて流す（後ろの輪、前の輪、蓋、入口の枠。1 個 22 kg 以下）, dims: [dome.inner_diameter, dome.inner_height, dome.thickness, dome.split_lat, collar.depth], doc: 02-configuration.md}
   - {id: seam, name: 継ぎ目, mat: 段付きの継ぎ目に生体溶解性のペーパー 1 mm を挟み、外を耐火モルタルで薄く塗る。ドームの足とレンガのあいだに縄を敷き、焚き口の両脇で止める, dims: [dome.step, dome.gasket, dome.skim, dome.seat], doc: 02-configuration.md}
-  - {id: band, name: 足元の帯, mat: 平鋼 3 × 40 の半円 2 本。内向きのつめでドームの足に流し込み、両端の耳をステンレスの M8 で締める, dims: [band.width, band.thickness], doc: 03-structural-design.md}
+  - {id: band, name: 足元の帯, mat: 平鋼 3 × 40 の半円 2 本。前の帯は入口の枠の脚の脇で止め、焚き口の床を横切らせない。内向きのつめでドームの足に流し込み、両端の耳をステンレスの M8 で締める, dims: [band.width, band.thickness], doc: 03-structural-design.md}
   - {id: insulation, name: 毛布, mat: 生体溶解性の毛布 25 mm を 3 層。継ぎ目をずらして巻き、外をガラスクロスで包み、ステンレスの針金で留める, dims: [insulation.thickness], doc: 02-configuration.md}
   - {id: shell, name: 殻, mat: 山形鋼 L25 の枠に、塗った鋼板の小板（0.27 × 455 × 910）と塗った小波の波板を張る勾配 45°の切妻の箱。天板に M8 で留め、外せる, dims: [shell.width, shell.eave, shell.pitch, shell.overhang, shell.frame, shell.gap, shell.bottom_gap], doc: 02-configuration.md}
   - {id: vent, name: 頂部のベント, mat: ステンレスのフード付きガラリ 100 mm。後ろの妻の頂に付け、口の内に網を張る（ネズミと虫よけ）, dims: [vent.diameter], doc: 02-configuration.md}
@@ -90,7 +90,7 @@ sheets:
       - [hearth, door, rad, 扉の内面が冷たいと焚き口の側の炉床が冷える（P38 による計算）。焚き口の差し込みの扉は内側を断熱にし、煙道より奥で閉める]
   - id: fire
     title: 焚く間の熱と煙
-    caption: 窯の中で薪を焚き、蓄熱層と炉床に熱をためる。煙は焚き口の上から前室と煙突へ出る。
+    caption: 窯の中で薪を焚き、ドームと炉床に熱をためる。煙は焚き口の上から前室と煙突へ出る。
     size: [1100, 560]
     pos:
       outside: [90, 330]
@@ -114,7 +114,7 @@ sheets:
       - [fire, chamber, rad, キャスタブル 40 mm に熱をためる。内面の上がりは 1 時間に 100℃ 以下（R-05）]
       - [gas, chamber, conv, ""]
       - [fire, hearth, rad, 火の位置を動かして炉床のむらを作らない（付録 A.1）]
-      - [embers, hearth, cond, 焚き終わりに熾火を炉床全体に広げて 30 分以上（F15、F19）]
+      - [embers, hearth, cond, 焚く時間の終わりの 30 分に熾火を炉床全体に広げる（焚く時間に含む、F15、F19）]
   - id: steam
     title: 蒸気の通り道
     caption: 焼き始めは焚き口の差し込みの扉で蒸気を閉じ込め、焼き終わりに扉を外して前室とダンパーから抜く（R-02c）。
@@ -145,12 +145,12 @@ steps:
   - {id: prep, lane: oven, col: 0, row: 1, kind: step, name: 焚く前に見る, desc: 台と殻のまわりの雪を除き、裾の網とベントが塞がっていないか、脚が傾いていないかを見る。窯が 0℃ 以下なら冬の日、殻の裾か前室に水か氷が見えれば濡れたあとの日にする。組み直したあとの最初の日は、乾かしの火から 50℃/時のまま 350℃ まで上げる。扉とダンパーを開ける。, parts: [shell, vent, stand, door, damper], reqs: [R-08], src: [P79]}
   - {id: dryfire, lane: oven, col: 0, row: 2, kind: step, name: 乾かしの火, desc: 冬の日と、雨や雪どけで濡れたおそれのあるあとは、内面を 1 時間に 50℃ 以下で 150℃ まで上げ、ベントの湯気が止まるまで保つ（約 1.7 時間）。, parts: [chamber, insulation, hearthIns, vent], reqs: [R-05, R-08], src: [F68, F69]}
   - {id: burn, lane: oven, col: 1, row: 0, kind: step, name: 焚く, desc: 火は炉床の中央で小さく始め、内面の上がりを 30 分ごとに測る。ふだん 1 時間に 100℃、冬は 90℃、初めの 10 回は 60℃ までにする。乾いた日も速めない。内面 380℃ で止めて保つ。, parts: [chamber, hearth], reqs: [R-05, R-02a, R-06], src: [F34]}
-  - {id: spread, lane: oven, col: 2, row: 0, kind: step, name: 熾火を広げる, desc: 焚き終わりに熾火を炉床全体に広げて 30 分以上置く。, parts: [hearth], reqs: [R-02e], src: [F15, F19]}
-  - {id: rake, lane: oven, col: 3, row: 0, kind: step, name: 掻き出して拭く, desc: 熾火と灰を掻き出し、炉床を掃いて、よく絞った布で灰を取る（1〜2 回）。冷ますために拭かない。, parts: [hearth], reqs: [R-02e], src: [P67, S19, F17]}
+  - {id: spread, lane: oven, col: 2, row: 0, kind: step, name: 熾火を広げる, desc: 焚く時間の終わりの 30 分に、熾火を炉床全体に広げる（焚く時間に含む）。, parts: [hearth], reqs: [R-02e], src: [F15, F19]}
+  - {id: rake, lane: oven, col: 3, row: 0, kind: step, name: 掻き出して拭く, desc: 熾火と灰を掻き出し、炉床を掃く。灰は炉床のブラシで払い、冷ますために濡れた布で拭かない。, parts: [hearth], reqs: [R-02e], src: [P67, S19, F17]}
   - {id: soak, lane: oven, col: 4, row: 0, kind: step, name: 閉じて均す, desc: 焚き口の差し込みの扉とダンパーを閉めて 20 分置く。, parts: [door, damper, chamber, hearth], reqs: [R-02e], src: [F36, F16]}
   - {id: measure, lane: oven, col: 5, row: 0, kind: gate, name: 測る, desc: 炉床が 305〜320℃（狙いは 315〜320℃）で、5 点の差が 20℃ 以内なら入れる。320℃ を超えていれば閉じて待つ。305℃ に届かなければ 15〜30 分焚き足す。, parts: [hearth], reqs: [R-02a, R-02e, R-04b], src: [P38]}
   - {id: load1, lane: oven, col: 6, row: 0, kind: step, name: 1 回目の窯入れ, desc: 2 個を左右に入れる。焚き口の前 10 cm には置かない。, parts: [door, hearth, landing], reqs: [R-01, R-04], src: [P38, F18]}
-  - {id: bake1, lane: oven, col: 7, row: 0, kind: step, name: 焼く, desc: 焚き口の差し込みの扉で蒸気を閉じ込め、焼き終わりに扉を外して抜く。1 回目は差し込みの扉を外さない（ふつうの日だけ引き戸の 1/4 まで。2 回目が下がる）。, parts: [door, damper, chamber], reqs: [R-02b, R-02c, R-02e], src: [P40, P21]}
+  - {id: bake1, lane: oven, col: 7, row: 0, kind: step, name: 焼く, desc: 焚き口の差し込みの扉で蒸気を閉じ込め、焼き終わりに扉を外して抜く。1 回目は、差し込みの扉を外して引き戸を閉めたままの段まで（ふつうの日だけ引き戸の 1/4 まで。開けすぎると 2 回目が下がる）。, parts: [door, damper, chamber], reqs: [R-02b, R-02c, R-02e], src: [P40, P21]}
   - {id: rest, lane: oven, col: 8, row: 0, kind: step, name: 取り出して閉める, desc: 取り出したら差し込みの扉を閉めて待つ。, parts: [door, hearth], reqs: [R-04b], src: [P1]}
   - {id: check2, lane: oven, col: 9, row: 0, kind: gate, name: 250℃ 以上か, desc: 1 回目から 60 分で、2 回目を入れる所の炉床が 250℃ 以上かを確かめる。, parts: [hearth], reqs: [R-04b], src: [P1]}
   - {id: load2, lane: oven, col: 10, row: 0, kind: step, name: 2 回目の窯入れ, desc: 焚き直さずに、1 回目を 90 度回した前と奥に入れて焼く。差し込みの扉を外すなら、引き戸は 1/4 まで（ふつうの日は 1/2 まで）。, parts: [door, hearth], reqs: [R-04, R-04b, R-02b], src: [P1]}
