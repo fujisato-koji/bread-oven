@@ -40,12 +40,12 @@ const PARTS = [
   { key: 'hearthIns', label: '炉床の下の断熱', color: 0xeee6cc, mat: 'セメントとパーライト 1:5（板 75 mm、縁の帯 65 mm）' },
   { key: 'hearth', label: '炉床', color: 0xb85f3c, mat: '耐火粘土レンガ 65 mm（切らない四角、18 個）' },
   { key: 'chamber', label: 'ドーム', color: 0xcfc6b5, mat: '耐火キャスタブル CA-13T 40 mm（4 個。入口の枠に前室の箱より 10 mm 大きい四角い鍔）' },
-  { key: 'seam', label: '継ぎ目', color: 0xd2462a, mat: '段付き、ペーパー 1 mm、外の薄塗り、ドームの足の下の縄' },
+  { key: 'seam', label: '継ぎ目', color: 0xd2462a, mat: '段付き、ペーパー 1 mm（縦の継ぎ目の段の外の半分はガラス繊維のテープ）、外の薄塗り、ドームの足の下の縄' },
   { key: 'band', label: '足元の帯', color: 0x3d4247, mat: '平鋼 3 × 40' },
   { key: 'insulation', label: '毛布', color: 0xf3f0e8, mat: '生体溶解性の毛布 25 mm を 3 層' },
   { key: 'shell', label: '殻', color: 0xe8ebee, mat: 'L25 の枠、塗った鋼板、塗った波板（45°）' },
   { key: 'vent', label: '頂部のベント', color: 0xb9bec2, mat: 'ステンレスのフード付きガラリ 100 mm' },
-  { key: 'landing', label: '前室と焚き口', color: 0x45484d, mat: '縞鋼板 3.2 mm の箱（耳と水切りと水返しを溶接）、敷居と床と天井にレンガ、台の受け金と押しばね、脇の水切り板、焚き口の前掛け' },
+  { key: 'landing', label: '前室と焚き口', color: 0x45484d, mat: '縞鋼板 3.2 mm の箱（天板を前へ 1/20 下げ、耳と水切りを溶接）、敷居と床と天井にレンガ、台の受け金と押しばね、脇の水切り板、焚き口の前掛け' },
   { key: 'door', label: '扉', color: 0x4a3b30, mat: '焚き口の差し込みの扉と、前室の口の引き戸（閉、1/4、1/2、全開）' },
   { key: 'damper', label: 'ダンパー', color: 0x2f3236, mat: '差し板' },
   { key: 'chimney', label: '煙突', color: 0x5d6066, mat: 'ステンレス φ120、H 笠、火の粉止め' },
@@ -93,7 +93,7 @@ const state = {
 // oven.json に鍵の無い小さな寸法で、構造様式と構造設計の表の値を、図を描くためだけに使う。
 // 表の値を変えたら、ここも合わせる。
 const LAND_CEIL = 0.032;            // 前室の天井の内の薄いレンガの厚さ
-const DAMPER_SLOT = 0.025;          // ダンパーの溝（L25）の高さ。煙突の付け根はこの上に載る
+const DAMPER_SLOT = 0.025;          // ダンパーの溝（L25）の立ちの辺。天板の前の縁でこの高さにし、上を水平にする。煙突の付け根はこの上に載る
 const DAMPER_Z0 = 0.48;             // ダンパーの溝の後ろの端の z
 const DAMPER_T = 0.0032;            // ダンパーの差し板の厚さ（縞鋼板 3.2 mm）
 const HEARTH_COLS = 6;              // 炉床のレンガの列の数（114 mm の列）
@@ -121,13 +121,12 @@ const DRAW = { r: 0.004, len: 0.11, head: 0.0053, headR: 0.0075, washer: 0.012, 
 // up は後ろの端の立ち上げ、end は前の端の、前室の前の面からの引っ込み（引き戸の下のレールと引き戸に当てない）。
 const SKIRT = { t: 0.0015, bot: 0.015, kick: 0.006, up: 0.010, end: 0.003 };
 const DRIP_SET = 0.005;            // 前室の天板の水切りの平鋼の、天板の前の縁からの引っ込み
-const WEIR_SET = 0.010;            // 前室の天板の水返しの平鋼の、殻の前の妻からの離れ
 const FB_T = 0.003;                // 水切りの平鋼の厚さ（3 × 25）
 const SHELL_PLATE = 0.002;          // 殻の板を見せる厚さ（板は 0.27 mm、図のための値）
 const ROOF_T = 0.004;               // 波板を見せる厚さ（板は 0.35 mm、図のための値）
 const ROOF_WAVE = 0.07;             // 波板の線の間（図のための値）
 const NOTCH_CLEAR = 0.02;           // 前の妻の切り欠きと前室の熱い鋼のすきま
-const NOTCH_OVER = 0.048;           // 前の妻の切り欠きの上の端の、軒からの高さ（1.8）
+const NOTCH_OVER = 0.048;           // 前の妻の切り欠きの上の端の、軒からの高さの下の限り（1.8）。天板の勾配で、箱から NOTCH_CLEAR 離す方が上になる
 const VENT_OUT = 0.05;              // ベントの殻の外への出（図のための値）
 const CHIMNEY_CAP = 0.18;           // H 笠の高さ
 const TUBE_WALL = 0.0023;           // 角パイプの厚さ
@@ -152,11 +151,12 @@ const WOOD = { r: 0.045, rows: 3, len: 0.30, x0: 0.28, z0: 0.36 };  // 薪置き
 const BREAD = { d: 0.25, h: 0.08, wall: 0.035 };                // 焼く場面のパン（直径と壁までは dome.inner_diameter の根拠、高さは図のための値）
 
 // 計算の値（構造設計と構造様式の表による）。図の寸法からは出せないので、札と表にそのまま出す。
+// 乾いた密度 1,650〜2,050 kg/m³ の幅。輪は帯を含み、厚さ +4 mm の上の端を括弧に書く（構造設計 3.7.1）。
 const DOME_PIECES = [
-  ['後ろの輪', '17.5〜21.4 kg（帯の半分を含む）'],
-  ['前の輪', '13.2〜16.4 kg'],
-  ['蓋', '9.9〜12.4 kg'],
-  ['入口の枠', '6.2〜7.7 kg（鍔を含む）'],
+  ['後ろの輪', '16.0〜19.6 kg（帯を含む、厚さ +4 mm で 21.7 kg）'],
+  ['前の輪', '15.9〜19.5 kg（帯を含む、厚さ +4 mm で 21.7 kg）'],
+  ['蓋', '9.2〜11.4 kg'],
+  ['入口の枠', '6.5〜8.1 kg（鍔を含む）'],
 ];
 const CALC_ROWS = [
   ['全体の重さ（計算）', '283〜306 kg', '算出'],
@@ -581,10 +581,14 @@ function buildCast(ctx) {
   const Ro = R + t;
   const Rm = R + t / 2;
   const lat = deg(P('dome.split_lat'));
-  const dStep = P('dome.step') / Rm;          // 段の重なりの角。子午線に沿って段の深さと同じ長さにとる
+  const dStep = P('dome.lip') / Rm;           // 輪の内の半分を緯度 lat より上へ伸ばす角（厚さの中ほどで子午線に沿って dome.lip）
+  const dSplit = P('dome.split_z');           // 前後の輪を分ける縦の面の z（縦の継ぎ目の段の中ほど）
+  // 縦の継ぎ目の段は面の前後に dome.step / 2 ずつ置く。内の半分の面が前（zSeamIn）、外の半分の面が後ろ（zSeamOut）で、
+  // 前の輪の外の半分が後ろの輪の内の半分の上を外から抱く（oven.json の dome.split_z、図面とそろえる）。
+  const zSeamIn = dSplit + P('dome.step') / 2;
+  const zSeamOut = dSplit - P('dome.step') / 2;
   const gk = P('dome.gasket');
   const gLat = gk / Rm;
-  const gPhi = gk / 2 / Rm;
   const ins = P('insulation.thickness');
   const rIns = Ro + ins;
 
@@ -603,10 +607,24 @@ function buildCast(ctx) {
   const zLF = collarZ + ld + lp;              // 前室の前の面
   const yCeil = yFloor + lh;                  // 天井の薄いレンガの下の面
   const yRoof = yCeil + LAND_CEIL;            // 鋼板の天井の下の面
-  const yRoofTop = yRoof + lp;
+  const yRoofTop = yRoof + lp;                // 口（z = zLF）での高さ。天板は前へ landing.slope で下げ、奥ほど高い
+  const lslope = P('landing.slope');
+  const roofDy = (z) => (zLF - z) * lslope;   // 口から測った天板の上がり（z の所）
+  const rise = roofDy(collarZ);               // 箱の奥での上がり（約 12 mm）
+  const zTopL = zLF + P('landing.overhang');  // 天板の前の縁
   const rc = P('chimney.diameter') / 2;
   const cz = P('chimney.z');
-  const yCB = yRoofTop + DAMPER_SLOT;         // 煙突の付け根
+  const yCB = yRoofTop + roofDy(zTopL) + DAMPER_SLOT;  // 煙突の付け根（ダンパーの溝の水平な上の辺）
+  // 天板の勾配に合わせて形の点を上げる。yMin より下の点は動かさない（袖は上の辺だけを上げる）。物は回していない前提。
+  const slopeUp = (o, yMin = -Infinity) => {
+    const pos = o.geometry.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      if (pos.getY(i) + o.position.y < yMin) continue;
+      pos.setY(i, pos.getY(i) + roofDy(pos.getZ(i) + o.position.z));
+    }
+    o.geometry.computeVertexNormals();
+    return o;
+  };
 
   // 炉床
   const hw = P('hearth.width');
@@ -626,13 +644,11 @@ function buildCast(ctx) {
   // 4 個は同じ chamber に入れ、色を 3% ずつ変えて継ぎ目を見せる。
   const shade = (i) => new THREE.Color(PART.chamber.color).multiplyScalar(1 - 0.03 * i);
   const pieceWeights = DOME_PIECES.map(([n, w]) => `${n} ${w}`).join('、');
-  const domeDims = `内径 ${f2(2 * R)} m、内高 ${f2(H)} m、厚さ ${f3(t)} m。緯度 ${P('dome.split_lat')}° で輪と蓋に分け、輪を z = 0 で前と後ろに分ける。4 個の重さは ${pieceWeights} になる（計算）`;
+  const domeDims = `内径 ${f2(2 * R)} m、内高 ${f2(H)} m、厚さ ${f3(t)} m（押し付ける厚さの許し +${mm(P('dome.thickness_tol'))} mm）。緯度 ${P('dome.split_lat')}° で輪と蓋に分け（輪の内の半分を ${mm(P('dome.lip'))} mm 上へ伸ばし、蓋の外の半分が外から抱く）、輪を z = ${f3(dSplit)} m の縦の面で前と後ろに分ける。4 個の重さは ${pieceWeights} になる（計算）`;
   const pieceInfo = (i) => info('chamber', domeDims, `${PART.chamber.mat}。この個は${DOME_PIECES[i][0]}で、重さは ${DOME_PIECES[i][1]} になる（計算）`, DOME_PIECES[i][0]);
 
-  // 輪の輪郭。上の端を段付きにする（外の半分は緯度 lat まで、内の半分は lat + dStep まで）。
+  // 輪の輪郭は、上の端を段付きにする（外の半分は緯度 lat まで、内の半分は lat + dStep まで。下の ringPiece で作る）。
   const N = 24;
-  const ringPts = [...arc(t, 0, lat, N), ...arc(t / 2, lat, lat + dStep, 3), ...arc(0, lat + dStep, 0, N)];
-  ringPts.push(ringPts[0].clone());
   // 蓋の輪郭。輪の段に紙の厚さだけ離して座る。
   const lidPts = [
     ...arc(t, lat + gLat, Math.PI / 2, N),
@@ -644,9 +660,90 @@ function buildCast(ctx) {
   const doorWin = { arch: { halfW: dHalf, spring: yFloor + dSpring, bottom: yFloor - 0.02, z0: 0 } };
   const collarWin = { arch: { halfW: dHalf + t, spring: yFloor + dSpring, bottom: yFloor - 0.02, z0: 0 } };
 
-  const back = mesh(revolve(ringPts, Math.PI / 2 + gPhi, Math.PI - 2 * gPhi, 48), material('chamber', { color: shade(0) }), pieceInfo(0));
+  // 前後の輪は縦の面 z = zc で平らに切る。後ろか前の半分の回転体を作り、各点の方位を、その点の水平の半径で面に届く幅へ寄せる。
+  // 方位は +z（前）から測り、前の輪は −φc〜φc、後ろの輪は φc〜2π − φc（cos φc = zc / 半径）。
+  // zc は数か、点の番号から面の z を返す関数（縦の継ぎ目の段で、内の半分と外の半分を別の面で切る）。
+  const planeCut = (geom, zc, isFront) => {
+    const pos = geom.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i);
+      const z = pos.getZ(i);
+      const r = Math.hypot(x, z);
+      if (r < 1e-6) continue;
+      const zci = typeof zc === 'function' ? zc(i) : zc;
+      const pc = Math.acos(Math.max(-1, Math.min(1, zci / r)));
+      let ph = Math.atan2(x, z);
+      if (isFront) ph *= pc / (Math.PI / 2);
+      else {
+        if (ph < 0) ph += 2 * Math.PI;
+        ph = Math.PI + (ph - Math.PI) * ((Math.PI - pc) / (Math.PI / 2));
+      }
+      pos.setXYZ(i, r * Math.sin(ph), pos.getY(i), r * Math.cos(ph));
+    }
+    geom.computeVertexNormals();
+    return geom;
+  };
+  // 前後の輪。縦の継ぎ目の段は、内の半分を zSeamIn、外の半分を zSeamOut の面で切り、そのあいだの厚さの中ほどの面（踏み面）を足す。
+  // 輪郭の各点に、どちらの半分の面で切るかを付ける。段の角（厚さの中ほどの点）は両方の側に 2 度置く（そのあいだの面は幅を持たない）。
+  const ringTop = arc(t / 2, lat, lat + dStep, 3);
+  const ringProf = [
+    ...arc(t, 0, lat, N).map((p) => [p, 'o']),
+    [ringTop[0], 'o'],
+    ...ringTop.map((p) => [p, 'i']),
+    ...arc(0, lat + dStep, 0, N).map((p) => [p, 'i']),
+    [sp(t / 2, 0), 'i'],
+    [sp(t / 2, 0), 'o'],
+    [sp(t, 0), 'o'],
+  ];
+  const capIn = [...arc(t / 2, 0, lat, N), ...ringTop.slice(1), ...arc(0, lat + dStep, 0, N)];
+  const capOut = [...arc(t, 0, lat, N), ...arc(t / 2, lat, 0, N)];
+  const tread = arc(t / 2, 0, lat, N);
+  const ringPiece = (phi0, segs, isFront) => {
+    const dz = isFront ? gk / 2 : -gk / 2;
+    const zIn = zSeamIn + dz;
+    const zOut = zSeamOut + dz;
+    const pts = ringProf.map(([p]) => p);
+    const lathe = planeCut(new THREE.LatheGeometry(pts, segs, phi0, Math.PI), (i) => (ringProf[i % pts.length][1] === 'i' ? zIn : zOut), isFront);
+    const caps = [];
+    for (const [cap, zc] of [[capIn, zIn], [capOut, zOut]]) {
+      [phi0, phi0 + Math.PI].forEach((phi, k) => {
+        const g = new THREE.ShapeGeometry(new THREE.Shape(cap.map((p) => new THREE.Vector2(p.x, p.y))));
+        if (k === 1) flipFaces(g);
+        g.rotateY(phi - Math.PI / 2);
+        caps.push(planeCut(g, zc, isFront));
+      });
+    }
+    // 踏み面。後ろの輪では内の半分の外の面（外を向く）、前の輪では外の半分の内の面（内を向く）。
+    for (const s of [-1, 1]) {
+      const p = [];
+      for (const v of tread) {
+        for (const z of [zOut, zIn]) p.push(s * Math.sqrt(Math.max(0, v.x * v.x - z * z)), v.y, z);
+      }
+      const idx = [];
+      for (let k = 0; k < tread.length - 1; k++) {
+        const a = 2 * k;
+        for (const tri of [[a, a + 1, a + 2], [a + 1, a + 3, a + 2]]) {
+          const P3 = tri.map((j) => new THREE.Vector3(p[3 * j], p[3 * j + 1], p[3 * j + 2]));
+          const nrm = new THREE.Vector3().subVectors(P3[1], P3[0]).cross(new THREE.Vector3().subVectors(P3[2], P3[0]));
+          const c = P3[0].clone().add(P3[1]).add(P3[2]);
+          const outward = nrm.x * c.x + nrm.z * c.z > 0;
+          idx.push(...(outward === !isFront ? tri : [tri[0], tri[2], tri[1]]));
+        }
+      }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(p, 3));
+      g.setAttribute('normal', new THREE.Float32BufferAttribute(new Array(p.length).fill(0), 3));
+      g.setAttribute('uv', new THREE.Float32BufferAttribute(new Array((p.length / 3) * 2).fill(0), 2));
+      g.setIndex(idx);
+      caps.push(g);
+    }
+    const geom = mergeGeometries([lathe, ...caps]);
+    geom.computeVertexNormals();
+    return geom;
+  };
+  const back = mesh(ringPiece(Math.PI / 2, 48, false), material('chamber', { color: shade(0) }), pieceInfo(0));
   const frontMat = cutWindow(material('chamber', { color: shade(1) }), doorWin);
-  const front = mesh(revolve(ringPts, -Math.PI / 2 + gPhi, Math.PI - 2 * gPhi, 48), frontMat, pieceInfo(1));
+  const front = mesh(ringPiece(-Math.PI / 2, 56, true), frontMat, pieceInfo(1));
   const lid = mesh(revolve(lidPts), material('chamber', { color: shade(2) }), pieceInfo(2));
 
   // 前の輪の焚き口の縁の壁（見た目のため。断面の蓋は窓で捨てるので、ここには付けない）。
@@ -689,9 +786,9 @@ function buildCast(ctx) {
   // 入口の枠の輪の外の弧の内を除いた形を、入口の枠の前の面から後ろへ collar.flange だけ押し出す。輪と一体に流すので、同じ個として描く。
   const ft = P('collar.flange');
   const fo = P('collar.flange_out');
-  const fx = lw / 2 + lp;                     // 前室の箱の外の半幅（耳、水切り、水返しもこの値で描く）
+  const fx = lw / 2 + lp;                     // 前室の箱の外の半幅（耳と水切りもこの値で描く）
   const ffx = fx + fo;                        // 鍔の半幅
-  const fTop = yRoofTop + fo - yBase;
+  const fTop = yRoofTop + rise + fo - yBase;  // 鍔の上の端は、勾配で上がった箱の奥の上の端の fo 上
   const ro = dHalf + t;
   const fyi = sprL + Math.sqrt(Math.max(0, ro * ro - ffx * ffx));
   const fa0 = Math.atan2(fyi - sprL, ffx);
@@ -705,7 +802,7 @@ function buildCast(ctx) {
   const flangeGeom = extrude(flangeShape, ft);
   flangeGeom.translate(0, 0, collarZ - ft);
   const flange = mesh(flangeGeom, material('chamber', { color: shade(3) }),
-    info('chamber', `厚さ ${mm(ft)} mm、外形 幅 ${f3(2 * ffx)} m、炉床から ${f3(yRoofTop + fo - yFloor)} m（前室の箱より左右と上に ${mm(fo)} mm 大きい）、z = ${f2(collarZ - ft)}〜${f2(collarZ)} m。入口の枠と合わせて ${DOME_PIECES[3][1]}（計算）`,
+    info('chamber', `厚さ ${mm(ft)} mm、外形 幅 ${f3(2 * ffx)} m、炉床から ${f3(yRoofTop + rise + fo - yFloor)} m（前室の箱の奥より左右と上に ${mm(fo)} mm 大きい）、z = ${f2(collarZ - ft)}〜${f2(collarZ)} m。入口の枠と合わせて ${DOME_PIECES[3][1]}（計算）`,
       '入口の枠の四角い鍔（入口の枠と一体に流す）。前室の箱の奥の縁を毛布の帯（幅 12 mm、図は描かない）で受け、箱の奥の上の隅のすきまを塞ぐ', '入口の枠の鍔'));
   for (const o of [back, front, reveal, lid, collar, flange]) o.position.y = yBase;
   add('chamber', back, front, reveal, lid, collar, flange);
@@ -713,22 +810,23 @@ function buildCast(ctx) {
   // ---- 継ぎ目（継ぎ目の線、外の薄塗り、ドームの足の下の縄）
   const seamMat = material('seam');
   const skimMat = material('seam', { color: new THREE.Color(PART.seam.color).lerp(new THREE.Color(PART.chamber.color), 0.45) });
-  const seamDims = `段の深さ ${mm(P('dome.step'))} mm、紙 ${mm(gk)} mm、外の薄塗り ${mm(P('dome.skim'))} mm、縄の圧したあとの厚さ ${mm(seat)} mm`;
+  const seamDims = `段の深さ ${mm(P('dome.step'))} mm（緯度の継ぎ目は輪の内の半分を ${mm(P('dome.lip'))} mm 上へ伸ばす）、紙 ${mm(gk)} mm、縦の継ぎ目の外の半分のテープ ${mm(P('dome.tape'))} mm、外の薄塗り ${mm(P('dome.skim'))} mm、縄の圧したあとの厚さ ${mm(seat)} mm`;
   const Hm = H + t / 2;
   // 緯度 lat の輪（厚さの中ほど）
   const ringSeam = new THREE.TorusGeometry(Rm * Math.cos(lat), SEAM_R, 8, 128);
   ringSeam.rotateX(-Math.PI / 2);
-  const ringSeamMesh = mesh(ringSeam, seamMat, info('seam', seamDims, '輪と蓋の段付きの継ぎ目（ペーパー 1 mm を挟む）', '緯度の継ぎ目'));
+  const ringSeamMesh = mesh(ringSeam, seamMat, info('seam', seamDims, '輪と蓋の段付きの継ぎ目（ペーパー 1 mm を挟む。蓋の外の半分が輪の内の半分の上を外から抱く）', '緯度の継ぎ目'));
   ringSeamMesh.position.y = yBase + Hm * Math.sin(lat);
   add('seam', ringSeamMesh);
-  // 前と後ろを分ける縦の 2 本（x = ±Rm）
+  // 前と後ろを分ける縦の 2 本（面 z = dSplit が厚さの中ほどを切る線）
   for (const s of [-1, 1]) {
     const pts = Array.from({ length: 13 }, (_, i) => {
       const q = (lat * i) / 12;
-      return V3(s * Rm * Math.cos(q), yBase + Hm * Math.sin(q), 0);
+      const rh = Rm * Math.cos(q);
+      return V3(s * Math.sqrt(Math.max(0, rh * rh - dSplit * dSplit)), yBase + Hm * Math.sin(q), dSplit);
     });
     add('seam', mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 24, SEAM_R, 8, false), seamMat,
-      info('seam', seamDims, '前の輪と後ろの輪の段付きの継ぎ目（ペーパー 1 mm を挟む）', '縦の継ぎ目')));
+      info('seam', seamDims, `前の輪と後ろの輪の段付きの継ぎ目（z = ${f3(dSplit)} m の縦の面。段の外の半分に編んだ平たいガラス繊維のテープ ${mm(P('dome.tape'))} mm、内の半分にペーパー 1 mm を挟む。段の内の半分の面は z = ${f3(zSeamIn)} m、外の半分の面は z = ${f3(zSeamOut)} m で、前の輪の外の半分が後ろの輪の内の半分の上を外から抱く。赤の線は段の踏み面の中ほどに描く）`, '縦の継ぎ目')));
   }
   // 入口の枠のまわり（ドームの外面の上）
   {
@@ -756,7 +854,18 @@ function buildCast(ctx) {
     const vBand = [...arc(t + sk, q0, lat - hwq, 12), ...arc(t + 3e-4, lat - hwq, q0, 12)];
     vBand.push(vBand[0].clone());
     for (const s of [-1, 1]) {
-      const o = mesh(revolve(vBand, s * Math.PI / 2 - hwq, 2 * hwq, 4), skimMat, skimInfo);
+      // 方位 ±π/2 で作った帯を、点ごとの水平の半径で、縦の継ぎ目の外の面 z = zSeamOut の上へ回す（外の面の継ぎ目を覆う）。
+      const g = revolve(vBand, s * Math.PI / 2 - hwq, 2 * hwq, 4);
+      const pos = g.attributes.position;
+      for (let i = 0; i < pos.count; i++) {
+        const x = pos.getX(i);
+        const z = pos.getZ(i);
+        const r = Math.hypot(x, z);
+        const ph = Math.atan2(x, z) + s * (Math.acos(Math.max(-1, Math.min(1, zSeamOut / r))) - Math.PI / 2);
+        pos.setXYZ(i, r * Math.sin(ph), pos.getY(i), r * Math.cos(ph));
+      }
+      g.computeVertexNormals();
+      const o = mesh(g, skimMat, skimInfo);
       o.position.y = yBase;
       add('seam', o);
     }
@@ -777,7 +886,7 @@ function buildCast(ctx) {
     }
   }
 
-  // ---- 足元の帯（半円 2 本。焚き口の前は入口の枠の外形の中を描かない）
+  // ---- 足元の帯（後ろの帯と前の帯。継ぎ目は縦の継ぎ目の外の面 z = zSeamOut。焚き口の前は入口の枠の外形の中を描かない）
   {
     const bwid = P('band.width');
     const bt = P('band.thickness');
@@ -787,19 +896,28 @@ function buildCast(ctx) {
     const gB = BAND_EAR.gap / 2 / Ro;
     const bandMat = material('band', { metalness: 0.4, roughness: 0.6 });
     const frontBandMat = cutWindow(material('band', { metalness: 0.4, roughness: 0.6 }), collarWin);
-    const bInfo = info('band', `平鋼 ${mm(bt)} × ${mm(bwid)} mm、外の半径 ${f3(rO)} m の半円 2 本。前の帯は入口の枠の脚の脇で止め、焚き口の床を横切らせない。耳はステンレスの M8 で締める`);
+    const bInfo = info('band', `平鋼 ${mm(bt)} × ${mm(bwid)} mm、外の半径 ${f3(rO)} m。後ろの帯と前の帯 2 本で、継ぎ目の耳は縦の継ぎ目の外の面 z = ${f3(zSeamOut)} m に置く。前の帯は入口の枠の脚の脇で止め、焚き口の床を横切らせない。耳はステンレスの M8 で、冷えた窯でぴったり当てて締め、熱いときに締め直さない`);
+    const pc = Math.acos(Math.max(-1, Math.min(1, zSeamOut / Ro)));   // 縦の継ぎ目の外の面の方位（+z から）
     const halves = [
-      mesh(revolve(pts, Math.PI / 2 + gB, Math.PI - 2 * gB, 64), bandMat, bInfo),
-      mesh(revolve(pts, -Math.PI / 2 + gB, Math.PI - 2 * gB, 64), frontBandMat, bInfo),
+      mesh(revolve(pts, pc + gB, 2 * Math.PI - 2 * (pc + gB), 64), bandMat, bInfo),
+      mesh(revolve(pts, -pc + gB, 2 * (pc - gB), 64), frontBandMat, bInfo),
     ];
     for (const o of halves) { o.position.y = yBase; add('band', o); }
     for (const s of [-1, 1]) {
+      // 耳は継ぎ目の方位 φ で外へ向ける。局所の x を外の向き、z を周の向きにとり、y の回りに φ − π/2 回す。
+      const ph = s * pc;
+      const ry = ph - Math.PI / 2;
+      const at = (u, w) => [u * Math.cos(ry) + w * Math.sin(ry), -u * Math.sin(ry) + w * Math.cos(ry)];
       for (const k of [-1, 1]) {
-        add('band', box(BAND_EAR.out, bwid, bt, s * (rO + BAND_EAR.out / 2), yBase + bwid / 2, k * (BAND_EAR.gap / 2 + bt / 2), bandMat, bInfo));
+        const [x, z] = at(rO + BAND_EAR.out / 2, k * (BAND_EAR.gap / 2 + bt / 2));
+        const ear = box(BAND_EAR.out, bwid, bt, x, yBase + bwid / 2, z, bandMat, bInfo);
+        ear.rotation.y = ry;
+        add('band', ear);
       }
       const bolt = mesh(new THREE.CylinderGeometry(BAND_EAR.bolt, BAND_EAR.bolt, BAND_EAR.gap + 2 * bt + 0.012, 12), material('band', { color: ZINC, metalness: 0.5 }), bInfo);
-      bolt.rotation.x = Math.PI / 2;
-      bolt.position.set(s * (rO + BAND_EAR.out * 0.6), yBase + bwid / 2, 0);
+      bolt.rotation.set(Math.PI / 2, ry, 0, 'YXZ');
+      const [bx, bz] = at(rO + BAND_EAR.out * 0.6, 0);
+      bolt.position.set(bx, yBase + bwid / 2, bz);
       add('band', bolt);
     }
   }
@@ -807,7 +925,7 @@ function buildCast(ctx) {
   // ---- 毛布とガラスクロス。入口の枠の外形と、鍔と前室の箱の形を抜く（四角は鍔の裏の面から前）。
   const insWin = {
     arch: { halfW: dHalf + t, spring: yFloor + dSpring, bottom: yFloor - 0.02, z0: 0 },
-    rect: { halfW: ffx, bottom: yFloor - 0.02, top: yRoofTop + fo, z0: collarZ - ft },
+    rect: { halfW: ffx, bottom: yFloor - 0.02, top: yRoofTop + rise + fo, z0: collarZ - ft },
   };
   {
     const insInfo = info('insulation', `厚さ ${f3(ins)} m（25 mm を ${BLANKET_LAYERS} 層）、外の半径 ${f3(rIns)} m`);
@@ -934,16 +1052,16 @@ function buildCast(ctx) {
   {
     const lm = material('landing', { metalness: 0.35, roughness: 0.6 });
     const brick = material('landing', { color: PART.hearth.color });
-    const boxInfo = info('landing', `内のり 幅 ${f2(lw)} × 高さ ${f3(lh)}（薄いレンガの下）× 奥行 ${f2(ld)} m、鋼板の天井は床から ${f3(lh + LAND_CEIL)} m`, '縞鋼板 3.2 mm の袖 2 枚と天板。外は 600℃ の耐熱塗料で塗る。奥の縁は毛布の帯を挟んで入口の枠の鍔に当てる（図は帯の厚さを描かない）', '箱');
+    const boxInfo = info('landing', `内のり 幅 ${f2(lw)} × 高さ ${f3(lh)}（口、奥は ${f3(lh + rise)}、薄いレンガの下）× 奥行 ${f2(ld)} m、鋼板の天井は床から口で ${f3(lh + LAND_CEIL)} m、天板は前へ 1/${Math.round(1 / lslope)} 下げる`, '縞鋼板 3.2 mm の袖 2 枚（台形）と天板。外は 600℃ の耐熱塗料で塗る。奥の縁は毛布の帯を挟んで入口の枠の鍔に当てる（図は帯の厚さを描かない）', '箱');
     for (const s of [-1, 1]) {
-      add('landing', box(lp, yRoof - yFloor, zLF - collarZ, s * (lw / 2 + lp / 2), (yFloor + yRoof) / 2, (collarZ + zLF) / 2, lm, boxInfo));
+      add('landing', slopeUp(box(lp, yRoof - yFloor, zLF - collarZ, s * (lw / 2 + lp / 2), (yFloor + yRoof) / 2, (collarZ + zLF) / 2, lm, boxInfo), (yFloor + yRoof) / 2));
     }
-    const zTop = zLF + P('landing.overhang');
-    add('landing', mesh(slabXZ(rectXZ(-(lw / 2 + lp), lw / 2 + lp, collarZ, zTop), [{ x: 0, z: cz, r: rc + 0.003 }], yRoof, lp), lm, boxInfo));
+    const zTop = zTopL;
+    add('landing', slopeUp(mesh(slabXZ(rectXZ(-(lw / 2 + lp), lw / 2 + lp, collarZ, zTop), [{ x: 0, z: cz, r: rc + 0.003 }], yRoof, lp), lm, boxInfo)));
     const zc1 = collarZ + ld;
     const holeR = Math.max(0.01, Math.min(rc, zc1 - cz - 0.003, cz - collarZ - 0.003));
-    add('landing', mesh(slabXZ(rectXZ(-lw / 2, lw / 2, collarZ, zc1), [{ x: 0, z: cz, r: holeR }], yCeil, LAND_CEIL - 0.0005), brick,
-      info('landing', `厚さ ${mm(LAND_CEIL)} mm。煙突の口を切り欠く`, '薄いレンガ（SK34 ウス半丁）を天井の内に張る', '天井のレンガ')));
+    add('landing', slopeUp(mesh(slabXZ(rectXZ(-lw / 2, lw / 2, collarZ, zc1), [{ x: 0, z: cz, r: holeR }], yCeil, LAND_CEIL - 0.0005), brick,
+      info('landing', `厚さ ${mm(LAND_CEIL)} mm。煙突の口を切り欠く。天板と同じ勾配で張る`, '薄いレンガ（SK34 ウス半丁）を天井の内に張る', '天井のレンガ'))));
     // 焚き口の敷居と前室の床に、丸ごと 3 個と、前室の口の小片 3 個を並べる。
     const sillInfo = info('landing', `幅 ${f3(3 * bw)} m、z = ${f3(hz)}〜${f3(hz + bl + SILL_SMALL)} m`, '耐火粘土レンガ（丸ごと 3 個と小片 3 個）', '敷居と前室の床');
     for (let i = -1; i <= 1; i++) {
@@ -952,13 +1070,11 @@ function buildCast(ctx) {
       }
     }
     // 天板の水切り。平鋼 3 × 25 を、天板の前の縁から DRIP_SET 内の下の面に立てて溶接する（縞鋼板は折らない）。
+    // 天板は前へ下げるので、天板の上の水は前の縁へ流れ、殻の当て板へ戻らない（#8 の水返しは外した）。
     const drip = P('landing.drip');
-    add('landing', box(2 * fx, drip, FB_T, 0, yRoof - drip / 2, zTop - DRIP_SET - FB_T / 2, lm,
-      info('landing', `平鋼 3 × ${mm(drip)}、長さ ${f3(2 * fx)} m。天板の前の縁から ${mm(DRIP_SET)} mm 内の下の面に溶接する。下の端は炉床から ${f3(yRoof - drip - yFloor)} m`, '天板の水切り（平鋼を溶接する）', '水切り')));
-    // 天板の水返し。天板は水平（仮）なので、殻の前の妻の WEIR_SET 前に同じ平鋼を横に立て、天板の上の水を殻の当て板へ戻さず左右へ落とす。
-    const zWeir = P('shell.width') / 2 + WEIR_SET;
-    add('landing', box(2 * fx, drip, FB_T, 0, yRoofTop + drip / 2, zWeir + FB_T / 2, lm,
-      info('landing', `平鋼 3 × ${mm(drip)}、長さ ${f3(2 * fx)} m。殻の前の妻の ${mm(WEIR_SET)} mm 前（z = ${f3(zWeir)} m）で天板の上に立てて溶接する`, '天板の水返し（天板の上の水を左右へ落とす。天板を水平にするか勾配を付けるかは施主が決める）', '水返し')));
+    const zDrip = zTop - DRIP_SET - FB_T / 2;
+    add('landing', slopeUp(box(2 * fx, drip, FB_T, 0, yRoof - drip / 2, zDrip, lm,
+      info('landing', `平鋼 3 × ${mm(drip)}、長さ ${f3(2 * fx)} m。天板の前の縁から ${mm(DRIP_SET)} mm 内の下の面に溶接する。下の端は炉床から ${f3(yRoof + roofDy(zDrip) - drip - yFloor)} m（口の上 ${f3(lh)} m より上）`, '天板の水切り（平鋼を溶接する）', '水切り'))));
     // 箱の耳、受け金、引きボルトと押しばね（左右に 1 組ずつ）。耳は袖の外の面の下の前寄りに溶接し、受け金の引きボルトに上から掛ける。
     const ss = material('landing', { color: 0xa9aeb3, metalness: 0.6, roughness: 0.4 });
     const earZ = P('landing.ear_z');
@@ -1079,15 +1195,35 @@ function buildCast(ctx) {
     const open = damperOpen();
     const pull = open ? Math.max(0, cz + rc + 0.005 - DAMPER_Z0) : 0;
     const dmat = material('damper', { metalness: 0.3, roughness: 0.6 });
-    const dInfo = info('damper', `差し板 ${f2(dw)} × ${f2(dl)} m、溝 z = ${f2(DAMPER_Z0)}〜${f2(DAMPER_Z0 + dl)} m。図は${open ? `前へ ${mm(pull)} mm 引いて開けた` : '閉めた'}位置で描く`);
-    const yc = yRoofTop + DAMPER_SLOT / 2;
-    add('damper', box(dw, DAMPER_T, dl, 0, yc, DAMPER_Z0 + pull + dl / 2, dmat, dInfo));
+    // 溝の L25 は立ちの辺を斜めに切り、天板の前の縁で DAMPER_SLOT、後ろの端で低くして、上の辺を水平（yCB）にする。
+    // 差し板は勾配の天板の上に載って滑る。天板より前へ出る所も同じ勾配のまま描く。
+    const z0 = DAMPER_Z0;
+    const z1 = DAMPER_Z0 + dl;
+    const plateTop = (z) => yRoofTop + roofDy(Math.min(z, zTopL));
+    const dInfo = info('damper', `差し板 ${f2(dw)} × ${f2(dl)} m、溝 z = ${f2(z0)}〜${f2(z1)} m。溝の立ちの辺は斜めに切り（後ろの端 ${mm(yCB - plateTop(z0))} mm、天板の前の縁 ${mm(DAMPER_SLOT)} mm）、上の辺を水平にして煙突を載せる。差し板は勾配の天板の上を滑る。図は${open ? `前へ ${mm(pull)} mm 引いて開けた` : '閉めた'}位置で描く`);
+    const zp = z0 + pull;
+    add('damper', slopeUp(box(dw, DAMPER_T, dl, 0, yRoofTop + DAMPER_T / 2, zp + dl / 2, dmat, dInfo)));
     for (const s of [-1, 1]) {
       const x = s * (dw / 2 + 0.004);
-      add('damper', box(RAIL.t, DAMPER_SLOT, dl, x, yc, DAMPER_Z0 + dl / 2, dmat, dInfo));
-      add('damper', box(0.012, RAIL.t, dl, x - s * 0.006, yRoofTop + DAMPER_SLOT - RAIL.t / 2, DAMPER_Z0 + dl / 2, dmat, dInfo));
+      // 立ちの辺（z と y の面の形を x の向きに RAIL.t だけ押し出す）
+      const leg = new THREE.Shape([
+        new THREE.Vector2(z0, plateTop(z0)), new THREE.Vector2(zTopL, plateTop(zTopL)), new THREE.Vector2(z1, plateTop(zTopL)),
+        new THREE.Vector2(z1, yCB), new THREE.Vector2(z0, yCB),
+      ]);
+      const lg = extrude(leg, RAIL.t);
+      const lpos = lg.attributes.position;
+      for (let i = 0; i < lpos.count; i++) {
+        const sx = lpos.getX(i);
+        const sy = lpos.getY(i);
+        const sz = lpos.getZ(i);
+        lpos.setXYZ(i, x + RAIL.t / 2 - sz, sy, sx);
+      }
+      lg.computeVertexNormals();
+      add('damper', mesh(lg, dmat, dInfo));
+      add('damper', box(0.012, RAIL.t, dl, x - s * 0.006, yCB - RAIL.t / 2, z0 + dl / 2, dmat, dInfo));
     }
-    add('damper', cylAlong(0.005, V3(0, yc, DAMPER_Z0 + pull + dl), V3(0, yc, DAMPER_Z0 + pull + dl + 0.08), dmat, dInfo, 10));
+    const yAt = (z) => yRoofTop + DAMPER_T / 2 + roofDy(z);
+    add('damper', cylAlong(0.005, V3(0, yAt(zp + dl), zp + dl), V3(0, yAt(zp + dl + 0.08), zp + dl + 0.08), dmat, dInfo, 10));
   }
 
   // ---- 殻（45°の切妻）
@@ -1100,8 +1236,8 @@ function buildCast(ctx) {
   const ov = P('shell.overhang');
   const fr = P('shell.frame');
   const flow = (sw2 + ov) / Math.cos(pitch);
-  // 切り欠きは、炉床の面より下を縁の帯と前室の下の板の幅にし、上を前室の形から NOTCH_CLEAR 離す（図面とそろえる）。
-  const notch = { w: lw / 2 + lp + NOTCH_CLEAR, wLow: STRIP_LEN / 2, yStep: yFloor, top: Math.max(yE + NOTCH_OVER, yRoofTop + NOTCH_CLEAR) };
+  // 切り欠きは、炉床の面より下を縁の帯と前室の下の板の幅にし、上を前室の形（妻の所の天板の上の面）から NOTCH_CLEAR 離す（図面とそろえる）。
+  const notch = { w: lw / 2 + lp + NOTCH_CLEAR, wLow: STRIP_LEN / 2, yStep: yFloor, top: Math.max(yE + NOTCH_OVER, yRoofTop + roofDy(sw2) + NOTCH_CLEAR) };
   {
     const pm = material('shell', { metalness: 0.2, roughness: 0.7 });
     const rm = material('shell', { color: 0xc9ced3, metalness: 0.3, roughness: 0.6 });
@@ -1461,8 +1597,10 @@ function buildCast(ctx) {
     ['ドームの内径と内高', `${f2(2 * R)} m、${f2(H)} m`],
     ['ドームの外の半径、毛布の外の半径', `${f3(Ro)} m、${f3(rIns)} m`],
     ['ドームの足の下の面', `${f3(yBase)} m`],
+    ['前後の輪を分ける縦の面', `z = ${f3(dSplit)} m`],
     ['焚き口', `幅 ${f2(2 * dHalf)} m、高さ ${f2(dH)} m`],
     ['前室の前の面の z', `${f3(zLF)} m`],
+    ['前室の天板の勾配', `前へ 1/${Math.round(1 / lslope)}（奥で ${mm(rise)} mm 上がる）`],
     ['殻の軒と棟', `${f2(yE)} m、${f2(yR)} m`],
     ['殻の屋根の流れの長さ', `${f3(flow)} m`],
     ['天板の大きさ', `${f2(TW)} × ${f2(TD)} m（z ${f2(zBack)}〜${f2(zFront)} m）`],
