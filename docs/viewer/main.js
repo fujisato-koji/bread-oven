@@ -66,6 +66,16 @@ const DOOR_STATES = {
   open: { label: '差し込みの扉を外し、引き戸を全開', plug: false, open: 1 },
 };
 
+// 空気の流れの場面。doors は場面に合う扉の開け幅（先頭を既定にする）で、null ならどれでもよい。
+// damper は、ダンパーを開けた位置で描くか。第一案（cast）だけに描く。
+const FLOW_SCENES = {
+  none: { label: 'なし', doors: null, damper: false },
+  fire: { label: '焚く', doors: ['open'], damper: true },
+  bake: { label: '焼く', doors: ['plug'], damper: false },
+  cool: { label: '温度を下げる', doors: ['q2', 'q1'], damper: true },
+  shell: { label: '殻の換気', doors: null, damper: false },
+};
+
 const state = {
   type: Object.keys(TYPE_LABEL).includes(spec.type) ? spec.type : 'cast',
   section: false,
@@ -74,6 +84,7 @@ const state = {
   shellFade: false,
   apron: false,
   door: 'plug',
+  flow: 'none',
   visible: Object.fromEntries(PARTS.map((p) => [p.key, true])),
   selected: null,
 };
@@ -125,6 +136,7 @@ const GRAVEL = 0x8e9093;            // 締めた砕石の色
 const CONCRETE = 0xb9b7b0;          // コンクリート平板の色
 const FRAME = 0x8d9297;             // 殻の枠の色
 const WOOD = { r: 0.045, rows: 3, len: 0.30, x0: 0.28, z0: 0.36 };  // 薪置き（目安）
+const BREAD = { d: 0.25, h: 0.08, wall: 0.035 };                // 焼く場面のパン（直径と壁までは dome.inner_diameter の根拠、高さは図のための値）
 
 // 計算の値（構造設計と構造様式の表による）。図の寸法からは出せないので、札と表にそのまま出す。
 const DOME_PIECES = [
@@ -935,7 +947,8 @@ function buildCast(ctx) {
     const lfw = P('door.leaf_w');
     const lfh = P('door.leaf_h');
     const dt = P('door.thickness');
-    const off = ds.open * lfw;
+    // 1/2 開けると板の左の端が断面の面（x = 0）にちょうど重なり、切り口がちらつくので、開けたときは 0.5 mm だけ先へずらして描く。
+    const off = ds.open * lfw + (ds.open > 0 ? 0.0005 : 0);
     const yMid = yFloor + lh / 2;
     const leafInfo = info('door', `${f2(lfw)} × ${f2(lfh)} m、厚さ ${f3(dt)} m。止めは閉のほかに ${P('door.stops')} 段ある（1/4、1/2、全開）`,
       '縞鋼板 3.2 mm、ケイカル板 6 mm、毛布 25 mm の引き戸', '前室の口の引き戸');
@@ -950,20 +963,23 @@ function buildCast(ctx) {
     }
   }
 
-  // ---- ダンパー（前室の天板の上の溝に通す差し板。図は閉めた位置）
+  // ---- ダンパー（前室の天板の上の溝に通す差し板）
+  // ふだんは閉めた位置で描き、空気の流れの「焚く」と「温度を下げる」では、差し板の後ろの端が煙突の口の前に出るまで前へ引いた位置で描く。
   {
     const dw = P('damper.width');
     const dl = P('damper.length');
+    const open = damperOpen();
+    const pull = open ? Math.max(0, cz + rc + 0.005 - DAMPER_Z0) : 0;
     const dmat = material('damper', { metalness: 0.3, roughness: 0.6 });
-    const dInfo = info('damper', `差し板 ${f2(dw)} × ${f2(dl)} m、溝 z = ${f2(DAMPER_Z0)}〜${f2(DAMPER_Z0 + dl)} m。図は閉めた位置で描く`);
+    const dInfo = info('damper', `差し板 ${f2(dw)} × ${f2(dl)} m、溝 z = ${f2(DAMPER_Z0)}〜${f2(DAMPER_Z0 + dl)} m。図は${open ? `前へ ${mm(pull)} mm 引いて開けた` : '閉めた'}位置で描く`);
     const yc = yRoofTop + DAMPER_SLOT / 2;
-    add('damper', box(dw, DAMPER_T, dl, 0, yc, DAMPER_Z0 + dl / 2, dmat, dInfo));
+    add('damper', box(dw, DAMPER_T, dl, 0, yc, DAMPER_Z0 + pull + dl / 2, dmat, dInfo));
     for (const s of [-1, 1]) {
       const x = s * (dw / 2 + 0.004);
       add('damper', box(RAIL.t, DAMPER_SLOT, dl, x, yc, DAMPER_Z0 + dl / 2, dmat, dInfo));
       add('damper', box(0.012, RAIL.t, dl, x - s * 0.006, yRoofTop + DAMPER_SLOT - RAIL.t / 2, DAMPER_Z0 + dl / 2, dmat, dInfo));
     }
-    add('damper', cylAlong(0.005, V3(0, yc, DAMPER_Z0 + dl), V3(0, yc, DAMPER_Z0 + dl + 0.08), dmat, dInfo, 10));
+    add('damper', cylAlong(0.005, V3(0, yc, DAMPER_Z0 + pull + dl), V3(0, yc, DAMPER_Z0 + pull + dl + 0.08), dmat, dInfo, 10));
   }
 
   // ---- 殻（45°の切妻）
@@ -1056,11 +1072,11 @@ function buildCast(ctx) {
   }
 
   // ---- 頂部のベント（後ろの妻の頂）
+  const yV = yR - P('vent.diameter') - fr * 1.5;   // ベントの中心の高さ
   {
     const rv = P('vent.diameter') / 2;
     const vm = material('vent', { metalness: 0.6, roughness: 0.35 });
     const vInfo = info('vent', `径 ${f2(2 * rv)} m。後ろの妻の頂に付け、口の内に網を張る`);
-    const yV = yR - 2 * rv - fr * 1.5;
     add('vent', cylAlong(rv, V3(0, yV, -sw2 + SHELL_PLATE), V3(0, yV, -sw2 - VENT_OUT), vm, vInfo, 24));
     const hood = box(2 * rv + 0.03, 0.003, VENT_OUT + 0.03, 0, yV + rv + 0.012, -sw2 - (VENT_OUT + 0.03) / 2, vm, vInfo);
     hood.rotation.x = -0.35;
@@ -1069,16 +1085,17 @@ function buildCast(ctx) {
   }
 
   // ---- 煙突（前室の天板の上の溝の上に立てる）
+  const yCT = P('chimney.top') - CHIMNEY_CAP;     // H 笠の下の端
+  const yH = yCT + CHIMNEY_CAP / 2;               // H 笠の横の管の中心
+  const capX = 2 * rc;                            // H 笠の縦の管の中心の左右の位置
   {
-    const yCT = P('chimney.top') - CHIMNEY_CAP;
     const cm = material('chimney', { metalness: 0.4, roughness: 0.5 });
     const cInfo = info('chimney', `内径 ${f2(2 * rc)} m、付け根 ${f2(yCB)} m、頂部の高さ ${f2(P('chimney.top'))} m、z = ${f2(cz)} m`);
-    const yH = yCT + CHIMNEY_CAP / 2;
     const pipe = mesh(new THREE.CylinderGeometry(rc + 0.002, rc + 0.002, yH - yCB, 32, 1, true), cm, cInfo);
     pipe.position.set(0, (yCB + yH) / 2, cz);
     add('chimney', pipe);
     const capInfo = info('chimney', cInfo.dims, 'H 笠（内に火の粉止めの網）', 'H 笠');
-    const xs = 2 * rc;
+    const xs = capX;
     add('chimney', cylAlong(rc * 0.9, V3(-xs, yH, cz), V3(xs, yH, cz), cm, capInfo, 24));
     for (const s of [-1, 1]) {
       const o = mesh(new THREE.CylinderGeometry(rc * 0.9, rc * 0.9, CHIMNEY_CAP, 24, 1, true), cm, capInfo);
@@ -1350,9 +1367,17 @@ function buildCast(ctx) {
     ...CALC_ROWS,
   ];
 
+  // 空気の流れの曲線を作るための寸法（buildFlow が使う）
+  const doorNow = DOOR_STATES[state.door] || DOOR_STATES.plug;
+  const geo = {
+    yT, yFloor, yBase, R, H, rIns: rIns + CLOTH_T, dHalf, dH, collarZ, lw, lh, zLF, yCeil, yRoofTop, yCB,
+    rc, cz, yH, capX, chimneyTop: P('chimney.top'), sw2, yS0, yE, yR, pitch, yV, ventOut: VENT_OUT,
+    doorOpen: doorNow.open, leafW: P('door.leaf_w'),
+  };
+
   return {
     yFloor, outerTop: yR, centerZ: tz, outerD: zLF - (-sw2 - ov), span: Math.max(2 * xR + 0.4, TD, P('chimney.top')),
-    rows,
+    rows, geo,
   };
 }
 
@@ -1502,6 +1527,557 @@ function buildBrick(ctx) {
   return { yFloor, outerTop, centerZ, outerD: zFront - zBack, span: Math.max(tw, td, 2.2), rows };
 }
 
+// ---------- 空気の流れ
+// 場面ごとの空気と煙と湯気の流れを、oven.json の寸法から作った曲線に沿って動く矢印と粒で描く。
+// 曲線は、ドームの内面、焚き口、前室、煙突、H 笠、殻の板と毛布の面から少し離した点を通る CatmullRom の曲線にする。
+// 流れの向きと形は説明のための絵で、測っても計算してもいない（推定）。
+// 矢印は 2 度描く。1 度目はふつうに描き、2 度目は奥行きを比べずに薄く描いて、壁の向こうの流れも透けて見せる。
+// 断面のときは、窯と同じ面で切る。中ほどの流れは x = FLOW_MID に置き、断面で切らずに見せる。
+
+const FLOW_COLOR = {
+  cold: 0x2f7fe0,   // 外の冷たい空気
+  hot: 0xe0301e,    // 火で温まった煙
+  warm: 0xf08a1c,   // 天井を回って出ていく煙と、焼き室の熱い空気
+  smoke: 0x8f7d72,  // 煙突の H 笠から出る煙
+  damp: 0x13a39b,   // 湿気を連れた空気（殻の換気）
+  leak: 0xe6a35e,   // 差し込みの扉のまわりのわずかな漏れ
+  steam: 0xffffff,  // 湯気
+};
+const FLOW_MID = -0.02;           // 中ほどの流れを置く x（断面の面 x = 0 から、残す側へ 20 mm）
+const FLOW_ARROW = { r: 0.011, h: 0.034 };
+const FLOW_STEAM_R = 0.011;
+const FLOW_GHOST = 0.35;          // 壁の向こうの矢印の濃さ
+const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function damperOpen() {
+  return state.type === 'cast' && !!(FLOW_SCENES[state.flow] || FLOW_SCENES.none).damper;
+}
+
+function flowActive() {
+  return state.type === 'cast' && state.flow !== 'none' && state.flow in FLOW_SCENES;
+}
+
+const flowMat = {
+  arrow: new THREE.MeshBasicMaterial({ color: 0xffffff }),
+  ghost: new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: FLOW_GHOST, depthTest: false, depthWrite: false }),
+  line: new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.5 }),
+  thin: new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.28 }),
+  steam: new THREE.MeshBasicMaterial({ color: FLOW_COLOR.steam }),
+  rim: new THREE.MeshBasicMaterial({ color: 0x55504a, side: THREE.BackSide }),
+  steamGhost: new THREE.MeshBasicMaterial({ color: FLOW_COLOR.steam, transparent: true, opacity: FLOW_GHOST, depthTest: false, depthWrite: false }),
+  flame: new THREE.MeshBasicMaterial({ color: 0xff7a1a, transparent: true, opacity: 0.85 }),
+  core: new THREE.MeshBasicMaterial({ color: 0xffd34d }),
+  bread: new THREE.MeshStandardMaterial({ color: 0xc8894a, roughness: 0.9 }),
+};
+const flowGeom = {
+  arrow: new THREE.ConeGeometry(FLOW_ARROW.r, FLOW_ARROW.h, 10),
+  steam: new THREE.IcosahedronGeometry(FLOW_STEAM_R, 1),
+  rim: new THREE.IcosahedronGeometry(FLOW_STEAM_R * 1.3, 1),
+  flame: new THREE.ConeGeometry(0.028, 0.085, 12),
+  core: new THREE.ConeGeometry(0.015, 0.05, 10),
+  bread: (() => {
+    const g = new THREE.SphereGeometry(BREAD.d / 2, 28, 10, 0, Math.PI * 2, 0, Math.PI / 2);
+    g.scale(1, BREAD.h / (BREAD.d / 2), 1);
+    return g;
+  })(),
+};
+
+const air = { root: new THREE.Group(), streams: [], arrows: [], steam: [], flames: [], built: [], ghosts: [], arrowMesh: null, steamMesh: null, t: 0, autoFade: false };
+air.root.name = 'flow';
+air.root.visible = false;
+scene.add(air.root);
+
+const clamp = THREE.MathUtils.clamp;
+
+// 制御点 [{ p, c }] の曲線を、弧の長さで等分に取り直す。色は制御点の番号で、sRGB の値のまま混ぜる。
+// ただし、冷たい空気（青）と温まった空気（赤、橙、灰茶）のあいだは混ぜずに、区間の中ほどで切り替える
+// （青と赤や橙を混ぜると、どの混ぜ方でも紫や灰色になり、凡例に無い色に見えるため）。
+// opt は closed（輪）、speed（m/s、図のための値）、gap（矢印の間）、scale（矢印の大きさ）、thin（細い線）とする。
+const FLOW_WARM = new Set(['hot', 'warm', 'smoke', 'leak']);
+function makeStream(pts, opt = {}) {
+  const closed = !!opt.closed;
+  const curve = new THREE.CatmullRomCurve3(pts.map((q) => q.p), closed, 'centripetal');
+  const cols = pts.map((q) => new THREE.Color(FLOW_COLOR[q.c]).getRGB({ r: 0, g: 0, b: 0 }, THREE.SRGBColorSpace));
+  const step = (a, b) => (a === 'cold' && FLOW_WARM.has(b)) || (b === 'cold' && FLOW_WARM.has(a));
+  const mixSrgb = (a, b, w) => new THREE.Color().setRGB(a.r + (b.r - a.r) * w, a.g + (b.g - a.g) * w, a.b + (b.b - a.b) * w, THREE.SRGBColorSpace);
+  const n = closed ? pts.length : pts.length - 1;
+  const M = 64 * n;
+  const raw = [];
+  const rawCol = [];
+  const cum = [0];
+  for (let i = 0; i <= M; i++) {
+    const u = i / M;
+    raw.push(curve.getPoint(u));
+    const f = u * n;
+    const k = Math.min(Math.floor(f), n - 1);
+    const ka = k % cols.length;
+    const kb = (k + 1) % cols.length;
+    const w = step(pts[ka].c, pts[kb].c) ? (f - k < 0.5 ? 0 : 1) : f - k;
+    rawCol.push(mixSrgb(cols[ka], cols[kb], w));
+    if (i) cum.push(cum[i - 1] + raw[i].distanceTo(raw[i - 1]));
+  }
+  const L = cum[M];
+  const K = Math.max(40, Math.min(800, Math.ceil(L / 0.008)));
+  const pos = new Float32Array(K * 3);
+  const col = new Float32Array(K * 3);
+  let j = 0;
+  for (let i = 0; i < K; i++) {
+    const s = (L * i) / (K - 1);
+    while (j < M - 1 && cum[j + 1] < s) j++;
+    const w = clamp((s - cum[j]) / Math.max(cum[j + 1] - cum[j], 1e-9), 0, 1);
+    const p = raw[j].clone().lerp(raw[j + 1], w);
+    const c = rawCol[j].clone().lerp(rawCol[j + 1], w);
+    pos.set([p.x, p.y, p.z], i * 3);
+    col.set([c.r, c.g, c.b], i * 3);
+  }
+  const tan = new Float32Array(K * 3);
+  for (let i = 0; i < K; i++) {
+    const a = closed ? (i - 1 + (K - 1)) % (K - 1) : Math.max(0, i - 1);
+    const b = closed ? (i + 1) % (K - 1) : Math.min(K - 1, i + 1);
+    const t = V3(pos[b * 3] - pos[a * 3], pos[b * 3 + 1] - pos[a * 3 + 1], pos[b * 3 + 2] - pos[a * 3 + 2]).normalize();
+    tan.set([t.x, t.y, t.z], i * 3);
+  }
+  return {
+    pos, col, tan, K, L, closed,
+    speed: opt.speed || 0.1,
+    scale: opt.scale || 1,
+    thin: !!opt.thin,
+    count: Math.max(2, Math.round(L / (opt.gap || 0.1))),
+  };
+}
+
+// 弧の長さの割合 u の点と向きと色を返す（となりの 2 点を線形に混ぜる）。
+function sampleStream(st, u, p, t, c) {
+  const f = clamp(u, 0, 1) * (st.K - 1);
+  const i = Math.min(Math.floor(f), st.K - 2);
+  const w = f - i;
+  const a = i * 3;
+  const b = a + 3;
+  const mix = (arr, k) => arr[a + k] + (arr[b + k] - arr[a + k]) * w;
+  p.set(mix(st.pos, 0), mix(st.pos, 1), mix(st.pos, 2));
+  if (t) t.set(mix(st.tan, 0), mix(st.tan, 1), mix(st.tan, 2)).normalize();
+  if (c) c.setRGB(mix(st.col, 0), mix(st.col, 1), mix(st.col, 2));
+}
+
+// 場面の曲線を作る。g は buildCast の geo とする。
+function flowScene(name, g) {
+  const out = { streams: [], steam: [], flames: [], breads: [] };
+  const at = (p, c) => ({ p, c });
+  const yF = g.yFloor;
+  const yLow = yF + g.dH * 0.18;                       // 焚き口の下の側を通る高さ
+  const yHigh = yF + g.dH * 0.78;                      // 焚き口の上の側を通る高さ
+  const zIn = g.R * Math.sqrt(Math.max(0, 1 - ((yHigh - g.yBase) / g.H) ** 2));  // 焚き口の上の側の、ドームの内面の z
+  const zTun = (zIn + g.collarZ) / 2;                  // 焚き口の中ほどの z
+  const zC = zIn - 0.06;                               // 焚き口のすぐ内の z
+  const yArch = (x) => yF + Math.max(0, g.dH - g.dHalf) + Math.sqrt(Math.max(0, g.dHalf ** 2 - x * x));  // 焚き口のアーチの縁の高さ
+  // ドームの内面から d だけ内の点。az は +z（焚き口の向き）から +x へ回る角、lat は緯度とする。
+  const dirOf = (lat, az) => V3(Math.cos(lat) * Math.sin(az), Math.sin(lat), Math.cos(lat) * Math.cos(az));
+  const onDome = (u, d) => V3(u.x * (g.R - d), g.yBase + u.y * (g.H - d), u.z * (g.R - d));
+  const slerp = (a, b, t) => {
+    const w = Math.acos(clamp(a.dot(b), -1, 1));
+    if (w < 1e-6) return a.clone();
+    return a.clone().multiplyScalar(Math.sin((1 - t) * w) / Math.sin(w)).addScaledVector(b, Math.sin(t * w) / Math.sin(w));
+  };
+
+  // 前室の口から入り、焚き口の下の側を通って炉床を奥へ流れ、壁を上がり、天井に沿って前へ回り、
+  // 焚き口の上の側から前室へ出て、煙突を上がり、H 笠から出る道。
+  // o.x は前室の口の左右の位置、o.az は壁を上がる向き、o.azFront は天井から下りてくる向き、
+  // o.mid は中ほどの流れか、o.side は H 笠で出る側、o.fire は火で温まるか（焚く場面）とする。
+  function ovenRoute(o) {
+    const k = (x, f) => (o.mid ? FLOW_MID : x * f);
+    const rf = g.R * 0.55;
+    const F = V3(o.mid ? FLOW_MID : rf * Math.sin(o.az), yF + 0.06, rf * Math.cos(o.az));
+    const front = V3(k(o.x, 1.05), yLow, zC);
+    const mid = front.clone().lerp(F, 0.5).setY(yLow + 0.005);
+    const near = front.clone().lerp(F, 0.88).setY(yLow + 0.01);   // 色を火の手前まで青のままにする点
+    const U0 = dirOf(0.75, o.az);
+    const U1 = dirOf(0.98, o.azFront);
+    const pin = (p) => { if (o.mid) p.x = FLOW_MID; return p; };
+    const heat = o.fire ? 'hot' : 'cold';
+    const capC = o.fire ? 'smoke' : 'warm';
+    const pts = [
+      at(V3(k(o.x, 1), yF + 0.05, g.zLF + 0.22), 'cold'),
+      at(V3(k(o.x, 1), yF + 0.04, g.zLF + 0.01), 'cold'),
+      at(V3(k(o.x, o.fire ? 1 : 0.7), yLow + 0.005, g.collarZ + 0.06), 'cold'),
+      at(V3(k(o.x, o.fire ? 0.95 : 0.6), yLow, zTun), 'cold'),
+      at(front, 'cold'),
+      at(mid, 'cold'),
+      at(near, 'cold'),
+      at(F, heat),
+      at(pin(onDome(dirOf(0.3, o.az), 0.04)), heat),
+      at(pin(onDome(U0, 0.035)), o.fire ? 'hot' : 'warm'),
+      at(pin(onDome(slerp(U0, U1, 0.35).normalize(), 0.035)), o.fire ? 'hot' : 'warm'),
+      at(pin(onDome(slerp(U0, U1, 0.7).normalize(), 0.035)), 'warm'),
+      at(pin(onDome(U1, 0.04)), 'warm'),
+      at(V3(k(o.x, 0.45), yHigh, zIn - 0.05), 'warm'),
+      at(V3(k(o.x, 0.45), yHigh, zTun), 'warm'),
+      at(V3(k(o.x, 0.4), Math.min(yHigh + 0.012, g.yCeil - 0.035), g.collarZ + 0.05), 'warm'),
+      at(V3(k(o.x, 0.25), g.yCeil - 0.03, g.cz - g.rc - 0.01), 'warm'),
+      at(V3(k(o.x, 0.12), g.yCeil + 0.016, g.cz), 'warm'),
+      at(V3(k(o.x, 0.25), g.yCB + 0.12, g.cz), 'warm'),
+      at(V3(k(o.x, 0.25), g.yH - 0.12, g.cz), 'warm'),
+      at(V3(o.side * 0.03, g.yH - 0.02, g.cz), capC),
+      at(V3(o.side * g.capX * 0.6, g.yH, g.cz), capC),
+      at(V3(o.side * g.capX, g.yH + 0.03, g.cz), capC),
+      at(V3(o.side * g.capX, g.chimneyTop + 0.02, g.cz), capC),
+      at(V3(o.side * (g.capX + 0.03), g.chimneyTop + 0.22, g.cz), capC),
+    ];
+    return { pts, F };
+  }
+
+  if (name === 'fire') {
+    // 5 本。中ほどの 1 本は奥の火へ、両脇の 4 本は奥の脇と横の火へ向かう。
+    for (const s of [-1, -0.5, 0, 0.5, 1]) {
+      const r = ovenRoute({
+        x: s * (g.dHalf - 0.05), az: Math.PI - s * 1.3, azFront: s * 0.25, mid: s === 0,
+        side: s > 0 ? 1 : -1, fire: true,
+      });
+      out.streams.push(makeStream(r.pts, { speed: 0.22, gap: 0.1 }));
+      if (s !== 0) out.flames.push(V3(r.F.x * 1.12, yF, r.F.z * 1.12));
+    }
+  } else if (name === 'cool') {
+    // 引き戸の開いた所（左の端）から入る。開いた幅は、引き戸の板の幅と開ける割合から出す。
+    const left = -g.lw / 2;
+    const wo = clamp(g.doorOpen * g.leafW - (g.leafW - g.lw) / 2, 0.02, g.lw);
+    const n = g.doorOpen >= 0.5 ? 3 : 2;
+    for (let j = 0; j < n; j++) {
+      const x = left + (wo * (j + 0.5)) / n;
+      const r = ovenRoute({ x, az: Math.PI - 0.9 * (x / (g.lw / 2)), azFront: -0.15, mid: false, side: -1, fire: false });
+      out.streams.push(makeStream(r.pts, { speed: 0.12, gap: 0.1 }));
+    }
+  } else if (name === 'bake') {
+    // 焼き室の中でゆっくり回る流れ。熱いドームの壁に沿って上がり、天井の下を真ん中へ寄り、
+    // パンの上へ下りて外へ広がり、壁へ戻る輪を、縦の面 6 枚に描く。輪の形はドームの内径と内高に合わせる。
+    // 輪の点は、内径 0.6 m、内高 0.30 m のドームでの (中心からの水平の距離, 足の下の面からの高さ) とし、R と H の比で伸ばす。
+    const loop = [[0.25, 0.06], [0.235, 0.12], [0.18, 0.19], [0.10, 0.245], [0.04, 0.20], [0.06, 0.125], [0.15, 0.105], [0.22, 0.075]];
+    for (let i = 0; i < 6; i++) {
+      const az = (i * Math.PI) / 3;
+      const midPlane = i === 0 || i === 3;
+      const pts = loop.map(([r, y]) => {
+        const rr = (r / 0.3) * g.R;
+        const p = V3(midPlane ? FLOW_MID : rr * Math.sin(az), g.yBase + (y / 0.3) * g.H, rr * Math.cos(az));
+        return at(p, 'warm');
+      });
+      const st = makeStream(pts, { closed: true, speed: 0.045, gap: 0.095, scale: 0.9 });
+      out.streams.push(st);
+      // 湯気の粒は、同じ輪に沿って少しずらして流す。
+      for (let k = 0; k < 4; k++) {
+        out.steam.push({
+          st, phase: ((k + 0.5) / 4 + i * 0.07) % 1,
+          off: V3(Math.sin(i * 3.1 + k * 1.7), Math.cos(i * 2.3 + k * 2.9), Math.sin(i * 1.3 + k * 0.7)).multiplyScalar(0.012),
+        });
+      }
+    }
+    // パン 2 個（直径 BREAD.d、壁まで BREAD.wall）
+    const bx = g.R - BREAD.wall - BREAD.d / 2;
+    out.breads.push(V3(-bx, yF, 0), V3(bx, yF, 0));
+    // 差し込みの扉の上のすきまからのわずかな漏れ。前室の天井の下を通り、閉めたダンパーのすきまから煙突へ抜ける（推定）。
+    for (const x of [2.5 * FLOW_MID, -2.5 * FLOW_MID]) {
+      const pts = [
+        at(V3(x, yArch(x) - 0.02, zTun - 0.03), 'warm'),
+        at(V3(x, yArch(x) - 0.005, g.collarZ - 0.015), 'leak'),
+        at(V3(x, yArch(x) + 0.016, g.collarZ + 0.012), 'leak'),
+        at(V3(x, g.yCeil - 0.01, g.collarZ + 0.07), 'leak'),
+        at(V3(x * 0.5, g.yCeil - 0.01, g.cz - 0.03), 'leak'),
+        at(V3(x * 0.3, g.yCeil + 0.016, g.cz), 'leak'),
+        at(V3(x * 0.3, g.yCB + 0.2, g.cz), 'leak'),
+      ];
+      out.streams.push(makeStream(pts, { speed: 0.03, gap: 0.08, scale: 0.6, thin: true }));
+    }
+  } else if (name === 'shell') {
+    // 殻の裾のすきま（網）から入り、毛布と殻のすきまを上がり、後ろの妻のベントから出る。
+    // 点は殻の板の内から 8 mm、屋根の面から 15 mm 離し、毛布の外の面から 6 mm より内へ入れない。
+    const c = V3(0, g.yBase, 0);
+    const lim = g.sw2 - 0.008;
+    const rMin = g.rIns + 0.006;
+    const inShell = (p) => {
+      p.x = clamp(p.x, -lim, lim);
+      p.z = clamp(p.z, -lim, lim);
+      p.y = Math.min(p.y, g.yR - Math.abs(p.x) * Math.tan(g.pitch) - 0.015);
+      const d = p.clone().sub(c);
+      if (p.y >= g.yBase && d.length() < rMin) p.copy(c).addScaledVector(d.normalize(), rMin);
+      return p;
+    };
+    const ySlit = (g.yT + g.yS0) / 2;
+    // 裾から入る所。side は 'x'（左右の側の板）か 'z'（前と後ろの妻）、s は向き、a はもう一方の座標とする。
+    const inlet = (side, s, a) => {
+      const Q = (n, y) => (side === 'x' ? V3(s * n, y, a) : V3(a, y, s * n));
+      return [
+        at(Q(g.sw2 + 0.12, g.yS0 + 0.006), 'cold'),
+        at(Q(g.sw2 + 0.012, ySlit), 'cold'),
+        at(Q(lim, g.yS0 + 0.02), 'cold'),
+        at(inShell(Q(lim, g.yBase - 0.03)), 'cold'),
+      ];
+    };
+    // ベントの管の中で、流れどうしを少し離す。
+    const ventOff = [[-0.022, 0.012], [0.022, 0.012], [-0.022, -0.012], [0.022, -0.012], [-0.008, 0.024], [0.008, -0.024], [-0.012, 0], [0.012, 0]];
+    const vent = (i) => {
+      const [ox, oy] = ventOff[i % ventOff.length];
+      return [
+        at(V3(ox * 1.5, g.yV + oy, -g.sw2 + 0.04), 'damp'),
+        at(V3(ox, g.yV + oy * 0.8, -g.sw2 - g.ventOut * 0.6), 'damp'),
+        at(V3(ox, g.yV - 0.03 + oy * 0.5, -g.sw2 - g.ventOut - 0.07), 'damp'),
+        at(V3(ox, g.yV - 0.09, -g.sw2 - g.ventOut - 0.13), 'damp'),
+      ];
+    };
+    const ridgeY = g.yR - 0.13;
+    let i = 0;
+    // 左右の側の板の裾から 2 本ずつ。毛布の外の面に沿って上がり、棟の下を後ろへ流れる。
+    for (const s of [-1, 1]) {
+      for (const a of [-0.46 * g.sw2, 0.28 * g.sw2]) {
+        const h0 = V3(s * lim, 0, a).normalize();
+        const over = [0.12, 0.45, 0.8, 1.1].map((lat, j) => {
+          const rho = g.rIns + 0.012 + 0.03 * (lat / 1.1);
+          const p = c.clone().addScaledVector(h0, rho * Math.cos(lat)).add(V3(0, rho * Math.sin(lat), 0));
+          return at(inShell(p), j < 2 ? 'cold' : 'damp');
+        });
+        out.streams.push(makeStream([
+          ...inlet('x', s, a), ...over,
+          at(inShell(V3(s * 0.06, ridgeY, a * 0.4 - 0.12)), 'damp'),
+          at(inShell(V3(s * 0.02, ridgeY, -g.sw2 * 0.55)), 'damp'),
+          ...vent(i++),
+        ], { speed: 0.07, gap: 0.09 }));
+      }
+    }
+    // 後ろの妻と前の妻の裾から 2 本ずつ（前の妻は、前室の切り欠きの外の左右）
+    for (const [s, xa] of [[-1, 0.6], [1, 0.76]]) {
+      for (const sx of [-1, 1]) {
+        const x0 = sx * xa * g.sw2;
+        const up = s < 0
+          ? [
+            at(inShell(V3(x0 * 0.9, g.yBase + 0.2, -(g.sw2 - 0.015))), 'cold'),
+            at(inShell(V3(x0 * 0.55, g.yE + 0.12, -(g.sw2 - 0.02))), 'damp'),
+          ]
+          : [
+            at(inShell(V3(x0 * 0.85, g.yE - 0.02, g.sw2 - 0.03)), 'cold'),
+            at(inShell(V3(x0 * 0.45, g.yE + 0.15, g.sw2 - 0.08)), 'damp'),
+            at(inShell(V3(x0 * 0.12, ridgeY, 0.05)), 'damp'),
+            at(inShell(V3(x0 * 0.04, ridgeY, -g.sw2 * 0.5)), 'damp'),
+          ];
+        out.streams.push(makeStream([...inlet('z', s, x0), ...up, ...vent(i++)], { speed: 0.07, gap: 0.09 }));
+      }
+    }
+  }
+  return out;
+}
+
+function clearFlow() {
+  for (const o of air.built) {
+    air.root.remove(o);
+    if (o.isInstancedMesh) o.dispose();
+    else if (o.isLineSegments) o.geometry.dispose();
+  }
+  Object.assign(air, { streams: [], arrows: [], steam: [], flames: [], built: [], ghosts: [], arrowMesh: null, steamMesh: null });
+}
+
+// 場面を組む。矢印と湯気の粒は、場面ごとに InstancedMesh を 1 組ずつ作る（粒の数は数百に収める）。
+function buildFlow(d) {
+  clearFlow();
+  if (flowActive() && d.geo) {
+    const sc = flowScene(state.flow, d.geo);
+    air.streams = sc.streams;
+    const keep = (o) => { o.frustumCulled = false; air.root.add(o); air.built.push(o); return o; };
+
+    // 道筋の薄い線（漏れは、さらに薄い線）
+    for (const thin of [false, true]) {
+      const pos = [];
+      const col = [];
+      for (const st of sc.streams.filter((s) => s.thin === thin)) {
+        for (let i = 0; i + 2 < st.K; i += 2) {
+          for (const k of [i, i + 2]) {
+            pos.push(st.pos[k * 3], st.pos[k * 3 + 1], st.pos[k * 3 + 2]);
+            col.push(st.col[k * 3], st.col[k * 3 + 1], st.col[k * 3 + 2]);
+          }
+        }
+      }
+      if (!pos.length) continue;
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+      g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+      keep(new THREE.LineSegments(g, thin ? flowMat.thin : flowMat.line));
+    }
+
+    // 矢印。ふつうに描く組と透けて見せる組で、置き場所と色を共有する。
+    for (const st of sc.streams) for (let j = 0; j < st.count; j++) air.arrows.push({ st, phase: j / st.count });
+    if (air.arrows.length) {
+      const main = keep(new THREE.InstancedMesh(flowGeom.arrow, flowMat.arrow, air.arrows.length));
+      main.setColorAt(0, new THREE.Color());
+      const ghost = keep(new THREE.InstancedMesh(flowGeom.arrow, flowMat.ghost, air.arrows.length));
+      ghost.instanceMatrix = main.instanceMatrix;
+      ghost.instanceColor = main.instanceColor;
+      ghost.renderOrder = 3000;
+      air.ghosts.push(ghost);
+      air.arrowMesh = main;
+    }
+
+    // 湯気の粒。白い粒に暗い縁を付けて、明るい壁の前でも見えるようにする。
+    air.steam = sc.steam;
+    if (air.steam.length) {
+      const main = keep(new THREE.InstancedMesh(flowGeom.steam, flowMat.steam, air.steam.length));
+      const rim = keep(new THREE.InstancedMesh(flowGeom.rim, flowMat.rim, air.steam.length));
+      const ghost = keep(new THREE.InstancedMesh(flowGeom.steam, flowMat.steamGhost, air.steam.length));
+      rim.instanceMatrix = main.instanceMatrix;
+      ghost.instanceMatrix = main.instanceMatrix;
+      ghost.renderOrder = 3000;
+      air.ghosts.push(ghost);
+      air.steamMesh = main;
+    }
+
+    // 火（焚く場面）とパン（焼く場面）
+    for (const p of sc.flames) {
+      const f = new THREE.Group();
+      f.add(new THREE.Mesh(flowGeom.flame, flowMat.flame), new THREE.Mesh(flowGeom.core, flowMat.core));
+      f.position.copy(p);
+      f.userData.seed = air.flames.length * 1.7;
+      air.flames.push(keep(f));
+    }
+    for (const p of sc.breads) {
+      const b = keep(new THREE.Mesh(flowGeom.bread, flowMat.bread));
+      b.position.copy(p);
+      b.castShadow = true;
+    }
+    updateFlow(0);
+  }
+  applyFlowVisibility();
+}
+
+const _fp = new THREE.Vector3();
+const _ft = new THREE.Vector3();
+const _fc = new THREE.Color();
+const _fq = new THREE.Quaternion();
+const _fs = new THREE.Vector3();
+const _fm = new THREE.Matrix4();
+const _fu = new THREE.Vector3(0, 1, 0);
+
+// 矢印と粒を動かす。場面が無いときは何もしない。
+function updateFlow(dt) {
+  if (!flowActive()) return;
+  if (!REDUCED_MOTION) air.t += dt;
+  const t = air.t;
+  // 開いた道の両端では矢印を小さくして、出てくる所と消える所をなめらかにする。
+  const fadeOf = (st, u) => (st.closed ? 1 : clamp(Math.min(u / 0.04, (1 - u) / 0.06), 0, 1));
+  if (air.arrowMesh) {
+    const m = air.arrowMesh;
+    air.arrows.forEach((a, i) => {
+      const st = a.st;
+      const u = (a.phase + (t * st.speed) / st.L) % 1;
+      sampleStream(st, u, _fp, _ft, _fc);
+      _fq.setFromUnitVectors(_fu, _ft);
+      const s = st.scale * fadeOf(st, u);
+      _fm.compose(_fp, _fq, _fs.set(s, s, s));
+      m.setMatrixAt(i, _fm);
+      m.setColorAt(i, _fc);
+    });
+    m.instanceMatrix.needsUpdate = true;
+    m.instanceColor.needsUpdate = true;
+  }
+  if (air.steamMesh) {
+    const m = air.steamMesh;
+    air.steam.forEach((a, i) => {
+      const st = a.st;
+      const u = (a.phase + (t * st.speed) / st.L) % 1;
+      sampleStream(st, u, _fp, null, null);
+      _fp.add(a.off);
+      const s = 0.85 + 0.25 * Math.sin(t * 1.3 + i);
+      _fm.compose(_fp, _fq.identity(), _fs.set(s, s, s));
+      m.setMatrixAt(i, _fm);
+    });
+    m.instanceMatrix.needsUpdate = true;
+  }
+  for (const f of air.flames) {
+    const k = f.userData.seed;
+    const sy = 1 + 0.18 * Math.sin(t * 11 + k) + 0.08 * Math.sin(t * 23 + 2 * k);
+    for (const o of f.children) {
+      o.scale.set(1, sy, 1);
+      o.position.y = (o.geometry.parameters.height * sy) / 2;
+    }
+  }
+}
+
+function applyFlowVisibility() {
+  air.root.visible = flowActive();
+  for (const g of air.ghosts) g.visible = !state.section;
+  renderFlowLegend();
+}
+
+// 断面のときは、流れも窯と同じ面で切る。透けて見せる組は隠す
+// （切り口の面に重ねて描くと、ドームや炉床の中を流れるように見えるため）。
+function applyFlowClip() {
+  for (const m of Object.values(flowMat)) {
+    m.clippingPlanes = state.section ? [cutPlane] : [];
+    m.needsUpdate = true;
+  }
+  for (const g of air.ghosts) g.visible = !state.section;
+  renderFlowLegend();
+}
+
+// 凡例。場面の扉とダンパーの状態と、色ごとの短い文を出す。
+function renderFlowLegend() {
+  const el = $('flowLegend');
+  if (!el) return;
+  if (!flowActive()) { el.hidden = true; el.innerHTML = ''; return; }
+  const prev = el.querySelector('details');
+  const open = prev ? prev.open : true;      // 畳んだ凡例は、場面や断面を替えても畳んだままにする
+  const hex = (k) => '#' + FLOW_COLOR[k].toString(16).padStart(6, '0');
+  const ds = DOOR_STATES[state.door] || DOOR_STATES.plug;
+  const leaf = ds.open >= 1 ? '引き戸を全開にする' : ds.open > 0 ? `引き戸を ${ds.open <= 0.25 ? '1/4' : '1/2'} 開ける` : '引き戸を閉める';
+  const doorText = ds.plug ? '差し込みの扉を差し、引き戸を閉める' : `差し込みの扉を外し、${leaf}`;
+  const damper = damperOpen() ? 'ダンパーを開ける' : 'ダンパーを閉める';
+  const rows = {
+    fire: [
+      ['cold', '外の冷たい空気が前室の口から入り、焚き口の下の側を通って炉床を奥へ流れる。'],
+      ['hot', '奥と脇の火で温まって上がり、ドームの天井に沿って前へ回る。'],
+      ['warm', '焚き口の上の側から前室へ出て、ダンパーを通って煙突を上がる。'],
+      ['smoke', 'H 笠の縦の管から外へ出る。'],
+    ],
+    bake: [
+      ['warm', '焼き室の熱い空気が、ドームの壁に沿って上がり、天井の下を真ん中へ寄って、パンの上へ下りる。'],
+      ['steam', 'パンから出た湯気は、差し込みの扉で閉じ込めて、焼き室の中を回る。'],
+      ['leak', '細い矢印は差し込みの扉の上のすきまからのわずかな漏れで、閉めたダンパーのすきまから煙突へ抜ける。'],
+    ],
+    cool: [
+      ['cold', '引き戸の開いた所から冷たい空気が入り、焚き口の下の側から焼き室へ入る。'],
+      ['warm', '熱い空気は焚き口の上の側から前室へ出て、ダンパーを通って煙突へ抜ける。'],
+    ],
+    shell: [
+      ['cold', `外の空気が、殻の裾の ${mm(P('shell.bottom_gap'))} mm のすきま（網）から入る。`],
+      ['damp', `毛布と殻のすきま（壁で ${mm(P('shell.gap'))} mm）を上がり、湿気を連れて後ろの妻のベントから出る。`],
+    ],
+  }[state.flow] || [];
+  const sw = (k) => (k === 'steam'
+    ? '<span class="fk dot"></span>'
+    : `<span class="fk${k === 'leak' ? ' thin' : ''}" style="background:${hex(k)}"></span>`);
+  const how = state.flow === 'shell' ? '扉とダンパーによらない。' : `${doorText}。${damper}。`;
+  el.hidden = false;
+  const see = state.section ? '断面では透かさずに、切り口より奥の流れを描く。' : '壁の向こうの流れは薄く透かして描く。';
+  el.innerHTML = `<details${open ? ' open' : ''}><summary>空気の流れ：${FLOW_SCENES[state.flow].label}</summary>`
+    + `<div class="fs">${how}</div>`
+    + rows.map(([k, s]) => `<div class="fr">${sw(k)}<span>${s}</span></div>`).join('')
+    + `<div class="fn">流れの向きと形は説明のための絵で、測っても計算してもいない（推定）。${see}</div></details>`;
+}
+
+// 場面を選ぶ。扉の開け幅を場面に合わせ、殻の換気では殻を透かす。
+// 殻の換気が透かした殻は、ほかの場面へ移るときに元へ戻す（自分で透かした殻はそのままにする）。
+function setFlow(name, opts = {}) {
+  state.flow = name in FLOW_SCENES ? name : 'none';
+  const sc = FLOW_SCENES[state.flow];
+  if (sc.doors && !sc.doors.includes(state.door)) state.door = sc.doors[0];
+  if (state.flow === 'shell') {
+    if (!state.shellFade) { state.shellFade = true; air.autoFade = true; }
+  } else if (air.autoFade) {
+    state.shellFade = false;
+    air.autoFade = false;
+  }
+  syncFlowControls();
+  if (opts.rebuild !== false) rebuild();
+}
+
+function syncFlowControls() {
+  if ($('flow')) $('flow').value = state.flow;
+  if ($('doorState')) $('doorState').value = state.door;
+  if ($('shellFade')) $('shellFade').checked = state.shellFade;
+}
+
 // ---------- 組み替えと表示
 
 let current = null;
@@ -1527,10 +2103,11 @@ function rebuild() {
   applySection();
   renderDerived(b.d);
   renderParams();
+  buildFlow(b.d);
   for (const btn of document.querySelectorAll('#type button')) {
     btn.setAttribute('aria-pressed', String(btn.dataset.type === state.type));
   }
-  for (const id of ['doorState', 'apron']) if ($(id)) $(id).disabled = state.type !== 'cast';
+  for (const id of ['doorState', 'apron', 'flow']) if ($(id)) $(id).disabled = state.type !== 'cast';
   state.selected = null;
   renderInfo(null);
   applyFocus(false);
@@ -1601,6 +2178,9 @@ window.addEventListener('message', (e) => {
   } else if (m.type === 'v3d:fade') {
     state.fade = !!m.on;
     applyFocus(false);
+  } else if (m.type === 'v3d:flow') {
+    const name = typeof m.scene === 'string' && m.scene in FLOW_SCENES ? m.scene : 'none';
+    if (name !== state.flow) setFlow(name);
   }
 });
 
@@ -1622,6 +2202,7 @@ function applySection() {
   }
   syncCaps();
   for (const o of current.sectionOnly) o.visible = state.section;
+  applyFlowClip();
 }
 
 // 断面の蓋を見せるかを決める。透かした殻の蓋と、まわりを透かすときの光らせない部品の蓋は隠す。
@@ -1724,8 +2305,9 @@ function renderParts() {
   });
 }
 
-// 左の欄の型式のボタンと、殻を透かす、前掛け、扉の開け幅の切替をそろえる（index.html に無ければ足す）。
+// 左の欄の型式のボタンと、殻を透かす、前掛け、扉の開け幅、空気の流れの切替をそろえる（index.html に無ければ足す）。
 function setupControls() {
+  setupFlowControls();
   const seg = $('type');
   const want = Object.keys(TYPE_LABEL);
   const have = [...seg.querySelectorAll('button[data-type]')].map((b) => b.dataset.type);
@@ -1740,6 +2322,15 @@ function setupControls() {
     const opts = Object.entries(DOOR_STATES).map(([k, s]) => `<option value="${k}">${s.label}</option>`).join('');
     tg.insertAdjacentHTML('afterend', `<h2>扉の開け幅</h2><select id="doorState" style="width:100%;font:inherit;padding:5px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink)">${opts}</select>`);
   }
+}
+
+// 空気の流れの切替と凡例（index.html に無ければ足す）
+function setupFlowControls() {
+  if (!$('flowLegend') && canvas.parentElement) canvas.parentElement.insertAdjacentHTML('beforeend', '<div id="flowLegend" hidden></div>');
+  const anchor = $('doorState');
+  if ($('flow') || !anchor) return;
+  const opts = Object.entries(FLOW_SCENES).map(([k, s]) => `<option value="${k}">${s.label}</option>`).join('');
+  anchor.insertAdjacentHTML('afterend', `<h2>空気の流れ</h2><select id="flow" style="width:100%;font:inherit;padding:5px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink)">${opts}</select>`);
 }
 
 // ---------- 部品を指す
@@ -1803,18 +2394,31 @@ $('section').addEventListener('change', (e) => {
   if (state.section) setView('cut');
 });
 $('seeThrough').addEventListener('change', (e) => { state.seeThrough = e.target.checked; applySeeThrough(); });
-if ($('shellFade')) $('shellFade').addEventListener('change', (e) => { state.shellFade = e.target.checked; applyShellFade(); applySection(); applyFocus(false); });
+if ($('shellFade')) $('shellFade').addEventListener('change', (e) => { state.shellFade = e.target.checked; air.autoFade = false; applyShellFade(); applySection(); applyFocus(false); });
 if ($('apron')) $('apron').addEventListener('change', (e) => { state.apron = e.target.checked; rebuild(); });
-if ($('doorState')) $('doorState').addEventListener('change', (e) => { state.door = e.target.value in DOOR_STATES ? e.target.value : 'plug'; rebuild(); });
+// 扉の開け幅を場面に合わない段にしたら、空気の流れは「なし」に戻す。
+if ($('doorState')) {
+  $('doorState').addEventListener('change', (e) => {
+    state.door = e.target.value in DOOR_STATES ? e.target.value : 'plug';
+    const sc = FLOW_SCENES[state.flow];
+    if (sc && sc.doors && !sc.doors.includes(state.door)) state.flow = 'none';
+    syncFlowControls();
+    rebuild();
+  });
+}
+if ($('flow')) $('flow').addEventListener('change', (e) => setFlow(e.target.value));
 
-// URL の ?type=brick&section=1&view=side&door=q2&apron=1&shellFade=1 で初期状態を指定できる。
+// URL の ?type=brick&section=1&view=side&door=q2&apron=1&shellFade=1&flow=fire で初期状態を指定できる。
+// flow は none、fire、bake、cool、shell で、扉の開け幅が場面に合わなければ場面に合わせる（cool は door=q1 で 1/4）。
 const q = new URLSearchParams(location.search);
 if (q.get('type') in TYPE_LABEL) state.type = q.get('type');
 if (q.get('section') === '1') { state.section = true; $('section').checked = true; }
 if (q.get('door') in DOOR_STATES) state.door = q.get('door');
 if (q.get('apron') === '1') state.apron = true;
 if (q.get('shellFade') === '1') state.shellFade = true;
+if (q.get('flow') in FLOW_SCENES) setFlow(q.get('flow'), { rebuild: false });
 if ($('doorState')) $('doorState').value = state.door;
+if ($('flow')) $('flow').value = state.flow;
 if ($('apron')) $('apron').checked = state.apron;
 if ($('shellFade')) $('shellFade').checked = state.shellFade;
 
@@ -1831,7 +2435,9 @@ new ResizeObserver(resize).observe(canvas.parentElement);
 resize();
 if (EMBED && window.parent !== window) window.parent.postMessage({ type: 'v3d:ready' }, location.origin);
 
+const clock = new THREE.Clock();
 renderer.setAnimationLoop(() => {
+  updateFlow(Math.min(clock.getDelta(), 0.1));
   controls.update();
   renderer.render(scene, camera);
 });

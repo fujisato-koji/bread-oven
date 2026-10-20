@@ -1,5 +1,5 @@
 // 3D モード。docs/viewer/ を iframe で開き、postMessage で部品を光らせる。
-// 帯のボタンで、断面、見る向き、まわりを透かすを 3D の図へ伝える。
+// 帯のボタンで、断面、見る向き、まわりを透かす、空気の流れの場面を 3D の図へ伝える。
 NavApp.register('v3d', (api) => {
   'use strict';
 
@@ -7,7 +7,7 @@ NavApp.register('v3d', (api) => {
   const note = api.$('#v3d-note');
   const bar = api.$('#mode-v3d .modebar');
   if (!stage || !bar) return null;
-  if (note) note.textContent = '部品を選ぶと 3D でも光る。3D で部品を押すと選ばれ、何もない所を押すと選択が外れる。';
+  if (note) note.textContent = '部品を選ぶと 3D でも光る。3D で部品を押すと選ばれ、何もない所を押すと選択が外れる。空気の流れの場面を選ぶと、流れを矢印で描く。';
 
   const style = document.createElement('style');
   style.textContent = `
@@ -20,6 +20,11 @@ NavApp.register('v3d', (api) => {
     }
     #mode-v3d .v3dbar button:hover { border-color: var(--accent); }
     #mode-v3d .v3dbar button[aria-pressed="true"] { background: var(--accent-tint); border-color: var(--accent); font-weight: 700; }
+    #mode-v3d .v3dbar label { font-size: 12px; display: flex; gap: 4px; align-items: center; }
+    #mode-v3d .v3dbar select {
+      border: 1px solid var(--rule); background: var(--card); color: var(--ink); border-radius: 6px;
+      padding: 1px 6px; font: inherit; font-size: 12px;
+    }
     @media (max-width: 899px) { #mode-v3d .modebar { flex-wrap: wrap; } }
   `;
   document.head.append(style);
@@ -30,7 +35,14 @@ NavApp.register('v3d', (api) => {
   const btnFade = api.el('button', { type: 'button', 'aria-pressed': 'false', text: 'まわりを透かす' });
   const views = [['iso', '斜め'], ['front', '正面'], ['side', '側面'], ['top', '上']].map(([v, t]) =>
     api.el('button', { type: 'button', 'data-view': v, text: t }));
-  tools.append(btnCut, btnFade, api.el('span', { class: 'sep', 'aria-hidden': 'true' }), ...views);
+  // 空気の流れの場面（3D の図の FLOW_SCENES と同じ名にする）
+  const AIR = [['', 'なし'], ['fire', '焚く'], ['bake', '焼く'], ['cool', '温度を下げる'], ['shell', '殻の換気']];
+  const selAir = api.el('select', { 'aria-label': '空気の流れの場面' });
+  for (const [v, t] of AIR) selAir.append(api.el('option', { value: v, text: t }));
+  const airLabel = api.el('label', { text: '空気の流れ' });
+  airLabel.append(selAir);
+  tools.append(btnCut, btnFade, api.el('span', { class: 'sep', 'aria-hidden': 'true' }), ...views,
+    api.el('span', { class: 'sep', 'aria-hidden': 'true' }), airLabel);
   bar.append(tools);
 
   let frame = null;
@@ -38,6 +50,7 @@ NavApp.register('v3d', (api) => {
   let pending = [];
   let section = false;
   let fade = false;
+  let air = '';
 
   function send(msg) {
     if (!frame || !frame.contentWindow || !ready) return;
@@ -69,6 +82,11 @@ NavApp.register('v3d', (api) => {
     send({ type: 'v3d:fade', on: fade });
   });
   for (const b of views) b.addEventListener('click', () => send({ type: 'v3d:view', view: b.dataset.view }));
+  selAir.addEventListener('change', () => {
+    air = AIR.some(([v]) => v === selAir.value) ? selAir.value : '';
+    send({ type: 'v3d:flow', scene: air || 'none' });
+    api.writeUrl(false);
+  });
 
   function onMessage(e) {
     if (!frame || e.source !== frame.contentWindow || e.origin !== location.origin) return;
@@ -78,6 +96,7 @@ NavApp.register('v3d', (api) => {
       ready = true;
       if (section) send({ type: 'v3d:section', on: true });
       if (fade) send({ type: 'v3d:fade', on: true });
+      if (air) send({ type: 'v3d:flow', scene: air });
       send({ type: 'v3d:focus', parts: pending });
     } else if (m.type === 'v3d:pick') {
       if (m.part == null) api.select(null, null, { push: true });
@@ -107,10 +126,15 @@ NavApp.register('v3d', (api) => {
         syncButtons();
         send({ type: 'v3d:section', on: true });
       }
+      if (params && params.air && params.air !== air && AIR.some(([v]) => v === params.air)) {
+        air = params.air;
+        selAir.value = air;
+        send({ type: 'v3d:flow', scene: air });
+      }
       make();
     },
     leave() {},
-    params() { return { cut: section ? '1' : '' }; },
+    params() { return { cut: section ? '1' : '', air }; },
     highlight,
     escape() { return false; },
   };
