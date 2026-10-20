@@ -73,10 +73,16 @@ build.yaml と bom.yaml の行に知らない鍵があると E17 で落ちる（
 - 終わりの工程から、日を決めた前の工程をたどった列を「日程を決めている流れ」として太線で描く。
 - 全モードの URL に、既定と違うときだけ `w=we`（土日だけ）と `s=始める日` を載せる。
 - タイムラインの引数は `cp=0`（日程を決めている流れを描かない）、調達の引数は `t=tools`（道具の表）と `g=cat` か `g=shop`（分け方）。
+- 3D の引数は `cut=1`（中心で切った断面）と `air=fire`、`air=bake`、`air=cool`、`air=shell`（空気の流れの場面）。
+  流れ図の `k=flow` と紛れないよう、空気の流れは `air` にした。
 
 3D とのやり取りは同じ生成元に限り、次の伝言を使う。
 
 | 向き | 伝言 |
 |------|------|
 | ナビゲータから 3D | `{ type: 'v3d:focus', parts: [部品の id] }`（空なら光らせない） |
+| ナビゲータから 3D | `{ type: 'v3d:section', on: 真か偽 }`（断面）、`{ type: 'v3d:fade', on: 真か偽 }`（地面を透かす）、`{ type: 'v3d:view', view: 見る向き }` |
+| ナビゲータから 3D | `{ type: 'v3d:flow', scene: 'fire' か 'bake' か 'cool' か 'shell' か 'none' }`（空気の流れ。知らない名は 'none' として扱う） |
 | 3D からナビゲータ | `{ type: 'v3d:ready' }`、`{ type: 'v3d:pick', part: 部品の id }` |
+
+3D の図（`docs/viewer/`）を単独で開くときは、URL の `flow=fire`、`flow=bake`、`flow=cool`、`flow=shell` で空気の流れの場面を選べる。

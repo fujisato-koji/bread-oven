@@ -124,6 +124,21 @@
     background: color-mix(in srgb, var(--panel) 80%, transparent); padding: 2px 8px; border-radius: 6px;
   }
   #err { position: absolute; inset: 0; display: none; place-items: center; padding: 24px; color: var(--ink); }
+  #flowLegend {
+    position: absolute; left: 10px; top: 10px; max-width: min(340px, calc(100% - 20px));
+    font-size: 12px; line-height: 1.5; color: var(--ink);
+    background: color-mix(in srgb, var(--panel) 90%, transparent);
+    border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px;
+  }
+  #flowLegend[hidden] { display: none; }
+  #flowLegend summary { font-weight: 600; cursor: pointer; }
+  #flowLegend .fs { color: var(--muted); margin: 2px 0 4px; }
+  #flowLegend .fr { display: flex; gap: 8px; align-items: flex-start; margin: 2px 0; }
+  #flowLegend .fk { flex: none; width: 18px; height: 5px; border-radius: 3px; margin-top: 7px; }
+  #flowLegend .fk.thin { height: 2px; margin-top: 8px; }
+  #flowLegend .fk.dot { width: 10px; height: 10px; margin: 4px 4px 0; border-radius: 50%; background: #fff; border: 2px solid #55504a; }
+  #flowLegend .fn { color: var(--muted); font-size: 11px; margin-top: 4px; }
+  body.embed #flowLegend { font-size: 11px; max-width: min(300px, calc(100% - 20px)); }
   body.embed .app { grid-template-columns: 1fr; }
   body.embed aside { display: none; }
   @media (max-width: 760px) {
@@ -177,6 +192,16 @@
       <option value="open">差し込みの扉を外し、引き戸を全開</option>
     </select>
 
+    <h2>空気の流れ</h2>
+    <select id="flow" style="width:100%;font:inherit;padding:5px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink)">
+      <option value="none">なし</option>
+      <option value="fire">焚く</option>
+      <option value="bake">焼く</option>
+      <option value="cool">温度を下げる</option>
+      <option value="shell">殻の換気</option>
+    </select>
+    <p class="note">場面を選ぶと、差し込みの扉、引き戸、ダンパーも場面に合わせます。断面で見ると、焼き室の中の流れが見えます。</p>
+
     <h2>部品</h2>
     <div id="parts"></div>
 
@@ -194,6 +219,7 @@
     <canvas id="scene"></canvas>
     <div id="tip"></div>
     <div id="legend">マス目は 0.5 m</div>
+    <div id="flowLegend" hidden></div>
     <div id="err"></div>
   </main>
 </div>
