@@ -149,6 +149,18 @@ NavApp.register('tl', (api) => {
     return out;
   }
 
+  // 工程名が帯に入らないときは、末尾を「…」にして帯の幅に収める（選んで太字になっても収まるよう太字で測る。全文は札と右の欄に出す）。
+  const NAME_MAX_W = LABEL_W - 24 - 10;
+  const measureCtx = document.createElement('canvas').getContext('2d');
+  function fitName(name) {
+    if (!measureCtx) return name;
+    measureCtx.font = `700 13px ${getComputedStyle(document.body).getPropertyValue('--font') || 'sans-serif'}`;
+    if (measureCtx.measureText(name).width <= NAME_MAX_W) return name;
+    let n = name.length - 1;
+    while (n > 1 && measureCtx.measureText(`${name.slice(0, n)}…`).width > NAME_MAX_W) n--;
+    return `${name.slice(0, n)}…`;
+  }
+
   // 左の工程名の帯（図と、左に重ねる SVG の両方に描く）
   function labelNodes(collect) {
     const out = [el('svg:rect', { x: 0, y: 0, width: LABEL_W, height: H, class: 'tl-bg' })];
@@ -161,7 +173,9 @@ NavApp.register('tl', (api) => {
       } else {
         const g = el('svg:g', { 'data-task': r.t.id }, [
           el('svg:rect', { x: 0, y: r.y, width: LABEL_W, height: ROW_H, class: 'tl-labbg' }),
-          el('svg:text', { x: 24, y: r.y + ROW_H / 2, class: 'tl-name', 'dominant-baseline': 'central', text: r.t.name }),
+          el('svg:text', { x: 24, y: r.y + ROW_H / 2, class: 'tl-name', 'dominant-baseline': 'central', text: fitName(r.t.name) }, [
+            el('svg:title', { text: r.t.name }),
+          ]),
         ]);
         out.push(g);
         collect(r.t.id, g);

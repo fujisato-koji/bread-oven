@@ -10,108 +10,107 @@
 # 日数の根拠は、付録 B（docs/07-build.md）の表に書く。出典の無い作業の日数は推定で、desc に「推定」と書く。
 meta:
   title: 製作の日程
-  rev: "0.1"
-  start: "2027-05-01"
-  start_note: 始める日は仮。据える地点の気候が分かったら決める。待ちの日数は気温 15℃ 以上の値で、寒い時期は延びる（付録 B）。
-  temp_note: 左官は気温 5℃ 以下で行わない（P86）。耐火モルタルは練った温度を 10〜30℃ にする（P94）。さび止めは気温 5℃ 以上、湿度 85% 以下で塗る（M103）。
+  rev: "0.2"
+  start: "2027-05-15"
+  start_note: 始める日は仮。キャスタブルを流す日を、夜も 5℃ を下回らない時期（6 月以降の見込み、未確認）に入れるため、今の 5 月 1 日から 2 週ずらした。待ちの日数は気温 15℃ 以上の値で、寒い時期は延びる（付録 B）。
+  temp_note: キャスタブルは練った温度を 10〜30℃ にし、凍るおそれのある日は流さない（P94）。硬化するまでの 24 時間以上の養生のあいだは凍らせない（P106）。硬化したあとと乾燥焚きのあとは、凍っても対策は要らない（P106）。流す日と養生のあいだの気温 5℃ 以上は目安で、推定である。パーライトとセメントは気温 5℃ 以上で打つ（P86）。さび止めと上塗りは気温 5℃ 以上、湿度 85% 以下で塗る。
   note: 製作の工程を、前後の関係と養生や乾燥の待ちから日程に組んだもの。作業の日数の多くは推定（付録 B）。
   first_bake: m-firstbake
 
 phases:
   - {id: prep, name: 準備と調達}
-  - {id: base, name: 据え台と鉄のテーブル}
+  - {id: base, name: 据え台と台}
   - {id: slab, name: 炉床の断熱と炉床}
   - {id: dome, name: ドームと前室}
-  - {id: skin, name: 断熱と外殻}
-  - {id: fire, name: 養生焚きと仕上げ}
+  - {id: skin, name: 毛布と殻}
+  - {id: fire, name: 乾燥焚きと仕上げ}
 
 tasks:
   # 準備と調達
-  - {id: b-site, phase: prep, kind: work, days: 1, after: [], name: 据える場所を決め、消防に確かめる, parts: [], reqs: [R-11], src: [],
-     desc: 据える場所と、煙突や薪置きのまわりの離隔を決める。火災予防条例の扱いを消防に確かめる（要求 1.4 の 8）。日数は推定。}
-  - {id: b-buy1, phase: prep, kind: work, days: 1, after: [b-site], name: 据え台と台と炉床の断熱の材料を買う, parts: [foundation, stand, hearthIns], reqs: [], src: [],
-     desc: 砕石、ピンコロ、鋼板 300 角、上塗りの塗料、角パイプのキャップ、セメント、砂、パーライト、合板、不織布を店で買う。角パイプ、平鋼、鋼管は鋼材店で買い、長さに切ってもらう（調達モード）。日数は推定。}
-  - {id: b-order, phase: prep, kind: wait, days: 14, after: [b-site], name: 耐火レンガ、耐火モルタル、縞鋼板の取り寄せ, parts: [hearth, chamber, landing, slab], reqs: [], src: [M90, M91, M95],
-     desc: コメリで取り寄せる。宅配は北海道へ 7 日以上（M90、抜粋）、耐火モルタルは発送まで 9〜11 日（M91）。縞鋼板はネットで注文して店で受け取る（M95）。14 日は推定。}
-  - {id: b-mail2, phase: prep, kind: wait, days: 7, after: [b-site], name: ねじとさび止めを通販で取り寄せる, parts: [stand, slab], reqs: [], src: [M96, M103],
-     desc: 溶融亜鉛めっきの全ねじ、ナット、ボルトをエスコの取扱店の通販で、ローバルを直販で頼む。届くまでの日数は未確認で、7 日は推定。}
-  - {id: b-buy2, phase: prep, kind: work, days: 1, after: [b-site], side: true, name: 煙突、鋼板、防水材などを買う, parts: [chimney, door, hood], reqs: [], src: [],
-     desc: 煙突、H 笠、支持金具、鋼板、ケイカル板、取っ手、灰入れ、防水材、シート、ガルバの平板、金網を店で買う（調達モード）。日数は推定。}
+  - {id: b-site, phase: prep, kind: work, days: 1, after: [], name: 据える場所を決め、消防と基準風速を確かめる, parts: [], reqs: [R-11, R-08], src: [P23, P109],
+     desc: 据える場所と、煙突や薪置きのまわりの離隔を決める。火災予防条例の扱いを消防に確かめる（要求 1.4 の 8）。据える町の基準風速と地表面の粗度を確かめる。風の留めは据える町によらず鎖の向きに 4.9 kN で作り、確かめた値が低ければ平板と金物を減らせる（施主の決定、構造設計 3.5）。冬の靴で立った肘の高さを測り、そこから 0.10 m 下を炉床の高さにする（0.85〜1.0 m、ふつう 0.90 m）。脚の長さはこの高さで決める。風の留めを埋める所（各脚から外へ約 0.9 m まで、深さ 0.7 m）に、水道管や電線が通っていないかを確かめる。日数は推定。}
+  - {id: b-buy1, phase: prep, kind: work, days: 1, after: [b-site], name: 据え台と台と断熱の材料を買う, parts: [foundation, stand, slab, hearthIns, chamber], reqs: [], src: [],
+     desc: 砕石、ピンコロ（灰入れの台の 1 個を含む）、コンクリート平板 6 枚、風の留めの全ねじ M16 とナットと角座金、アイナットとシャックルとターンバックルと鎖、セメント、パーライト、合板、不織布、型の剥がし紙、砂、覆い、耐熱塗料、足の敷き板の鋼板 3.2 × 300 × 300 を店で買う。角パイプ（50 角はめっきの無い鋼、40 角はめっきでもよい）、山形鋼（L50、L25）、平鋼、鋼管、天板の切り板は鋼材店で重さで買い、長さに切ってもらう（調達モード）。日数は推定。}
+  - {id: b-order, phase: prep, kind: wait, days: 14, after: [b-site], name: 耐火レンガと縞鋼板の取り寄せ, parts: [hearth, landing, door], reqs: [], src: [M90, M95, M77],
+     desc: コメリで取り寄せる。前掛けの縞鋼板 450 × 600 も頼む。宅配は北海道へ 7 日以上（M90、抜粋）。縞鋼板はネットで注文して店で受け取る（M95）。道内の店で受け取れるかは未確認。14 日は推定。}
+  - {id: b-mail2, phase: prep, kind: wait, days: 16, after: [b-site], name: ねじ、塗料、ステンレスの板と網、ガラスクロスを通販で取り寄せる, parts: [stand, slab, shell, insulation], reqs: [], src: [M124, M129, M130, M132, M121, M122, M119, M120],
+     desc: エスコの品番のねじと、足の M24 のナットと座金と、毛布を包むガラスクロスと、帯と前室に使うステンレスの M8 をモノタロウで、さび止め、上塗り、ステンレスの板と網を DCM オンラインで頼む。上塗りは 6〜10 営業日で発送する（M122）ので、北海道へ届くまでを 16 日と置いた（推定）。}
+  - {id: b-mail3, phase: prep, kind: wait, days: 7, after: [b-site], name: 殻の板と波板と耐熱シリコンと足の全ねじを通販で取り寄せる, parts: [shell, stand], reqs: [R-08], src: [M117, M118, M123, M128],
+     desc: 塗った鋼板の小板（K371）と耐熱シリコンをモノタロウで、塗った小波の波板と足の全ねじ M24 を DIY FACTORY で頼む。どちらも北海道へ届く表示がある。7 日は推定。}
   - {id: b-mail, phase: prep, kind: wait, days: 7, after: [b-site], name: 通販で取り寄せる（コーナン）, parts: [vent], reqs: [], src: [M88],
-     desc: 放射温度計と頂部のベントをコーナンの通販で頼む。出荷の予定は品ごとに表示があり、出荷から北海道へ 3 日以上かかる（M88）。7 日は推定。}
+     desc: 放射温度計と頂部のベントをコーナンの通販で頼む。出荷から北海道へ 3 日以上かかる（M88）。7 日は推定。}
+  - {id: b-buy2, phase: prep, kind: work, days: 1, after: [b-site], side: true, name: 煙突、扉の材料、灰入れを買う, parts: [chimney, door, damper], reqs: [], src: [],
+     desc: 煙突、H 笠、支持金具、煙突の付け根の筒、ケイカル板、取っ手、丸棒、灰入れを店で買う（調達モード）。日数は推定。}
+  - {id: b-castorder, phase: prep, kind: wait, days: 7, after: [b-pad], name: キャスタブル、毛布、継ぎ目の材料を取り寄せる, parts: [chamber, insulation, seam, landing], reqs: [R-05], src: [M114, M116, M125],
+     desc: キャスタブル 3 袋、毛布の巻き、継ぎ目の紙と縄と耐火モルタル、薄いレンガを通販で頼む。キャスタブルは製造から 6〜12 か月で使うので、据え台ができてから頼む（P71、P106）。届いたら袋のロット番号で製造日を確かめ、床から浮かせて乾いた所に置く。7 日は推定。}
 
-  # 据え台と鉄のテーブル
-  - {id: b-dig, phase: base, kind: work, days: 1, after: [b-buy1], name: 据え台の穴を掘り、砕石を締める, parts: [foundation], reqs: [R-08, R-14], src: [P98],
-     desc: 足の 4 か所に 50 cm 角、深さ 30 cm の穴を掘り、底に外への勾配を付ける。砕石を 2 層に分けて 20 cm 入れ、タンパーで締める。土が粘土質なら 80 cm 角、深さ 51 cm にし、砕石を 35 cm にする（構造設計 3.5）。日数は推定。}
-  - {id: b-pad, phase: base, kind: work, days: 1, after: [b-dig], name: 据え台を据え、穴をあける, parts: [foundation], reqs: [R-08, R-14], src: [],
-     desc: ピンコロ 4 個を砕石の上に据え（粘土質なら 40 cm 角の平板の上に据え）、水糸と水平器で上面を地面から 50 mm に、4 個の差を 5 mm 以内にそろえる。中心に径 22 mm、深さ 75 mm の穴をあけ、まわりを砕石で埋め戻す。固めずに置くので手で撤去できる。日数は推定。}
-  - {id: b-steelcut, phase: base, kind: work, days: 3, after: [b-order, b-mail2, b-buy1], name: 角パイプと板と全ねじを切り、穴をあける, parts: [stand, slab], reqs: [R-07], src: [],
-     desc: 切り出しの一覧のとおり角パイプ、平鋼、鋼板、鋼管、全ねじを切り、交点、天板、ピン、方杖、水抜きの穴、約 250 個をあける。敷き板に切り欠きを入れる。切り口のばりを取る。日数は推定。}
-  - {id: b-weld, phase: base, kind: work, days: 2, after: [b-steelcut], name: 溶接する, parts: [stand], reqs: [R-07], src: [],
-     desc: 施主が自分で 22 か所を溶接する。先に作業台で底板にさや管を、方杖の上の端に板を付け、次に前の門形、天秤の組、後ろの横梁の当て板と吊り板、止めを付ける。めっきの品は溶接しない。日数は推定。}
-  - {id: b-prime, phase: base, kind: work, days: 1, after: [b-weld], temp: 5, name: さび止めを塗る, parts: [stand, slab], reqs: [R-08], src: [P100, M103],
-     desc: 溶接の跡、切り口、穴の縁と、黒皮の板（天板の下面と縁、底板、吊り板、当て板、止め、方杖の上の板、敷き板）を地金まで磨き、ローバルを 2 回塗る。乾燥は 23℃ で 30 分（P100）。気温 5℃ 以上、湿度 85% 以下で塗る（M103、抜粋）。日数は推定。}
-  - {id: w-prime, phase: base, kind: wait, days: 1, after: [b-prime], name: さび止めの乾燥, parts: [stand, slab], reqs: [], src: [P100],
-     desc: ローバルの乾燥は 23℃ で 30 分（P100）。上塗りまでに置く日数は未確認で、1 日は推定。}
-  - {id: b-top1, phase: base, kind: work, days: 1, after: [w-prime], temp: 5, name: 上塗りの 1 回目, parts: [stand], reqs: [R-08], src: [M104],
-     desc: 塗装品の角パイプの工場のさび止めを紙やすりで足付けし、油性の鉄部用塗料を塗る。塗る気温の下限は缶の注意で確かめる（未確認。5℃ は推定）。日数は推定。}
-  - {id: w-top1, phase: base, kind: wait, days: 1, after: [b-top1], name: 塗り重ねの待ち, parts: [stand], reqs: [], src: [M109],
+  # 据え台と台
+  - {id: b-dig, phase: base, kind: work, days: 3, after: [b-buy1], name: 風の留めの平板を埋め、据え台の穴に砕石を締める, parts: [foundation, anchor], reqs: [R-08, R-14], src: [P98],
+     desc: 各脚から外へ 0.66 m の所（後ろの脚は左右の外と少し後ろ、前の脚は前）に、50 × 90 cm、深さ約 70 cm の穴を掘り、底を外へ上る 30°の斜めにする。受け材（山形鋼 L50 を 0.55 m、真ん中に 18 mm の穴）に M16 の全ねじを通して角座金とナット 2 個で留め、その上にコンクリート平板 2 枚をすきま 15〜20 mm で並べ、全ねじをすきまから脚の耳の向きに水平から 60°で出す。土を 15 cm ごとに突き固めて埋め戻し（土かぶり 0.6 m）、全ねじの頭にアイナットを付ける。据える町で要る強さが 3.5 kN を超えるなら、埋め戻したあとに 1 本ずつ引いて確かめる（方法は施主が決める、要求 1.4 の 15）。据え台の 3 か所に 40 cm 角、深さ 20 cm の穴を掘り、底に外への勾配を付け、砕石を 10 cm 入れてタンパーで締める。土が粘土質なら 45 cm 角にし、砕石を 15 cm にする（構造設計 3.5）。日数は推定。}
+  - {id: b-pad, phase: base, kind: work, days: 1, after: [b-dig], name: 据え台を据える, parts: [foundation], reqs: [R-08, R-14], src: [],
+     desc: ピンコロ 3 個の中心に径 26 mm、深さ 100 mm の穴をあける。ピンコロを砕石の上に据え、上面を地面から 50 mm に、3 個の差を 5 mm 以内にそろえる。固めずに置き、平板は手で掘り出せるので、手で撤去できる。日数は推定。}
+  - {id: b-steelcut, phase: base, kind: work, days: 2, after: [b-order, b-mail2, b-mail3, b-buy1], name: 鋼材を切り、穴をあける, parts: [stand, slab, shell, band, door, damper, landing], reqs: [R-07], src: [],
+     desc: 切り出しの一覧のとおり、角パイプ、山形鋼、平鋼、天板、縞鋼板、全ねじを切り、穴をあける。脚の長さは b-site で決めた炉床の高さに合わせる（炉床 0.90 m で 0.44 m）。足の全ねじ M24 は 0.28 m に、さや管 SGP 25A は 0.1 m に切る。底板の真ん中にホールソー 35 mm でさや管の穴をあける。敷き板（鋼板 3.2 × 300 × 300 から 98 mm 角を 18 枚）に径 26 mm の穴と、縁から穴までの幅 26 mm の切り欠きを入れる。台の交点の当て板（L50）、管の端を塞ぐ板と脚の耳（平鋼 6 × 100、耳は 60 mm に切って穴 18 mm）、前掛けとダンパー（縞鋼板 450 × 600 から）も切る。切り口のばりを取る。日数は推定。}
+  - {id: b-weld, phase: base, kind: work, days: 2, after: [b-steelcut], name: 溶接する, parts: [stand, band, landing, door, damper, shell], reqs: [R-07], src: [],
+     desc: 施主が 100 V のノンガス半自動の溶接機で溶接する。前の T、後ろの門形、脚の底板とさや管と鎖を掛ける耳、管の端を塞ぐ板、帯のつめと耳、前室の箱、扉のレール、前室の天板の上のダンパーの溝、殻の枠（L25、45°の切妻）、前掛けの縁。亜鉛めっきの品（40 角をめっきで買ったとき、全ねじ、ボルト）は溶接しない。溶接する所のまわりから燃える物をどけ、消火器と水を置く。日数は推定。}
+  - {id: b-prime, phase: base, kind: work, days: 1, after: [b-weld], temp: 5, name: さび止めを塗る, parts: [stand, slab, shell], reqs: [R-08], src: [M121],
+     desc: 溶接のスラグと黒皮を落とし、台、天板の下面と縁、殻の枠にさび止めを塗る。気温 5℃ 以上、湿度 85% 以下で塗る。日数は推定。}
+  - {id: w-prime, phase: base, kind: wait, days: 1, after: [b-prime], name: さび止めの乾燥, parts: [stand, slab, shell], reqs: [], src: [],
+     desc: 上塗りまでに置く日数は未確認で、1 日は推定。}
+  - {id: b-top1, phase: base, kind: work, days: 1, after: [w-prime], temp: 5, name: 上塗りの 1 回目, parts: [stand, shell], reqs: [R-08], src: [M122],
+     desc: 油性のトタン用の塗料を塗る。前室の外、足元の帯、前掛けは 600℃ の耐熱塗料にする。日数は推定。}
+  - {id: w-top1, phase: base, kind: wait, days: 1, after: [b-top1], name: 塗り重ねの待ち, parts: [stand, shell], reqs: [], src: [M109],
      desc: 同じ系統の油性塗料で、塗り重ねは夏 1 日後、冬 2 日後の例がある（M109）。使う塗料の値は未確認。}
-  - {id: b-top2, phase: base, kind: work, days: 1, after: [w-top1], temp: 5, name: 上塗りの 2 回目, parts: [stand], reqs: [R-08], src: [M104],
+  - {id: b-top2, phase: base, kind: work, days: 1, after: [w-top1], temp: 5, name: 上塗りの 2 回目, parts: [stand, shell], reqs: [R-08], src: [M122],
      desc: 2 回目を塗る。日数は推定。}
-  - {id: w-top2, phase: base, kind: wait, days: 2, after: [b-top2], name: 上塗りの乾燥, parts: [stand], reqs: [], src: [M109],
-     desc: 部材を重ねる前に乾かす。乾燥は夏 4〜6 時間、冬 6〜15 時間の例がある（M109）。2 日は推定。}
-  - {id: b-frame, phase: base, kind: work, days: 1, after: [w-top2, b-pad], name: 枠を据えて高さをそろえる, parts: [stand, foundation], reqs: [R-07, R-08, R-14], src: [],
-     desc: 据え台に敷き板と全ねじを立て、前の門形と天秤の組を載せ、後ろの横梁をピンで吊る。側梁と根太を重ね、交点を全ねじで留め、方杖を前の脚と側梁に留める。ナットで高さを直し、天板の面を水平器で 2 mm 以内にそろえ、止めのすきまを左右とも 6 mm にする。角パイプの端にキャップをはめる。ボルトで組むので手で撤去できる。日数は推定。}
-  - {id: b-deck, phase: base, kind: work, days: 1, after: [b-frame], name: 天板を留め、不織布を敷く, parts: [slab], reqs: [R-08, R-14], src: [F50],
-     desc: 縞鋼板 6 枚を根太に載せ、交点の全ねじと M8 のボルトで留める。天板の全面に水を通す不織布を敷き、板の継ぎ目の上で切る。日数は推定。}
+  - {id: w-top2, phase: base, kind: wait, days: 2, after: [b-top2], name: 上塗りの乾燥, parts: [stand, shell], reqs: [], src: [M109],
+     desc: 部材を重ねる前に乾かす。2 日は推定。}
+  - {id: b-frame, phase: base, kind: work, days: 1, after: [w-top2, b-pad], name: 台を組んで高さをそろえる, parts: [stand, foundation, anchor], reqs: [R-07, R-08, R-14], src: [],
+     desc: 据え台に全ねじと底板の脚を立て、前の T と後ろの門形（脚は左右 ±0.90 m）を載せ、側梁（40 角）と根太を M10 で留める。側梁と横梁の 4 つの交点に山形鋼の当て板を当て、各部材に M10 を 2 本で留めて交点を固める。ナット A と底板のあいだに座金を入れ、ナットで高さを直し（全ねじの出しは 35 mm 以下にし、大きく直すときは敷き板で直す）、天板の面を水平器で 2 mm 以内にそろえる。風の留めのアイナットから脚の耳へ、シャックルと鎖とターンバックルを掛け、手で締めてたるみを取る（張っておく力は入れない）。地面が凍る前の秋に 50 mm の遊びを残し、春に解けてからたるみを取る。ボルトで組むので手で撤去できる。日数は推定。}
+  - {id: b-deck, phase: base, kind: work, days: 1, after: [b-frame], name: 天板を留め、不織布を敷く, parts: [slab], reqs: [R-08, R-14], src: [],
+     desc: 天板 2 枚（0.95 × 0.48 m と 0.95 × 0.69 m）を z = 0 の根太の上で突き合わせ、根太に M8 で留める。水抜きの穴をあけた天板の全面に水を通す不織布を敷く。日数は推定。}
 
   # 炉床の断熱と炉床
-  - {id: b-hins, phase: slab, kind: work, days: 2, after: [b-deck], temp: 5, name: 炉床の断熱を区画に分けて打つ, parts: [hearthIns], reqs: [R-14], src: [P55, P91],
-     desc: 不織布の上に合板の帯で外まわりの型枠と区画の仕切りを組み、天板 1 枚ごとの 6 区画にする。1 日目に互い違いの 3 区画、2 日目に残りの 3 区画を、セメントとパーライト 1:5 で 100 mm 打つ（P55）。継ぎ目には薄いシートを挟む。型枠は固まってから外す（P91）。日数は推定。}
+  - {id: b-hins, phase: slab, kind: work, days: 1, after: [b-buy1], side: true, temp: 5, name: 炉床の断熱の板と縁の帯を打つ, parts: [hearthIns], reqs: [R-14], src: [P55],
+     desc: 平らな所にシートを敷き、合板の帯で型を組む。セメントとパーライト 1:5 で、75 mm の板を 4 区画（0.42 m 角、外の角を 0.12 m 落とす）と前室の下の 1 枚、65 mm の縁の帯を 5 本（左右と後ろは 0.075 × 0.47 m、前は焚き口の両脇から前室の口までの 0.064 × 0.30 m を 2 本）打つ（P55）。型は固まってから外す。日数は推定。}
   - {id: w-hins, phase: slab, kind: wait, days: 7, after: [b-hins], name: 炉床の断熱の乾燥, parts: [hearthIns], reqs: [], src: [F57],
-     desc: 数値の基準は無い。経験則は「少し乾いてから」から「数週間」まで（F57）。7 日は経験則の短い側。}
-  - {id: b-hearth, phase: slab, kind: work, days: 1, after: [w-hins, b-order], name: 炉床のレンガを縦に並べる, parts: [hearth], reqs: [R-04], src: [],
-     desc: 耐火レンガを縦に立てて並べ、水平をそろえる。日数は推定。}
+     desc: 数値の基準は無い。経験則は「少し乾いてから」から「数週間」まで（F57）。7 日は経験則の短い側。雨の日は覆う。}
+  - {id: b-hcut, phase: slab, kind: work, days: 1, after: [b-order], side: true, name: 前室の口のレンガを切る, parts: [hearth, landing], reqs: [R-01, R-02e], src: [],
+     desc: 炉床のレンガは切らない（施主の決定 2026-10-19 の 2 回目の 2）。前室の口に並べるレンガ 1 個を、長さの向きに 3 つ（1 個約 70 mm）に切る（2 回）。湿式か集じんで切り、防じんマスクを着ける。日数は推定。}
+  - {id: b-hearth, phase: slab, kind: work, days: 1, after: [w-hins, b-hcut, b-deck], name: 断熱の板と縁の帯を据え、炉床を並べる, parts: [hearthIns, hearth], reqs: [R-01, R-02e, R-04], src: [],
+     desc: 不織布の上に断熱の板の 4 区画と前室の下の 1 枚を並べ、継ぎ目に薄いシートを挟む。炉床のレンガ 18 個を、砂を薄く敷いて、列を前後の向きに通した 6 列 × 3 個（0.684 × 0.69 m）に切らずに並べ、隣どうしの段を 1 mm 以下にそろえる。炉床の前に、焚き口の敷居と前室の床として丸ごと 3 個を前後の向きに並べ、前室の口に切った小片 3 個を並べる。炉床の四角の外に縁の帯 5 本を置く。日数は推定。}
 
   # ドームと前室
-  - {id: b-cut, phase: dome, kind: work, days: 1, after: [b-order], side: true, name: レンガを切り、ドームの定規を作る, parts: [chamber], reqs: [], src: [],
-     desc: 半割りのレンガを切り、中心で回す定規を作る。日数は推定。}
-  - {id: b-dome, phase: dome, kind: work, days: 6, after: [b-hearth, b-cut], temp: 10, name: ドームのレンガを積む, parts: [chamber], reqs: [], src: [F58, P94],
-     desc: 耐火モルタルでドームを積む。1 日数時間の作業で 10 日から 6 週かかった例がある（F58）。丸 1 日の作業で 6 日は推定。}
-  - {id: b-land, phase: dome, kind: work, days: 2, after: [b-dome], temp: 10, name: 前室と焚き口を積む, parts: [landing], reqs: [], src: [P94],
-     desc: 前室と焚き口のアーチを積み、煙突の台を作る。日数は推定。}
-  - {id: w-dome, phase: dome, kind: wait, days: 2, after: [b-land], name: 目地の養生, parts: [chamber, landing], reqs: [], src: [P94],
-     desc: 耐火モルタルは 24 時間以上養生し、急な乾燥と凍結を避ける（P94）。2 日は推定。}
-  - {id: b-chim, phase: dome, kind: work, days: 1, after: [w-dome, b-buy2], name: 煙突を立てる, parts: [chimney], reqs: [R-11], src: [P92],
-     desc: 煙突を前室の上に立て、支持金具で留め、H 笠を付ける。断熱の前に付ける（P92）。日数は推定。}
-  - {id: b-door, phase: dome, kind: work, days: 2, after: [b-buy2], side: true, name: 扉とダンパーを作る, parts: [door, chimney], reqs: [], src: [],
-     desc: 縞鋼板とケイカル板で扉を作り、鋼板でダンパーを作る。日数は推定。}
+  - {id: b-form, phase: dome, kind: work, days: 1, after: [b-hearth], name: 砂の山と型を作る, parts: [chamber, seam], reqs: [R-02d], src: [],
+     desc: 炉床をシートで覆い、ドームの足が載る輪（半径 0.30〜0.34 m）のレンガの上に剥がし紙を敷く。湿らせた砂で半径 0.30 m の山を作り、中心のピンで回す合板の型板でならし、紙で覆う。焚き口の型（幅 0.32 m、高さ 0.18 m のアーチ）を置く。後ろと前の輪を分ける仕切り（K371 の切れ端を段の形に曲げ、油を塗る）を z = 0 の面に立てる。日数は推定。}
+  - {id: b-cast1, phase: dome, kind: work, days: 1, after: [b-form, b-castorder], temp: 5, name: 後ろの輪と前の輪を流す, parts: [chamber, band, seam], reqs: [R-02d, R-05, R-04a], src: [P106],
+     desc: 帯の 2 本を据える。仕切りの後ろに後ろの輪（粉 約 20 kg）を、前に焚き口の型ごと前の輪（約 16 kg）を、1 個ずつ粉の 20〜22% の水で練り、30 分以内に厚さ 40 mm で押し付ける（P106）。緯度 50° の上の縁に段の帯を付ける。濡れた布で覆って湿らせる（P106）。日数は推定。}
+  - {id: w-cast1, phase: dome, kind: wait, days: 1, after: [b-cast1], name: 輪の養生, parts: [chamber], reqs: [], src: [P106, P71],
+     desc: 24 時間以上湿らせて置き、凍らせない（P106）。叩いて硬化を確かめてから仕切りを抜く（P106、P71）。}
+  - {id: b-cast2, phase: dome, kind: work, days: 1, after: [w-cast1], temp: 5, name: 蓋と入口の枠を流す, parts: [chamber, seam, landing], reqs: [R-02d, R-04a], src: [P106],
+     desc: 輪の上の段と前の輪の焚き口の縁に剥がし紙を貼る。蓋（粉 約 12 kg）と、合板の外の型で入口の枠（約 9 kg）を、1 個ずつ練って流す。頂に継ぎ目を置かない。日数は推定。}
+  - {id: w-cast2, phase: dome, kind: wait, days: 1, after: [b-cast2], name: 蓋と入口の枠の養生, parts: [chamber], reqs: [], src: [P106],
+     desc: 24 時間以上湿らせて置き、凍らせない（P106）。}
+  - {id: w-cure, phase: dome, kind: wait, days: 1, after: [w-cast2], name: キャスタブルの自然乾燥, parts: [chamber], reqs: [R-05], src: [P106, P71],
+     desc: 湿らせた養生のあと、覆いで雨を避けて自然に乾かす。AGC は養生のあとなるべく早く、1 週間以内を目安に乾燥焚きをするとし（P106）、ニチアスは 24 時間以上置くとする（P71）。1 日は推定。土日だけで作る日程では、乾燥焚きまで 1 週間を超える。}
+  - {id: b-assy, phase: dome, kind: work, days: 1, after: [w-cure], temp: 5, name: ドームをばらして継ぎ目を詰め、組み直す, parts: [chamber, seam, band, hearth], reqs: [R-13, R-02c, R-07], src: [],
+     desc: 蓋を外して砂を上から掻き出し、入口の枠、前の輪、後ろの輪の順に外す（1 個 22 kg 以下）。継ぎ目の面の紙を落とし、生体溶解性の紙 1 mm を切って挟んで組み直す。後ろの輪、前の輪、入口の枠、蓋の順に戻す。ドームの足の下に縄を 1 周敷いてから戻す（毛布の帯でもよい）。帯のステンレスの M8 に焼き付き止めを塗って手で締める（締めすぎない）。継ぎ目の外に耐火モルタルを幅 50 mm、厚さ 4 mm で薄く塗る。日数は推定。}
+  - {id: b-land, phase: dome, kind: work, days: 1, after: [b-assy, b-door], name: 前室を据え、扉とダンパーを付ける, parts: [landing, door, damper], reqs: [R-02c, R-12], src: [],
+     desc: 前室の箱の袖を前の縁の帯の上に立て（天板に直に触れさせない）、入口の枠との間に毛布の帯を挟み、ステンレスの M8 で留める。天井の内に薄いレンガ 3 枚を張る（1 枚を 110 mm に 2 つに切り、煙突の口の所を φ0.12 m に切り欠く。湿式か集じんで切る）。焚き口の差し込みの扉が前室を通って焚き口に入り、面の板が入口の枠に当たって閉まるかを確かめる。前室の口の引き戸をレールに入れ、止めのピンの穴（閉、1/4、1/2、全開）を確かめる。ダンパーの差し板を天板の上の溝に入れる。前掛けが天板の前の縁に掛かるかを確かめる。日数は推定。}
+  - {id: b-door, phase: dome, kind: work, days: 2, after: [b-buy2, b-steelcut, b-castorder], side: true, name: 扉とダンパーを作る, parts: [door, damper], reqs: [R-02b, R-02c], src: [],
+     desc: 縞鋼板とケイカル板と毛布で前室の口の引き戸を作り、取っ手と止めのピンを付ける。ケイカル板と毛布を焚き口の形（幅 0.31 m、高さ 0.17 m のアーチ）に切り、ステンレスの板の面（0.33 × 0.19 m）に重ねて焚き口の差し込みの扉を作り、取っ手を付ける。差し板のダンパー（前掛けの板の残りから取る）に丸棒の柄を付ける。日数は推定。}
 
-  # 断熱と外殻
-  - {id: b-ins, phase: skin, kind: work, days: 1, after: [b-chim], temp: 5, name: ドームの断熱を盛る, parts: [insulation], reqs: [], src: [P55, P92],
-     desc: セメントとパーライトを体積で 1:5 に練り、100 mm 盛る（P55）。}
-  - {id: w-ins, phase: skin, kind: wait, days: 7, after: [b-ins], name: ドームの断熱の乾燥, parts: [insulation], reqs: [], src: [P77, F57],
-     desc: 断熱が乾いてから金網と左官に進む（P77、日数は書かれていない）。雨の日は覆う。7 日は推定。}
-  - {id: b-lath, phase: skin, kind: work, days: 1, after: [w-ins, b-mail], name: 金網を張り、ベントとひさしを付ける, parts: [shell, vent, hood], reqs: [R-08], src: [P77],
-     desc: 断熱の上に金網を張る。頂部にベントを付け、焚き口の上にひさしを付ける。日数は推定。}
-  - {id: b-render1, phase: skin, kind: work, days: 1, after: [b-lath], temp: 5, name: 左官の 1 層目, parts: [shell], reqs: [R-08], src: [P77, P86],
-     desc: 金網の上に下塗りをする。乾かないよう水で湿らせ、シートを掛ける（P86 の 15.1.4）。}
-  - {id: w-render1, phase: skin, kind: wait, days: 14, after: [b-render1], name: 下塗りのひび割れを出し切る, parts: [shell], reqs: [], src: [P86],
-     desc: ラスの上の下塗りは 14 日以上置き、ひび割れを出し切ってから次を塗る。接着が確保できれば短くできる（P86 の 15.3.5）。}
-  - {id: b-render2, phase: skin, kind: work, days: 1, after: [w-render1], temp: 5, name: 左官の 2 層目, parts: [shell], reqs: [R-08], src: [P77, P86],
-     desc: 仕上げを塗り、水で湿らせて養生する。}
-  - {id: w-render2, phase: skin, kind: wait, days: 7, after: [b-render2], name: 養生焚きまで 1 週間置く, parts: [shell], reqs: [], src: [P89, F61],
-     desc: 窯ができてから 1 週間置いて養生焚きを始める（P89）。左官は 1 週間湿らせて強くするという経験則もある（F61）。}
-
-  # 養生焚きと仕上げ
-  - {id: b-cure, phase: fire, kind: work, days: 5, cont: true, after: [w-render2, b-door], name: 養生焚き, parts: [chamber, hearth, insulation, shell], reqs: [R-08], src: [P78, P89, F60],
-     desc: 1 日目は 300°F（約 150℃）、以後 1 日 50°F ずつ上げ、5 日目に 500°F（約 260℃）。長いほうがよい（P89）。7 日で 7 回焚くのが普通という経験則もある（F60）。}
-  - {id: m-firstbake, phase: fire, kind: mile, after: [b-cure], name: 初めて焼ける, parts: [], reqs: [], src: [],
-     desc: 養生焚きが終われば焼ける。防水材を塗るまでは、冷めたら覆いを掛ける。}
-  - {id: w-age, phase: fire, kind: wait, days: 21, after: [b-render2], name: 左官が 3 週間たつのを待つ, parts: [shell], reqs: [], src: [P82, F60],
-     desc: 新しいモルタルは 3 週間以上たってから防水材を塗る（P82）。乾くまで塗らない。シートを掛けて内側が結露すれば乾いていない（F60）。}
-  - {id: b-seal, phase: fire, kind: work, days: 2, after: [w-age, b-cure], name: 防水材を 2 回塗る, parts: [shell], reqs: [R-08], src: [P82],
-     desc: 乾き切ってから浸透性の防水材を 2 回塗る（P82）。2 回目までの間隔は未確認で、2 日は推定。}
-  - {id: m-done, phase: fire, kind: mile, after: [b-seal], name: できあがり, parts: [], reqs: [], src: [],
-     desc: 覆いと薪置きを整えて、できあがり。}
+  # 毛布と殻
+  - {id: b-blanket, phase: skin, kind: work, days: 1, after: [b-land, b-castorder], name: 毛布を 3 層巻き、ガラスクロスで包む, parts: [insulation], reqs: [R-02b, R-12], src: [M25, M132],
+     desc: 防じんマスクを着け、毛布 25 mm を 3 層、継ぎ目をずらして巻き、1 層目は継ぎ目にまたがせる。ステンレスの針金で留める。炉床の四角の 4 隅（毛布の円の外に出る所）と、縁の帯の無い側面を毛布の切れ端で覆う。外をガラスクロスで包み（重ねしろ 50 mm）、同じ針金で留める。アルミ箔を貼った布は湯気がこもるので使わない。日数は推定。}
+  - {id: b-shell, phase: skin, kind: work, days: 1, after: [b-blanket, b-mail3, b-mail, w-top2], name: 殻を据える, parts: [shell, vent], reqs: [R-08, R-12], src: [],
+     desc: 殻の枠（L25、45°の切妻、軒 1.12 m、棟 1.55 m）を天板に M8 で留め、塗った鋼板の小板と波板をドリルねじで張る。板は枠に 150 mm 以下の間でねじを打ち、せん断の面として効かせる。棟包みは 2 本を重ねて継ぐ。後ろの妻の頂にベントを付けて口の内に網を張り（ネズミと虫よけ）、裾の 10 mm のすきまにも同じ網を張る。前室との取り合いにステンレスの当て板を入れ、冷たい外の縁だけを耐熱シリコンで留める。日数は推定。}
+  - {id: b-chim, phase: dome, kind: work, days: 1, after: [b-shell, b-buy2], name: 煙突を立てる, parts: [chimney], reqs: [R-11, R-12], src: [P92],
+     desc: 煙突の付け根の筒を、前室の天板の上のダンパーの溝に載せて留め、煙突を立て、支持金具で殻の前の妻の枠に留め、火の粉止めの網を入れた H 笠を付ける。継ぎ目ごとにステンレスのねじを 3 本打つ。日数は推定。}
+  # 乾燥焚きと仕上げ
+  - {id: b-dry, phase: fire, kind: work, days: 1, after: [b-chim, b-mail], name: 乾燥焚き, parts: [chamber, hearth, hearthIns, insulation, seam], reqs: [R-05], src: [P106, P107],
+     desc: 殻と煙突を付けてから焚く。灰入れは灰入れの台に置く。内面を 1 時間に 50℃ 以下で 150℃ まで上げ、頂の逃げ口と継ぎ目から湯気が出なくなるまで保つ。50℃/時で 200℃ に上げて 2 時間保ち、50℃/時で 350℃ に上げて 2 時間保つ（P106 の手順を 40 mm に当てた、計算）。全部で約 12〜13 時間、続けて火の番をする。}
+  - {id: m-firstbake, phase: fire, kind: mile, after: [b-dry], name: 初めて焼ける, parts: [], reqs: [], src: [],
+     desc: 乾燥焚きが済めば焼ける。初めの 10 回は、焚き直しも含めて 1 時間に 60℃ 以下で上げる（付録 A）。}
+  - {id: m-done, phase: fire, kind: mile, after: [m-firstbake], name: できあがり, parts: [], reqs: [], src: [],
+     desc: 薪置きを整えて、できあがり。}

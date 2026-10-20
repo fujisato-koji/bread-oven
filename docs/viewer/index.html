@@ -151,9 +151,8 @@
 
     <h2>型式</h2>
     <div class="seg" id="type">
-      <button type="button" data-type="dome">レンガのドーム</button>
-      <button type="button" data-type="earth">土窯</button>
-      <button type="button" data-type="barrel">バレル（参考）</button>
+      <button type="button" data-type="cast">キャスタブルのドーム</button>
+      <button type="button" data-type="brick">レンガのドーム（参考）</button>
     </div>
 
     <h2>見る向き</h2>
@@ -166,7 +165,17 @@
     <div class="toggles" style="margin-top:8px">
       <label><input type="checkbox" id="section"> 中心で切って断面を見る</label>
       <label><input type="checkbox" id="seeThrough"> 地面を透かして据え台を見る</label>
+      <label><input type="checkbox" id="shellFade"> 殻を透かす</label>
+      <label><input type="checkbox" id="apron"> 焚き口の前掛けを掛ける</label>
     </div>
+    <h2>扉の開け幅</h2>
+    <select id="doorState" style="width:100%;font:inherit;padding:5px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink)">
+      <option value="plug">差し込みの扉あり（焼くとき）</option>
+      <option value="closed">差し込みの扉を外し、引き戸を閉</option>
+      <option value="q1">差し込みの扉を外し、引き戸を 1/4</option>
+      <option value="q2">差し込みの扉を外し、引き戸を 1/2</option>
+      <option value="open">差し込みの扉を外し、引き戸を全開</option>
+    </select>
 
     <h2>部品</h2>
     <div id="parts"></div>
