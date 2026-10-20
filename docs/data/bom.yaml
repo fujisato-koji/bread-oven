@@ -11,149 +11,219 @@
 #   group: build（組むとき）か bake（焼くとき）、use: 最初に使う工程、have: 持っている、借りる、買う、未確認（書かなければ未確認）
 meta:
   budget: 100000
-  date: "2026-10-18"
-  note: 耐火レンガのドーム、内径 0.8 m、鉄のテーブル（3 点支持）、屋根なし、ダンパー自作に、屋根なしの備えを足した案である。
+  date: "2026-10-20"
+  note: 分割のキャスタブルのドーム（内径 0.6 m、4 個）、炉床はレンガ 65 mm を切らずに四角に並べる、毛布 75 mm、45°の切妻の塗った鋼板の殻、後ろの脚を ±0.90 m に開いたボルト組みの 3 本脚、各脚から外へ 60°で張る埋めた平板の風の留めの案である。合計は 10 万円を超え、超える分の扱いは施主が決める。北海道で受け取れる見込みの品で数えた。確かめていない品は注記に書いた。
 
 categories:
-  - {id: brick, name: レンガと目地}
-  - {id: ins, name: 断熱と左官}
+  - {id: brick, name: キャスタブルとレンガ}
+  - {id: ins, name: 断熱と毛布}
   - {id: base, name: 台と天板と据え台}
   - {id: chim, name: 煙突とダンパー}
-  - {id: door, name: 扉、温度計、灰入れ}
-  - {id: weather, name: 屋根なしの備え}
+  - {id: door, name: 前室、扉、温度計、灰入れ、前掛け}
+  - {id: weather, name: 殻と屋外の備え}
   - {id: ship, name: 送料}
 
 items:
-  - {id: i-brick, name: 耐火レンガ 230 × 114 × 65 mm, qty: 161, unit: 個, price: 248, cat: brick, shop: コメリ, how: 取り寄せ, batch: b-order,
-     use: [b-hearth, b-dome, b-land], parts: [hearth, chamber, landing], src: [M64], note: 228 円の表示もある}
-  - {id: i-mortar, name: 耐火モルタル 25 kg（トーヨーマテラン）, qty: 1, unit: 袋, price: 5680, cat: brick, shop: コメリ, how: 取り寄せ, batch: b-order,
-     use: [b-dome, b-land], parts: [chamber, landing], src: [M65, P93], note: "5,180 円、5,480 円の表示もある。2 袋要るかもしれない。水で固まる型と読める"}
-  - {id: i-perlite, name: パーライト 50 L, qty: 9, unit: 袋, price: 1780, cat: ins, shop: コメリ, how: 店頭, batch: b-buy1,
-     use: [b-hins, b-ins], parts: [hearthIns, insulation], src: [M66], note: "1,680 円の表示もある。炉床の断熱を長方形 2.11 m² で数えた（計算）"}
-  - {id: i-plywood, name: JAS コンパネ 12 mm（炉床の断熱の型枠と仕切り）, qty: 1, unit: 枚, price: 2680, cat: ins, shop: コメリ, how: 店頭, batch: b-buy1,
-     use: [b-hins], parts: [hearthIns], src: [M72], note: "高さ 100 mm の帯に割く。2026-10-09〜11-12 は 2,150 円の割引中（M72）"}
-  - {id: i-cement, name: セメント 25 kg, qty: 7, unit: 袋, price: 838, cat: ins, shop: コメリ, how: 店頭, batch: b-buy1,
-     use: [b-hins, b-ins, b-render1, b-render2], parts: [hearthIns, insulation, shell], src: [M68],
-     note: "北海道店舗向け。798 円の表示もある。断熱と左官で 162 kg（計算）"}
-  - {id: i-sand, name: 砂 20 kg, qty: 8, unit: 袋, price: 300, cat: ins, shop: 未定, how: 店頭, batch: b-buy1, tentative: true,
-     use: [b-render1, b-render2], parts: [shell], src: [M69, M70], note: "北海道の店の値が未確認。左官だけで 156 kg（計算）"}
-  - {id: i-gravel, name: 砕石 20 kg, qty: 28, unit: 袋, price: 298, cat: base, shop: カインズ, how: 店頭, batch: b-buy1,
-     use: [b-dig, b-pad], parts: [foundation], src: [M38], note: "店舗限定。北海道の値と近くの店の扱いは未確認。据え台 4 か所で 551 kg（計算）。粘土質なら約 122 袋（計算）"}
-  - {id: i-pad, name: コンクリートピンコロ 200 × 200 × 150 mm, qty: 4, unit: 個, price: 798, cat: base, shop: カインズ, how: 店頭, batch: b-buy1,
-     use: [b-pad], parts: [foundation], src: [M105, M106], note: "14 kg。店舗限定で、配送と店舗受取はできない（M105）。コメリの束石は北海道で扱わない（M106）"}
-  - {id: i-tube50, name: 角パイプ STKR400 2.3 × 50 × 50 × 3000 mm, qty: 5, unit: 本, price: 4480, cat: base, shop: 未定, how: 店頭, batch: b-buy1, tentative: true,
-     use: [b-steelcut], parts: [stand], src: [M92, M111], note: "根太 10 本と天秤の脚。鋼材店で買う。値段は未確認で、前にコメリの抜粋で見た値を仮に置いた（M92、いまは掲載中止）。1 kg 252 円の仮定なら 1 本約 2,500 円（M111、計算）"}
-  - {id: i-tube60, name: 角パイプ STKR400 2.3 × 60 × 60 × 3000 mm, qty: 1, unit: 本, price: 4980, cat: base, shop: 未定, how: 店頭, batch: b-buy1, tentative: true,
-     use: [b-steelcut], parts: [stand], src: [M93, M112], note: "前の横梁、前の脚、方杖。値段は未確認で仮の値（M93、いまは掲載中止）。コメリには 6 m の品がある（6,780 円、M112）"}
-  - {id: i-tube100, name: 角パイプ STKR400 2.3 × 100 × 50 × 3000 mm, qty: 2, unit: 本, price: 6480, cat: base, shop: 未定, how: 店頭, batch: b-buy1, tentative: true,
-     use: [b-steelcut], parts: [stand], src: [M94, M111], note: "側梁、後ろの横梁、天秤。値段は未確認で仮の値（M94、いまは掲載中止）"}
-  - {id: i-deck, name: 縞鋼板 3.2 × 450 × 900 mm（天板）, qty: 6, unit: 枚, price: 4480, cat: base, shop: コメリ, how: 取り寄せ, batch: b-order,
-     use: [b-steelcut, b-deck], parts: [slab], src: [M95], note: "1 枚 10.86 kg。ネットで注文して店で受け取り、配送はできない（M95）"}
-  - {id: i-plate32, name: 鋼板 3.2 × 300 × 300 mm（敷き板）, qty: 3, unit: 枚, price: 898, cat: base, shop: コメリ, how: 店頭, batch: b-buy1, tentative: true,
-     use: [b-steelcut], parts: [stand], src: [M76], note: "約 98 mm 角を 27 枚取る。頁は 2026-10-18 に掲載中止と出るので、値段は前の値を仮に置いた（M76）"}
-  - {id: i-fb6, name: 平鋼 6 × 100 mm 2.1 m（底板、吊り板、当て板、止め、方杖の上の板）, qty: 1, unit: 本, price: 2500, cat: base, shop: 未定, how: 店頭, batch: b-buy1, tentative: true,
-     use: [b-steelcut], parts: [stand], src: [M111], note: "値段は未確認。9.9 kg を 1 kg 252 円の仮定で計算した（M111）。鋼材店で切ってもらう"}
-  - {id: i-sgp, name: 配管用炭素鋼鋼管 SGP 20A（黒）0.3 m（さや管）, qty: 1, unit: 本, price: 500, cat: base, shop: 未定, how: 店頭, batch: b-buy1, tentative: true,
-     use: [b-steelcut], parts: [stand], src: [], note: 値段は未確認}
-  - {id: i-rod20, name: 全ねじ M20 × 1 m 溶融亜鉛めっき（エスコ EA949HL-220）, qty: 1, unit: 本, price: 2904, cat: base, shop: エスコの取扱店, how: 通販, batch: b-mail2,
-     use: [b-steelcut], parts: [stand], src: [M96], note: 足 4 本に 240 mm ずつ}
-  - {id: i-nut20, name: 六角ナット M20 溶融亜鉛めっき 10 個（エスコ EA949LT-620）, qty: 2, unit: 袋, price: 919, cat: base, shop: エスコの取扱店, how: 通販, batch: b-mail2,
-     use: [b-frame], parts: [stand], src: [M97]}
-  - {id: i-pin, name: 六角ボルト M20 × 100 溶融亜鉛めっき 2 本（エスコ EA949LD-2099、ピン）, qty: 1, unit: 袋, price: 1210, cat: base, shop: エスコの取扱店, how: 通販, batch: b-mail2,
-     use: [b-frame], parts: [stand], src: [M98], note: 全ねじの品。ナットの外に 10 mm のねじが出る}
-  - {id: i-rod10, name: 全ねじ M10 × 1 m 溶融亜鉛めっき（エスコ EA949HL-210、交点と方杖）, qty: 5, unit: 本, price: 776, cat: base, shop: エスコの取扱店, how: 通販, batch: b-mail2,
-     use: [b-steelcut], parts: [stand, slab], src: [M99], note: 190 mm を 18 本、200 mm を 2 本、282 mm を 2 本、150 mm を 2 本}
-  - {id: i-nut10, name: 六角ナット M10 溶融亜鉛めっき 40 個（エスコ EA949LT-610）, qty: 2, unit: 袋, price: 776, cat: base, shop: エスコの取扱店, how: 通販, batch: b-mail2,
-     use: [b-frame], parts: [stand, slab], src: [M100], note: 70 個を使う}
-  - {id: i-bolt8, name: 六角ボルト M8 × 80 溶融亜鉛めっき 5 本（エスコ EA949LD-880、天板）, qty: 2, unit: 袋, price: 462, cat: base, shop: エスコの取扱店, how: 通販, batch: b-mail2,
-     use: [b-deck], parts: [slab], src: [M101]}
-  - {id: i-nut8, name: 六角ナット M8 溶融亜鉛めっき 50 個（エスコ EA949LT-608）, qty: 1, unit: 袋, price: 556, cat: base, shop: エスコの取扱店, how: 通販, batch: b-mail2,
-     use: [b-deck], parts: [slab], src: [M102], note: 16 個を使う}
-  - {id: i-roval, name: ローバル 1 kg（常温亜鉛めっき）, qty: 2, unit: 缶, price: 4290, cat: base, shop: ローバル直販, how: 通販, batch: b-mail2, tentative: true,
-     use: [b-prime], parts: [stand, slab], src: [M103, P100], note: "頁は売り切れなどで表示されず、値は検索結果の抜粋（M103）。2 回塗りで 1 缶 2 m²（P100）。約 3.5 m² に塗る（計算）"}
-  - {id: i-topcoat, name: 油性高耐久鉄部用 0.7 L ブラック（黒）（ニッペ）, qty: 2, unit: 缶, price: 3480, cat: base, shop: コメリ, how: 店頭, batch: b-buy1,
-     use: [b-top1, b-top2], parts: [stand], src: [M104], note: "角パイプ 5.0 m² に 2 回（計算）。塗れる面積は未確認。角パイプが黒なら要らない（構造設計 3.5.8）"}
-  - {id: i-endcap, name: 角パイプのキャップ（樹脂、50 角 20、60 角 2、100 × 50 が 8）, qty: 30, unit: 個, price: 100, cat: base, shop: 未定, how: 店頭, batch: b-buy1, tentative: true,
-     use: [b-frame], parts: [stand], src: [M113], note: "品と値段と北海道で 1 個から買えるかは未確認。コメリの品は 1 個 378 円で最低 50 個、60 角と 100 × 50 は無い（M113）"}
-  - {id: i-flue, name: ステン煙突 直筒 φ120, qty: 3, unit: 本, price: 1880, cat: chim, shop: コメリ, how: 店頭, batch: b-buy2,
-     use: [b-chim], parts: [chimney], src: [M73]}
+  # キャスタブルとレンガ
+  - {id: i-cast, name: 耐火キャスタブル CA-13T 25 kg, qty: 3, unit: 袋, price: 5550, cat: brick, shop: れんが屋（Amazon）, how: 通販, batch: b-castorder,
+     use: [b-cast1, b-cast2], parts: [chamber], src: [M114, P106], note: "4 個で約 57 kg（施工所要量 1,750 kg/m³ に損を 15% 見た、P106、計算）。ヒットネット 5,400 円（M115）、建材ショップ 5,450 円（M116）でもよい。製造から 6〜12 か月で使う（P71、P106）"}
+  - {id: i-brick, name: 耐火レンガ 230 × 114 × 65 mm, qty: 24, unit: 個, price: 248, cat: brick, shop: コメリ, how: 取り寄せ, batch: b-order, tentative: true,
+     use: [b-hcut, b-hearth], parts: [hearth, landing], src: [M64], note: "炉床 18 個（切らずに 6 列 × 3 個）、焚き口の敷居と前室の床に丸ごと 3 個、前室の口に 3 つに切って並べる 1 個、予備 2 個（計算）。道内で受け取れるかは未確認。通販なら 1 個 613 円以上"}
+  - {id: i-sk34, name: 薄い耐火レンガ SK34 ウス半丁 230 × 114 × 32 mm 10 枚, qty: 1, unit: 組, price: 4900, cat: brick, shop: れんが屋（Amazon）, how: 通販, batch: b-castorder,
+     use: [b-land], parts: [landing], src: [M125], note: "前室の天井の内に 3 枚を張る（1 枚を 110 mm に 2 つに切り、煙突の口の所を φ0.12 m に切り欠く、計算）。残りは予備。2026-10-19 に頁で値を確かめた"}
+  - {id: i-paper, name: 生体溶解性のペーパー 1 mm（継ぎ目の詰め物）, qty: 1, unit: 式, price: 2000, cat: brick, shop: 未定, how: 通販, batch: b-castorder, tentative: true,
+     use: [b-assy], parts: [seam], src: [P27], note: "継ぎ目 2.7 m を幅 40 mm で約 0.11 m²（計算）。品と値段は未確認。RCF の紙は使わない（P27）"}
+  - {id: i-rope, name: ドームの足の下の縄（ガラス繊維か生体溶解性、φ8〜10 mm、2.2 m）, qty: 1, unit: 式, price: 1500, cat: brick, shop: 未定, how: 通販, batch: b-castorder, tentative: true,
+     use: [b-assy], parts: [seam, hearth], src: [], note: "ドームの足（半径 0.30〜0.34 m）の中ほどに敷き、焚き口の両脇で止める（約 1.85 m）。入口の枠の脚の下にも敷く（約 0.2 m、計算）。毛布の帯でもよい。品と値段は未確認"}
+  - {id: i-putty, name: 耐火モルタル 2 kg（継ぎ目の外の薄塗り）, qty: 1, unit: 袋, price: 1200, cat: brick, shop: 未定, how: 通販, batch: b-castorder, tentative: true,
+     use: [b-assy], parts: [seam], src: [], note: "幅 50 mm、厚さ 4 mm で 1 回に約 1 kg（計算）。組み直すたびに塗り直す。品と値段は未確認"}
+  - {id: i-pp, name: PP 繊維（爆裂を減らす）, qty: 1, unit: 式, price: 1500, cat: brick, shop: 未定, how: 通販, batch: b-castorder, tentative: true,
+     use: [b-cast1, b-cast2], parts: [chamber], src: [P110], note: "国内で少量を買える頁は未確認。手に入らなければ入れず、乾燥焚きの手順を守る"}
+  - {id: i-sand, name: 砂 20 kg（ドームの型の砂の山）, qty: 5, unit: 袋, price: 300, cat: brick, shop: 未定, how: 店頭, batch: b-buy1, tentative: true,
+     use: [b-form, b-hearth], parts: [chamber, hearth], src: [M69], note: "砂の山 約 0.057 m³ と炉床の敷き砂（計算）。北海道の店の値は未確認（M69 は北海道で扱わない）"}
+
+  - {id: i-release, name: 型の剥がし紙, qty: 1, unit: 式, price: 400, cat: brick, shop: 未定, how: 店頭, batch: b-buy1, tentative: true,
+     use: [b-form], parts: [seam], src: [], note: "継ぎ目の面と、ドームの足が載るレンガの上に貼る紙。300〜500 円と置いた（仮）"}
+
+  # 断熱と毛布
+  - {id: i-perlite, name: パーライト 50 L, qty: 2, unit: 袋, price: 1780, cat: ins, shop: コメリ, how: 店頭, batch: b-buy1,
+     use: [b-hins], parts: [hearthIns], src: [M66], note: "板 75 mm（4 区画と前室の下の 0.47 × 0.24 m の 1 枚）と縁の帯 65 mm で約 69 L（計算）。道内の店の扱いは未確認"}
+  - {id: i-cement, name: セメント 25 kg, qty: 1, unit: 袋, price: 838, cat: ins, shop: コメリ, how: 店頭, batch: b-buy1,
+     use: [b-hins], parts: [hearthIns], src: [M68], note: 北海道店舗向け。約 21 kg を使う（計算）}
+  - {id: i-plywood, name: JAS コンパネ 12 mm（型枠、型板、仕切り、焚き口の型）, qty: 1, unit: 枚, price: 2680, cat: ins, shop: コメリ, how: 店頭, batch: b-buy1,
+     use: [b-hins, b-form], parts: [hearthIns, chamber], src: [M72]}
+  - {id: i-blanket, name: "毛布 イソウール BSSR1300 7,200 × 600 × 25 mm", qty: 1, unit: 巻, price: 19432, cat: ins, shop: 建材ショップ（楽天）, how: 通販, batch: b-castorder,
+     use: [b-blanket, b-land, b-door], parts: [insulation, door, landing], src: [M25, M116], note: "4.32 m²。3 層で約 3.0 m²、炉床の四角の隅と側面、引き戸と差し込みの扉、前室の帯を足して約 3.3 m²（計算）"}
+  - {id: i-mesh, name: 天板の全面の不織布と区画の仕切りのシート, qty: 1, unit: 式, price: 1500, cat: ins, shop: 未定, how: 店頭, batch: b-buy1, tentative: true,
+     use: [b-deck, b-hearth], parts: [slab, hearthIns], src: [], note: 水を通す不織布を約 1.2 m²。品と値段は未確認}
+  - {id: i-wire, name: ステンレスの針金（毛布とガラスクロスを留める）, qty: 1, unit: 巻, price: 300, cat: ins, shop: 未定, how: 店頭, batch: b-buy1, tentative: true,
+     use: [b-blanket], parts: [insulation], src: [], note: 外のガラスクロスもこの針金で留める。品と値段と、1 巻で足りるかは未確認}
+  - {id: i-glasscloth, name: "ガラスクロス #200（PROST's FRP ガラスクロス、幅 1 m × 1 m）", qty: 2, unit: パック, price: 1428, cat: ins, shop: モノタロウ, how: 通販, batch: b-mail2,
+     use: [b-blanket], parts: [insulation], src: [M132], note: "毛布の外を包み、繊維の粉が落ちるのと形の崩れを防ぐ。毛布の外面 約 1.1 m² と炉床の四角の隅を覆い、重ねしろ 50 mm と切りくずを見て約 1.5 m² 要る（計算、推定）。ガラス繊維の織物で燃えず、織り目から湯気が抜ける（推定）。アルミ箔を貼った布は湯気がこもるので使わない。毛布の外面は焼く日でも 50℃以下（計算）なので、樹脂の補修に使う品でよい。北海道を除く表示は無い。2026-10-20 に頁で確かめた"}
+
+  # 台と天板と据え台
+  - {id: i-tube50, name: 角パイプ 50 × 50 × 2.3 mm（前と後ろの横梁、脚、約 4.1 m、めっきの無い鋼）, qty: 14, unit: kg, price: 252, cat: base, shop: 近くの鋼材店, how: 店頭, batch: b-buy1, tentative: true,
+     use: [b-steelcut], parts: [stand], src: [M111, P97], note: "3.34 kg/m（P97）。前の T と後ろの門形に溶接するので、亜鉛めっきの品は使わない。1 kg 252 円は仮（M111）"}
+  - {id: i-tube40, name: 角パイプ 40 × 40 × 2.3 mm（根太 6 本と側梁 2 本、約 8.0 m）, qty: 22, unit: kg, price: 252, cat: base, shop: 近くの鋼材店, how: 店頭, batch: b-buy1, tentative: true,
+     use: [b-steelcut], parts: [stand], src: [M111], note: "2.62 kg/m は仮。ボルトで留めるので、亜鉛めっきの品でもよい（そのときは端の板を溶接しない）。定尺 6 m で買うなら 2 本"}
+  - {id: i-deck, name: 天板 鋼板 2.3 mm（0.95 × 0.48 m と 0.95 × 0.69 m の切り板）, qty: 21, unit: kg, price: 252, cat: base, shop: 近くの鋼材店, how: 店頭, batch: b-buy1, tentative: true,
+     use: [b-steelcut, b-deck], parts: [slab], src: [], note: "2 枚で約 20 kg（計算）。切り板の値段は出典が無く、管と同じ 1 kg 252 円と置いた（仮、M111）"}
+  - {id: i-fb6, name: 平鋼 6 × 100 mm（脚の底板、50 角の端の板、脚の耳、約 0.6 m、めっきの無い鋼）, qty: 3, unit: kg, price: 252, cat: base, shop: 近くの鋼材店, how: 店頭, batch: b-buy1, tentative: true,
+     use: [b-steelcut], parts: [stand], src: [M111], note: "底板 0.10 m を 3 枚、50 角の端を塞ぐ 50 mm 角を 4 枚、鎖を掛ける耳 100 × 60 mm（穴 18 mm）を 3 枚取る（計算）。溶接するので、めっきの無い鋼にする。値段は未確認"}
+  - {id: i-fb3, name: 平鋼 3 × 40 mm（足元の帯と 40 角の端を塞ぐ板、約 3.0 m、めっきの無い鋼）, qty: 3, unit: kg, price: 252, cat: base, shop: 近くの鋼材店, how: 店頭, batch: b-buy1, tentative: true,
+     use: [b-steelcut], parts: [band, stand], src: [M111], note: "帯 約 2.5 m と、40 角の端を塞ぐ 40 mm を 16 枚取る（計算）。値段は未確認"}
+  - {id: i-angle50, name: 山形鋼 L50 × 50 × 6 mm（台の交点の当て板 0.15 m を 4 枚、風の留めの受け材 0.55 m を 3 本）, qty: 10, unit: kg, price: 252, cat: base, shop: 近くの鋼材店, how: 店頭, batch: b-buy1, tentative: true,
+     use: [b-dig, b-steelcut], parts: [stand, anchor], src: [M111], note: "当て板は側梁と横梁の交点を固め（約 2.7 kg）、受け材は埋めた平板 2 枚の下に当てて全ねじを受ける（約 7.3 kg、計算）。どちらもボルトで留めるか埋めるだけで溶接しない。受け材は塗らずに埋める（厚さ 6 mm で、土の中の減りは 20 年で約 1 mm の見込み、推定）。値段は未確認"}
+  - {id: i-sgp, name: 配管用炭素鋼鋼管 SGP 25A（黒）0.3 m（さや管）, qty: 1, unit: 本, price: 600, cat: base, shop: 近くの鋼材店, how: 店頭, batch: b-buy1, tentative: true,
+     use: [b-steelcut], parts: [stand], src: [], note: "0.1 m を 3 本に切り、底板の真ん中にホールソー 35 mm であけた穴に通して溶接する。M24 の全ねじを通す（外径 34.0 mm、内径約 27.6 mm は JIS の表の記憶の値で仮）。値段は未確認で、600 円と置いた（仮）"}
+  - {id: i-rod24, name: 全ねじ M24 × 1 m 溶融亜鉛めっき（サンコーインダストリー ドブ メーター寸切 M24X1000）, qty: 1, unit: 本, price: 5493, cat: base, shop: DIY FACTORY（楽天）, how: 通販, batch: b-mail3,
+     use: [b-steelcut], parts: [stand], src: [M128], note: "足 3 本に 280 mm ずつ切る（先を据え台の穴に 80 mm 入れる）。波板（M118）と同じ店で、北海道の送料は 3,980 円以上で 0 円になる。エスコの EA949HL-224（4,202 円）は事業者向けの頁にあり、モノタロウでは見つからなかった。モノタロウの大阪魂 M24X1000（ドブ）は 8,468 円で高い。2026-10-20 に頁で確かめた"}
+  - {id: i-nut24, name: 六角ナット M24 溶融亜鉛めっき 4 個（エスコ EA949LT-624）, qty: 3, unit: 袋, price: 776, cat: base, shop: モノタロウ, how: 通販, batch: b-mail2,
+     use: [b-frame], parts: [stand], src: [M129, M131], note: "足 1 本に 4 個（頭の 2 個と、底板の下のナット B とナット A）で 12 個を使う。1 種で、高さは 19 mm（呼び径の 8 割、M131）、二面幅は 36 mm である（M129）。2026-10-20 に頁で確かめた"}
+  - {id: i-washer24, name: 丸座金 M24 溶融亜鉛めっき 26 × 44 × 4.5 mm 6 個（大阪魂 ドブ ナミマルW）, qty: 1, unit: 袋, price: 734, cat: base, shop: モノタロウ, how: 通販, batch: b-mail2,
+     use: [b-frame], parts: [stand], src: [M130], note: "ナット A と底板のあいだに 1 枚ずつ入れる。底板のさや管の穴（35 mm）がナットの二面幅（36 mm）とほぼ同じなので、座金で受ける。3 枚を使い、3 枚を予備にする。2026-10-20 に頁で確かめた"}
+  - {id: i-plate32, name: 鋼板 3.2 × 300 × 300 mm（足の敷き板）, qty: 2, unit: 枚, price: 898, cat: base, shop: コメリ, how: 店頭, batch: b-buy1, tentative: true,
+     use: [b-steelcut], parts: [stand], src: [M76], note: "98 mm 角を 1 枚から 9 枚、2 枚で 18 枚取り、足 1 本に 4 枚（12.8 mm）と予備 6 枚にする。どれにも径 26 mm の穴と、縁から穴までの幅 26 mm の切り欠きを入れ、横から抜き差しする。前の下書きで抜けていた品を足した。頁は 2026-10-18 に掲載中止と出たので、値段は前の値を仮に置いた（M76）"}
+  - {id: i-rod10, name: 全ねじ M10 × 1 m 溶融亜鉛めっき（エスコ EA949HL-210）, qty: 5, unit: 本, price: 776, cat: base, shop: モノタロウ, how: 通販, batch: b-mail2,
+     use: [b-steelcut], parts: [stand], src: [M99, M124], note: "交点と根太に約 24 本（1 本約 0.12 m）、当て板に 16 本（1 本約 0.08 m）切る"}
+  - {id: i-nut10, name: 六角ナット M10 溶融亜鉛めっき 40 個（エスコ EA949LT-610）, qty: 3, unit: 袋, price: 776, cat: base, shop: モノタロウ, how: 通販, batch: b-mail2,
+     use: [b-frame], parts: [stand], src: [M100, M124], note: 40 本の両端に 80 個使う}
+  - {id: i-bolt8, name: 六角ボルト M8 × 80 溶融亜鉛めっき 5 本（エスコ EA949LD-880）, qty: 3, unit: 袋, price: 462, cat: base, shop: モノタロウ, how: 通販, batch: b-mail2,
+     use: [b-deck, b-shell], parts: [slab, shell], src: [M101, M124], note: 天板 8、殻 4。熱くなる帯と前室には使わない}
+  - {id: i-bolt8s, name: ステンレスの六角ボルト M8 とナットと座金 6 組、焼き付き止め, qty: 1, unit: 式, price: 1500, cat: base, shop: モノタロウ, how: 通販, batch: b-mail2, tentative: true,
+     use: [b-cast1, b-land], parts: [band, landing], src: [], note: "帯の耳 2 組（約 300℃）と前室 4 組（焚く間 150〜250℃）。亜鉛めっきは熱い所に使わない。焼き付き止めを塗ってばらしやすくする。品と値段は未確認"}
+  - {id: i-nut8, name: 六角ナット M8 溶融亜鉛めっき 50 個（エスコ EA949LT-608）, qty: 1, unit: 袋, price: 556, cat: base, shop: モノタロウ, how: 通販, batch: b-mail2,
+     use: [b-deck], parts: [slab, shell], src: [M102, M124]}
+  - {id: i-primer, name: ニッペ 速乾さび止め 0.7 L, qty: 1, unit: 缶, price: 2743, cat: base, shop: DCM オンライン, how: 通販, batch: b-mail2,
+     use: [b-prime], parts: [stand, slab, shell], src: [M121], note: 約 4.7 m² に 1 回（計算）}
+  - {id: i-topcoat, name: カンペハピオ 油性トタン用 0.7 L, qty: 2, unit: 缶, price: 2380, cat: base, shop: DCM オンライン, how: 通販, batch: b-mail2,
+     use: [b-top1, b-top2], parts: [stand, shell], src: [M122], note: 約 4.7 m² に 2 回（計算）。塗れる面積は未確認}
+  - {id: i-pad, name: コンクリートピンコロ 200 × 200 × 150 mm, qty: 3, unit: 個, price: 798, cat: base, shop: 道内の店頭, how: 店頭, batch: b-buy1, tentative: true,
+     use: [b-pad], parts: [foundation], src: [M105], note: "中心に径 26 mm、深さ 100 mm の穴をあける（風の留めの穴はあけない）。カインズは道内 3 店の店頭だけ。ほかの店の値は未確認。通販は 1 個 2,980 円（高さ 10 cm）"}
+  - {id: i-gravel, name: 砕石 20 kg, qty: 5, unit: 袋, price: 298, cat: base, shop: 道内の店頭, how: 店頭, batch: b-buy1, tentative: true,
+     use: [b-dig], parts: [foundation], src: [M38], note: "ふだんの土で 3 か所に 10 cm（穴は 0.4 m 角、計算）。粘土質なら 15 cm（0.45 m 角）で 9 袋。道内の店の値は未確認"}
+  - {id: i-slab, name: コンクリート平板 400 × 400 mm（風の留めの埋めた板、1 か所に 2 枚）, qty: 6, unit: 枚, price: 600, cat: base, shop: 道内の店頭, how: 店頭, batch: b-buy1, tentative: true,
+     use: [b-dig], parts: [anchor], src: [], note: "各脚から外へ 0.66 m の所に、2 枚を並べて引く向きに直角に、土かぶり 0.6 m で埋める（構造設計 3.5）。穴はあけない（全ねじは 2 枚のすきまを通す）。1 枚 22 kg と置いた。厚さと値段は未確認（300 角は 1 枚 348 円の表示がある）"}
+  - {id: i-anchorrod, name: 全ねじ M16 × 1 m 溶融亜鉛めっき 3 本と、ナット 6 個と角座金 3 枚（風の留め）, qty: 1, unit: 式, price: 5200, cat: base, shop: 道内の店頭, how: 店頭, batch: b-buy1, tentative: true,
+     use: [b-dig], parts: [anchor], src: [], note: "受け材の下を角座金とナット 2 個で受け、全ねじを水平から 60°に立てて埋める（土の中 約 0.9 m）。地面の上に約 0.05 m 出し、頭にアイナットを付ける。平板を埋める日に要るので、通販でなく店頭で買う。1 本 1,500 円とナットと座金で 5,200 円と置いた（仮）"}
+  - {id: i-chain, name: アイナット M16、シャックル 2 個、ターンバックル、短い鎖（風の留め）, qty: 3, unit: 組, price: 3600, cat: base, shop: 未定, how: 店頭, batch: b-buy1, tentative: true,
+     use: [b-dig, b-frame], parts: [anchor], src: [M126], note: "アイナットは平板を埋める日に全ねじの頭に付ける。地面の全ねじの頭から脚の耳まで約 0.53 m を、水平から 60°で張る。どの品も使用荷重 3.3 kN 以上にする（倒す力と横の力の 1.5 倍で要る 4.9 kN を 1.5 で割った力。基準風速 38 m/s、粗度区分 II、炉床 1.0 m、しまう時期、構造設計 3.5）。アイナット M16 の使用荷重は 4.41 kN（M126）。ほかの品と値段は未確認"}
+
+  # 煙突とダンパー
+  - {id: i-flue, name: ステン煙突 直筒 φ120, qty: 1, unit: 本, price: 1880, cat: chim, shop: コメリ, how: 店頭, batch: b-buy2,
+     use: [b-chim], parts: [chimney], src: [M73, M42], note: "長さは未確認（カインズの同じ形は 910 mm、有効 83 cm、M42）。頂は約 2.1 m で、殻の棟より約 0.55 m 高い（計算）"}
   - {id: i-cap, name: 煙突 H 笠 φ120, qty: 1, unit: 個, price: 2880, cat: chim, shop: コメリ, how: 店頭, batch: b-buy2,
-     use: [b-chim], parts: [chimney], src: [M74]}
+     use: [b-chim], parts: [chimney], src: [M74], note: 内に火の粉止めの網を入れる}
   - {id: i-bracket, name: 煙突の自在支持金具, qty: 1, unit: 個, price: 1380, cat: chim, shop: コメリ, how: 店頭, batch: b-buy2,
      use: [b-chim], parts: [chimney], src: [M75]}
-  - {id: i-damper, name: 自作ダンパーの鋼板 3.2 × 300 × 300 mm, qty: 1, unit: 枚, price: 898, cat: chim, shop: コメリ, how: 店頭, batch: b-buy2, tentative: true,
-     use: [b-door], parts: [chimney], src: [M76], note: 丸棒は未計上。頁は 2026-10-18 に掲載中止と出るので、値段は前の値を仮に置いた（M76）}
-  - {id: i-doorplate, name: 扉の縞鋼板 3.2 × 450 × 600 mm, qty: 1, unit: 枚, price: 2980, cat: door, shop: コメリ, how: 店頭, batch: b-buy2,
-     use: [b-door], parts: [door], src: [M77]}
-  - {id: i-cal, name: 扉のケイカル板 6 mm, qty: 1, unit: 枚, price: 1580, cat: door, shop: コメリ, how: 店頭, batch: b-buy2,
-     use: [b-door], parts: [door], src: [M78]}
-  - {id: i-handle, name: 扉の取っ手, qty: 1, unit: 個, price: 248, cat: door, shop: コメリ, how: 店頭, batch: b-buy2,
-     use: [b-door], parts: [door], src: [M79]}
+  - {id: i-flange, name: 煙突の付け根の筒かフランジと、継ぎ目のステンレスのねじ, qty: 1, unit: 式, price: 2000, cat: chim, shop: 未定, how: 店頭, batch: b-buy2, tentative: true,
+     use: [b-chim], parts: [chimney, landing], src: [], note: "前室の天板の上の L25 の溝に載せて煙突を留める（溝のあいだをダンパーが通る）。1,000〜3,000 円と置いた（仮）。品は未確認"}
+  - {id: i-rodstock, name: 丸棒 φ8〜10 mm（ダンパーの柄、扉の止めのピン）, qty: 1, unit: 本, price: 300, cat: chim, shop: 未定, how: 店頭, batch: b-buy2, tentative: true,
+     use: [b-door], parts: [damper, door], src: [], note: 値段は未確認}
+
+  # 前室、扉、温度計、灰入れ
+  - {id: i-plate, name: 縞鋼板 3.2 × 450 × 900 mm（前室の箱、引き戸）, qty: 1, unit: 枚, price: 4480, cat: door, shop: コメリ, how: 取り寄せ, batch: b-order,
+     use: [b-steelcut], parts: [landing, door], src: [M95], note: "前室の袖 2 枚（0.24 × 0.232 m）、天板、引き戸（0.36 × 0.21 m）で 0.29 m² を取る（板の 73%、割り付けで確かめた、計算）。ダンパーは前掛けの板の残りから取る。ネットで注文して店で受け取る。道内の店で受け取れるかは未確認"}
+  - {id: i-cal, name: 扉のケイカル板 6 mm（引き戸と差し込みの扉）, qty: 1, unit: 枚, price: 1580, cat: door, shop: コメリ, how: 店頭, batch: b-buy2,
+     use: [b-door], parts: [door], src: [M78], note: 道内の店の扱いは未確認}
+  - {id: i-handle, name: 扉とダンパーの取っ手, qty: 3, unit: 個, price: 248, cat: door, shop: コメリ, how: 店頭, batch: b-buy2,
+     use: [b-door], parts: [door, damper], src: [M79], note: 引き戸、差し込みの扉、ダンパーに 1 個ずつ付ける}
+  - {id: i-heatpaint, name: 耐熱塗料 600℃ スプレー（前室の外）, qty: 1, unit: 本, price: 1011, cat: door, shop: 未定, how: 店頭, batch: b-buy1, tentative: true,
+     use: [b-top1], parts: [landing], src: [], note: "前室の外、足元の帯、前掛けに塗る。1 本で約 0.66 m² に 2 回塗れるかは未確認で、足りなければもう 1 本（1,011 円）要る。品と頁は未確認"}
   - {id: i-thermo, name: 放射温度計 CUSTOM IR-212, qty: 1, unit: 台, price: 5478, cat: door, shop: コーナン, how: 通販, batch: b-mail,
-     use: [b-cure], parts: [], src: [M80], note: "コメリは 7,200 円"}
-  - {id: i-vent, name: 頂部のベント ステン丸型フード付ガラリ 100 mm, qty: 1, unit: 個, price: 932, cat: weather, shop: コーナン, how: 通販, batch: b-mail,
-     use: [b-lath], parts: [vent], src: [M87], note: 網なし。防虫の網は未計上}
-  - {id: i-ship, name: コーナン通販の送料, qty: 1, unit: 回, price: 660, cat: ship, shop: コーナン, how: 通販, batch: b-mail,
-     use: [], parts: [], src: [M88], note: "7,700 円未満の額"}
+     use: [b-dry], parts: [], src: [M80], note: "コメリで買うと 7,200 円になる"}
   - {id: i-pail, name: 蓋付きの灰入れ ペール缶 20 L スチール, qty: 1, unit: 個, price: 1280, cat: door, shop: コメリ, how: 店頭, batch: b-buy2,
-     use: [b-cure], parts: [], src: [M81], note: 火災予防条例で要る（R-12）}
+     use: [b-dry], parts: [], src: [M81], note: 火災予防条例で要る（R-12）}
   - {id: i-lid, name: 灰入れの蓋, qty: 1, unit: 個, price: 348, cat: door, shop: コメリ, how: 店頭, batch: b-buy2,
-     use: [b-cure], parts: [], src: [M82]}
-  - {id: i-seal, name: 防水材 アサヒペン 防水塗料 1 L, qty: 1, unit: 缶, price: 3280, cat: weather, shop: コメリ, how: 店頭, batch: b-buy2,
-     use: [b-seal], parts: [shell], src: [M83, P82], note: 外殻約 3.2 m² に 2 回}
-  - {id: i-sheet, name: "覆い K+BUILD タフ UV シート #4000 2.7 × 3.6 m", qty: 1, unit: 枚, price: 2780, cat: weather, shop: コメリ, how: 店頭, batch: b-buy2,
-     use: [w-ins], parts: [], src: [M84], note: 耐用約 3 年の目安。断熱を盛ってからの雨の日に使う}
-  - {id: i-band, name: 覆いのゴムバンド フック付 20 mm × 3 m, qty: 1, unit: 本, price: 598, cat: weather, shop: コメリ, how: 店頭, batch: b-buy2,
-     use: [w-ins], parts: [], src: [M85]}
-  - {id: i-hood, name: 焚き口のひさし ガルバ平板 0.27 × 914 × 1829 mm, qty: 1, unit: 枚, price: 2480, cat: weather, shop: コメリ, how: 店頭, batch: b-buy2,
-     use: [b-lath], parts: [hood], src: [M86], note: 在庫切れの表示あり}
-  - {id: i-mesh, name: 天板の全面の不織布と区画の仕切りのシート, qty: 1, unit: 式, price: 1500, cat: weather, shop: 未定, how: 店頭, batch: b-buy1, tentative: true,
-     use: [b-deck, b-hins], parts: [slab, hearthIns], src: [], note: 水を通す不織布を約 2.4 m²。品と値段は未確認}
-  - {id: i-lath, name: 外殻の金網（ラス）, qty: 1, unit: 式, price: 1000, cat: weather, shop: 未定, how: 店頭, batch: b-buy2, tentative: true,
-     use: [b-lath], parts: [shell], src: [], note: 値段は未確認}
-  - {id: i-ship2, name: ねじとローバルの通販の送料, qty: 1, unit: 回, price: 1000, cat: ship, shop: エスコの取扱店とローバル直販, how: 通販, batch: b-mail2, tentative: true,
-     use: [], parts: [], src: [], note: 値段は未確認}
+     use: [b-dry], parts: [], src: [M82]}
+  - {id: i-ember, name: 焚き口の前掛けとダンパー 縞鋼板 3.2 × 450 × 600 mm, qty: 1, unit: 枚, price: 2980, cat: door, shop: コメリ, how: 取り寄せ, batch: b-order,
+     use: [b-steelcut, b-land], parts: [landing, damper], src: [M77], note: "0.45 × 0.30 m を取り、前と左右に高さ 25 mm の縁を溶接する。残り（約 450 × 213 mm）からダンパーの差し板 0.16 × 0.30 m を取る（計算）。焚く日に天板の前の縁に掛け、焚き口から落ちる熾火と灰を受ける。使い終わったら外す。道内の店で受け取れるかは未確認"}
+  - {id: i-ashpad, name: 灰入れの台 コンクリートピンコロ 200 × 200 × 150 mm, qty: 1, unit: 個, price: 798, cat: door, shop: 道内の店頭, how: 店頭, batch: b-buy1, tentative: true,
+     use: [b-dry], parts: [], src: [M105], note: 蓋をした灰入れを地面から離して、この上に置く。台の下と薪から離す}
+
+  # 殻と屋外の備え
+  - {id: i-angle25, name: 山形鋼 L25 × 25 × 3 mm（殻の枠、扉のレール、ダンパーの溝、約 12.0 m、めっきの無い鋼）, qty: 14, unit: kg, price: 252, cat: weather, shop: 近くの鋼材店, how: 店頭, batch: b-buy1, tentative: true,
+     use: [b-steelcut], parts: [shell, door, damper], src: [M111], note: "1.12 kg/m は仮。殻の枠 約 10.0 m（45°の切妻、L30 から軽くした）、レールと溝 約 2.0 m（計算）。ダンパーの溝は前室の天板の上に付ける。溶接するので、めっきの無い鋼にする。値段は未確認"}
+  - {id: i-shellsheet, name: カラー鉄板 久宝 K371 0.27 × 455 × 910 mm 白, qty: 6, unit: 枚, price: 3298, cat: weather, shop: モノタロウ, how: 通販, batch: b-mail3,
+     use: [b-shell], parts: [shell], src: [M117], note: "側 2 枚、妻 4 枚（四角の部分と三角の部分に 1 枚ずつ）。余りの帯で棟包みと水切りを取る（計算）。棟包みは 0.93 m 要るので、2 本を重ねて継ぐ"}
+  - {id: i-roof, name: ガルバカラー鋼板 波板 小浪 0.35 × 700 × 1000 mm（TETSUKO）, qty: 3, unit: 枚, price: 5447, cat: weather, shop: DIY FACTORY（楽天）, how: 通販, batch: b-mail3,
+     use: [b-shell], parts: [shell], src: [M118], note: "屋根の流れは 0.658 m、棟の向きは 0.93 m 要る（45°、計算）。波が 1000 mm の向きなら、700 × 658 mm を 2 枚と、1 枚を半分に切った 350 × 658 mm を 2 枚取り、片側に 1 枚ずつ張る（3 枚）。波が 700 mm の向きなら 2 枚で足りる。波の向きは未確認"}
+  - {id: i-vent, name: 頂部のベント ステン丸型フード付ガラリ 100 mm, qty: 1, unit: 個, price: 932, cat: weather, shop: コーナン, how: 通販, batch: b-mail,
+     use: [b-shell], parts: [vent], src: [M87], note: 網なし。口の内に、ステンレスのメッシュ（i-screen）から切った網を張り、ネズミと虫を入れない}
+  - {id: i-screen, name: ステンレスメッシュ 0.3 × 400 × 500 mm（裾とベントの網、火の粉止め）, qty: 1, unit: 枚, price: 1550, cat: weather, shop: DCM オンライン, how: 通販, batch: b-mail2,
+     use: [b-shell, b-chim], parts: [shell, vent, chimney], src: [M120], note: "1 枚から、裾の帯（約 3.5 m）と、後ろの妻のベントの口の網（ネズミと虫よけ）と、煙突の火の粉止めを切る。メッシュ 20、線径 0.3 mm で、目開きは約 1 mm になる（計算）。1 枚で足りるかは割り付けで確かめる（未確認）。2026-10-20 に頁で値を確かめた"}
+  - {id: i-flash, name: ステンレス板 0.5 × 400 × 600 mm（前室と殻の当て板）, qty: 1, unit: 枚, price: 2500, cat: weather, shop: DCM オンライン, how: 通販, batch: b-mail2,
+     use: [b-door, b-shell], parts: [shell, landing, door], src: [M119], note: 当て板の残りから差し込みの扉の面（0.33 × 0.19 m）を取る}
+  - {id: i-silicone, name: 耐熱シリコン スリーボンド TB5211A 330 mL, qty: 1, unit: 本, price: 2638, cat: weather, shop: モノタロウ, how: 通販, batch: b-mail3,
+     use: [b-shell], parts: [shell], src: [M123], note: "−60〜200℃。冷たい外の縁だけに使う"}
+  - {id: i-dscrew, name: ドリルねじ（板を枠に留める）, qty: 1, unit: 式, price: 800, cat: weather, shop: 未定, how: 店頭, batch: b-buy1, tentative: true,
+     use: [b-shell], parts: [shell], src: [], note: "板を 150 mm 以下の間で留めるので約 110 本（計算）。品と値段は未確認"}
+  - {id: i-sheet, name: "覆い K+BUILD タフ UV シート #4000 2.7 × 3.6 m", qty: 1, unit: 枚, price: 2780, cat: weather, shop: コメリ, how: 店頭, batch: b-buy1,
+     use: [w-cure], parts: [], src: [M84], note: 養生と乾燥のあいだの雨よけ。殻ができてからは使わない}
+  - {id: i-band, name: 覆いのゴムバンド フック付 20 mm × 3 m, qty: 1, unit: 本, price: 598, cat: weather, shop: コメリ, how: 店頭, batch: b-buy1,
+     use: [w-cure], parts: [], src: [M85]}
+
+  # 送料
+  - {id: i-ship, name: コーナン通販の送料, qty: 1, unit: 回, price: 660, cat: ship, shop: コーナン, how: 通販, batch: b-mail,
+     use: [], parts: [], src: [M88], note: "7,700 円未満の注文で掛かる"}
+  - {id: i-shipcast, name: キャスタブルの送料（北海道）, qty: 3, unit: 袋, price: 600, cat: ship, shop: れんが屋（Amazon）, how: 通販, batch: b-castorder, tentative: true,
+     use: [], parts: [], src: [M114], note: "1 袋の注文の表示で 600 円。何袋で 1 個口かは未確認で、薄いレンガとまとまれば 1,800 円減る"}
+  - {id: i-shipbl, name: 毛布の送料（北海道）, qty: 1, unit: 回, price: 1500, cat: ship, shop: 建材ショップ（楽天）, how: 通販, batch: b-castorder,
+     use: [], parts: [], src: [M116], note: 大型宅配便で北海道へ送るときに掛かる}
+  - {id: i-shipsk, name: 薄いレンガの送料, qty: 1, unit: 回, price: 600, cat: ship, shop: れんが屋（Amazon）, how: 通販, batch: b-castorder,
+     use: [], parts: [], src: [M125], note: 2026-10-19 に頁で 600 円の表示を確かめた}
 
 tools:
-  - {id: t-grinder, group: build, name: ディスクグラインダーとダイヤモンドカッター, purpose: レンガと鋼材を切る、敷き板に切り欠きを入れる, use: [b-steelcut]}
-  - {id: t-trowel, group: build, name: レンガごてと左官ごて, purpose: 断熱をならす、レンガを積む、外殻を塗る, use: [b-hins]}
-  - {id: t-level, group: build, name: 水平器, purpose: 据え台、天板、炉床、レンガの段の水平を見る, use: [b-pad]}
-  - {id: t-tape, group: build, name: メジャー, purpose: 寸法を測る, use: [b-site]}
-  - {id: t-line, group: build, name: 水糸, purpose: 据え台の位置と高さ、段の通りをそろえる, use: [b-dig]}
-  - {id: t-bucket, group: build, name: バケツと練り舟, purpose: 断熱とモルタルを練る, use: [b-hins]}
+  - {id: t-grinder, group: build, name: ディスクグラインダーとダイヤモンドカッター, purpose: 前室の口のレンガを 3 つに切る、前室の天井の薄いレンガを切る、鋼材を切る, use: [b-hcut, b-steelcut, b-land]}
+  - {id: t-trowel, group: build, name: 左官ごてと仕上げごて, purpose: 断熱の板をならす、キャスタブルを押し付ける、継ぎ目を薄く塗る, use: [b-hins]}
+  - {id: t-level, group: build, name: 水平器, purpose: 埋める平板の傾き、据え台、天板、炉床の水平を見る, use: [b-dig, b-pad]}
+  - {id: t-tape, group: build, name: メジャー, purpose: 寸法を測る。冬の靴で立った肘の高さを測る, use: [b-site]}
+  - {id: t-line, group: build, name: 水糸, purpose: 据え台の位置と高さをそろえる, use: [b-dig]}
+  - {id: t-bucket, group: build, name: バケツと練り舟, purpose: 断熱とキャスタブルを練る, use: [b-hins]}
+  - {id: t-mixer, group: build, name: かくはん機（電動ドリルとかくはんの羽根）, purpose: キャスタブルを 30 分以内に練り上げる, use: [b-cast1]}
+  - {id: t-scale, group: build, name: はかり（25 kg まで）, purpose: キャスタブルと水の量を量る, use: [b-cast1]}
   - {id: t-shovel, group: build, name: スコップ, purpose: 砂、砕石、セメントを混ぜる、運ぶ, use: [b-dig]}
-  - {id: t-mallet, group: build, name: ゴムハンマー, purpose: レンガを据える, use: [b-hearth]}
+  - {id: t-mallet, group: build, name: ゴムハンマー, purpose: 炉床のレンガを据える, use: [b-hearth]}
   - {id: t-tamper, group: build, name: タンパー, purpose: 砕石を締める, use: [b-dig]}
-  - {id: t-mask, group: build, name: 防じんマスク（DS2）, purpose: 切る、磨く、混ぜるときの粉じんを避ける, use: [b-steelcut]}
-  - {id: t-goggles, group: build, name: 保護めがね, purpose: 切る、磨く、砕くときの破片を避ける, use: [b-steelcut]}
+  - {id: t-mask, group: build, name: 防じんマスク（DS2）, purpose: 切る、磨く、練る、毛布を扱うときの粉じんを避ける, use: [b-steelcut]}
+  - {id: t-goggles, group: build, name: 保護めがね, purpose: 切る、磨く、練るときの破片としぶきを避ける, use: [b-dig, b-steelcut]}
   - {id: t-ear, group: build, name: 耳栓, purpose: グラインダーの音を避ける, use: [b-steelcut]}
   - {id: t-gloves, group: build, name: 作業手袋, purpose: 手を守る, use: [b-dig]}
-  - {id: t-drill, group: build, name: 振動ドリル, purpose: 鋼材と据え台の穴、ひさしとベントの下穴をあける, use: [b-pad]}
-  - {id: t-saw, group: build, name: のこぎりか丸のこ, purpose: 型枠の合板を帯に割く, use: [b-hins]}
-  - {id: t-snips, group: build, name: 金切りばさみ, purpose: ひさしのガルバ、外殻の金網、天板の不織布を切る, use: [b-deck]}
-  - {id: t-brush, group: build, name: 刷毛, purpose: さび止め、上塗り、防水材を塗る, use: [b-prime]}
+  - {id: t-rgloves, group: build, name: ゴム手袋, purpose: キャスタブルとセメントのアルカリから手を守る, use: [b-hins]}
+  - {id: t-drill, group: build, name: 振動ドリル, purpose: 鋼材と据え台の穴、殻の下穴をあける, use: [b-dig, b-pad]}
+  - {id: t-saw, group: build, name: のこぎりか丸のこ, purpose: 型枠と型板の合板を切る, use: [b-hins]}
+  - {id: t-snips, group: build, name: 金切りばさみ, purpose: 殻の板、波板、網、天板の不織布を切る, use: [b-deck]}
+  - {id: t-knife, group: build, name: カッターと長い定規, purpose: 毛布と継ぎ目の紙を切る, use: [b-door]}
+  - {id: t-spray, group: build, name: 霧吹き, purpose: 砂の山とキャスタブルを湿らせる, use: [b-form]}
+  - {id: t-airthermo, group: build, name: 気温を測る温度計, purpose: 気温 5℃ 以上を確かめてから流し、塗る, use: [b-hins]}
+  - {id: t-gauge, group: build, name: 隙間ゲージ, purpose: 継ぎ目とひびの幅を測って記録する, use: [b-assy]}
+  - {id: t-brush, group: build, name: 刷毛, purpose: さび止め、上塗りを塗る, use: [b-prime]}
   - {id: t-ladder, group: build, name: 脚立, purpose: 煙突の頂部の作業, use: [b-chim]}
-  - {id: t-welder, group: build, name: 溶接機（持っているか借りるかは未確認）, purpose: 枠を溶接する, use: [b-weld], have: 未確認}
-  - {id: t-wmask, group: build, name: 遮光面（溶接面）, purpose: 溶接の光から目と顔を守る, use: [b-weld]}
-  - {id: t-wire, group: build, name: 溶接棒かワイヤ（溶接機に合う細いもの）, purpose: 2.3 mm の管と 6 mm の板を溶接する, use: [b-weld]}
-  - {id: t-wgloves, group: build, name: 溶接用の革手袋と前掛け, purpose: 火花とやけどを避ける, use: [b-weld]}
-  - {id: t-fire, group: build, name: 消火器か水を張ったバケツ, purpose: 溶接と切断の火花に備える, use: [b-steelcut]}
-  - {id: t-cutdisc, group: build, name: 鉄用の切断砥石と研磨ディスク, purpose: 角パイプ、平鋼、全ねじを切り、ばりと塗膜を落とす, use: [b-steelcut]}
-  - {id: t-wbrush, group: build, name: ワイヤブラシと紙やすり, purpose: 黒皮とさびを落とし、上塗りの足付けをする, use: [b-prime]}
-  - {id: t-steelbit, group: build, name: 鉄工用のドリルの刃（6、9、10、11、22 mm）とホールソー 28 mm, purpose: 鋼材に穴をあける, use: [b-steelcut]}
-  - {id: t-concbit, group: build, name: コンクリート用のドリルの刃 22 mm, purpose: 据え台に全ねじの先を受ける穴をあける, use: [b-pad]}
-  - {id: t-clamp, group: build, name: クランプ, purpose: 切る、穴をあける、溶接するときに材を留める, use: [b-steelcut]}
-  - {id: t-square, group: build, name: スコヤと差し金, purpose: 脚と梁の直角と方杖の角度を見る, use: [b-steelcut]}
-  - {id: t-punch, group: build, name: センターポンチ, purpose: 穴の位置を打つ、ピンのナットの外のねじ山をつぶして抜けを止める, use: [b-steelcut]}
-  - {id: t-spanner, group: build, name: スパナとめがねレンチ（13、17、30 mm）とソケットレンチ, purpose: ナットを締める、頭を押さえる, use: [b-frame]}
-  - {id: t-torque, group: build, name: トルクレンチ, purpose: 足のナットの締め合わせを決めた力で締める, use: [b-frame]}
+  - {id: t-welder, group: build, name: 溶接機 100 V のノンガス半自動（インバーター、80〜140 A 級、ワイヤ 0.8〜0.9 mm）, purpose: "100 V では 80 A 級で使う（M127）。前の T、後ろの門形、脚の耳、管の端の板、帯、前室、殻の枠、前掛けを溶接する。亜鉛めっきの品は溶接しない。入力は 24〜29 A で、家の 15 A のコンセントでは足りないことがある（t-cord）", use: [b-weld], have: 買う}
+  - {id: t-wmask, group: build, name: 自動で暗くなる溶接面, purpose: 溶接の光から目と顔を守る, use: [b-weld], have: 買う}
+  - {id: t-wire, group: build, name: フラックス入りワイヤ 0.8〜0.9 mm（溶接機に合うもの）, purpose: ガスを使わずに、2.3 mm の管と、管に付ける 3〜6 mm の板をすみ肉で溶接する。板は適用板厚 4.0 mm（バディ 80、M127）を超えるが、すみ肉の脚長は薄い管に合わせて約 3 mm で足りる見込み（推定）。6 mm の板どうしの突き合わせはしない, use: [b-weld], have: 買う}
+  - {id: t-wgloves, group: build, name: 溶接用の革手袋と革のエプロン, purpose: 火花とやけどを避ける, use: [b-weld], have: 買う}
+  - {id: t-cord, group: build, name: 20 A のコンセントと太く短い延長コード（2.0 mm² 以上）, purpose: 溶接機の入力 24〜29 A に合わせる（M127）。15 A のコンセントにしかつなげないときは電流を下げ、ブレーカーが落ちないかを見る, use: [b-weld]}
+  - {id: t-chip, group: build, name: スラグを落とすハンマー（チッピングハンマー）, purpose: 溶接のあとの溶剤のかす（スラグ）を落とす, use: [b-weld], have: 買う}
+  - {id: t-magnet, group: build, name: 溶接用のマグネット, purpose: 部材を直角と 45°に保って溶接する, use: [b-weld], have: 買う}
+  - {id: t-fire, group: build, name: 消火器と水を張ったバケツ, purpose: 溶接と切断の火花に備える。溶接する所のまわりから燃える物をどける, use: [b-steelcut, b-weld]}
+  - {id: t-cutdisc, group: build, name: 鉄用の切断砥石と研磨ディスク, purpose: 角パイプ、山形鋼、平鋼、全ねじを切り、ばりと塗膜を落とす, use: [b-steelcut]}
+  - {id: t-wbrush, group: build, name: ワイヤブラシと紙やすり, purpose: 溶接のあとのスラグ、黒皮、さびを落とす, use: [b-weld, b-prime], have: 買う}
+  - {id: t-steelbit, group: build, name: 鉄工用のドリルの刃（6、9、10、11、18、26 mm）とホールソー 35 mm, purpose: 鋼材に穴をあける（風の留めの受け材と脚の耳は 18 mm、敷き板は 26 mm、底板のさや管の穴は 35 mm）, use: [b-dig, b-steelcut]}
+  - {id: t-concbit, group: build, name: コンクリート用のドリルの刃 26 mm, purpose: 据え台に M24 の全ねじの先を受ける穴（深さ 100 mm）をあける, use: [b-pad]}
+  - {id: t-clamp, group: build, name: クランプ, purpose: 切る、穴をあける、溶接するときに材を留める, use: [b-steelcut, b-weld], have: 買う}
+  - {id: t-square, group: build, name: スコヤと差し金, purpose: 脚と梁の直角と当て板の位置を見る, use: [b-steelcut]}
+  - {id: t-punch, group: build, name: センターポンチ, purpose: 穴の位置を打つ, use: [b-steelcut]}
+  - {id: t-spanner, group: build, name: スパナとめがねレンチ（13、17、24、36 mm）とソケットレンチ, purpose: ナットを締める、頭を押さえる, use: [b-dig, b-frame]}
   - {id: t-jack, group: build, name: 油圧ジャッキ 2 t と敷き板, purpose: 足の荷を抜いて高さを直す（年 1 回も使う）, use: [b-frame]}
   - {id: t-vise, group: build, name: バイスプライヤー, purpose: 全ねじを押さえる, use: [b-frame]}
   - {id: t-peel, group: bake, name: ピール（木と金属）, purpose: 生地を入れる、パンを出す, use: [m-firstbake]}
-  - {id: t-rake, group: bake, name: 熾火の掻き出し棒, purpose: 熾火を掻き出す, use: [m-firstbake]}
+  - {id: t-rake, group: bake, name: 熾火の掻き出し棒, purpose: 熾火を掻き出す, use: [b-dry]}
   - {id: t-hbrush, group: bake, name: 炉床のブラシ, purpose: 炉床の灰を払う, use: [m-firstbake]}
-  - {id: t-mop, group: bake, name: 炉床を拭くモップ, purpose: 炉床を拭く, use: [m-firstbake]}
-  - {id: t-hgloves, group: bake, name: 耐熱手袋, purpose: 熱い物を扱う, use: [b-cure]}
-  - {id: t-meter, group: bake, name: 薪の水分計, purpose: 含水率 20% 以下を確かめる（P64）, use: [b-cure]}
+  - {id: t-mop, group: bake, name: 炉床を拭く布, purpose: 炉床の灰を取る（冷ますために拭かない）, use: [m-firstbake]}
+  - {id: t-hgloves, group: bake, name: 耐熱手袋, purpose: 熱い物を扱う, use: [b-dry]}
+  - {id: t-meter, group: bake, name: 薪の水分計, purpose: 含水率 20% 以下を確かめる（P64）, use: [b-dry]}
   - {id: t-bag, group: bake, name: 保温バッグ, purpose: 冬に生地を運ぶ, use: []}
-  - {id: t-snow, group: bake, name: 雪かきのスコップ, purpose: 窯のまわりと足元を除雪する, use: []}
+  - {id: t-snow, group: bake, name: 雪かきのスコップ, purpose: 台と殻のまわりの雪を、台の梁の下に届く前に下ろす（付録 A.7）, use: []}
+  - {id: t-sbrush, group: bake, name: 柄の長い雪払いのほうき, purpose: 殻の屋根と前室の天板と天板の前の出の雪を払う（付録 A.7）, use: []}
+  - {id: t-timer, group: bake, name: タイマー, purpose: 30 分ごとに内面を測る、窯入れの時刻を守る, use: [b-dry]}

@@ -4,27 +4,28 @@
 
 meta:
   title: パン窯 ナビゲータ
-  rev: "0.1"
-  date: "2026-10-18"
+  rev: "0.2"
+  date: "2026-10-20"
 
 # 物（3D と図面に出る部品）。dims は oven.json の params の鍵。doc は設計書の文書。
 parts:
-  - {id: foundation, name: 据え台, mat: 締めた砕石 20 cm の上にコンクリートピンコロ 200 角（4 か所）。粘土質なら穴を 80 cm 角にし、砕石 35 cm と平板 40 角を足す, dims: [pad.size, pad.height, pad.top, pad.gravel, pad.pit, frost.depth], doc: 03-structural-design.md}
-  - {id: stand, name: 鉄のテーブル, mat: 角パイプ（STKR400、肉厚 2.3 mm）を溶接とボルトで組む。後ろの 2 本は天秤で受けて 3 点で支え、前の脚に方杖を入れる。足は M20 の全ねじ（溶融亜鉛めっき）, dims: [table.top, table.offset_z, table.joist, table.joist_n, table.beam_h, table.beam_x, table.front_z, table.leg, table.front_leg_x, table.brace_z, table.rear_z, table.rear_leg_x, table.rear_gap, table.stop_gap, foot.rod, foot.stack, foot.free], doc: 03-structural-design.md}
-  - {id: slab, name: 天板, mat: 縞鋼板 3.2 × 450 × 900 mm を 6 枚。ボルトで留め、水抜きの穴をあけ、全面に不織布を敷く, dims: [deck.thickness, table.width, table.depth, table.overhang], doc: 03-structural-design.md}
-  - {id: hearthIns, name: 炉床の断熱, mat: セメントとパーライト 体積で 1:5。天板 1 枚ごとの 6 区画に分けて打つ, dims: [hearth.insulation], doc: 02-configuration.md}
-  - {id: hearth, name: 炉床, mat: 耐火粘土レンガを縦に立てて並べる, dims: [hearth.firebrick, dome.inner_diameter], doc: 03-structural-design.md}
-  - {id: chamber, name: 窯壁（ドーム）, mat: 耐火粘土レンガ 114 mm（蓄熱を兼ねる）, dims: [wall.firebrick, dome.inner_diameter, dome.inner_height], doc: 02-configuration.md}
-  - {id: mass, name: 蓄熱層, mat: 第一案 B では置かない（土窯の型式で使う粘土と砂）, dims: [dome.mass], doc: 02-configuration.md}
-  - {id: insulation, name: 断熱, mat: セメントとパーライト 体積で 1:5（仮）, dims: [insulation.thickness], doc: 02-configuration.md}
-  - {id: shell, name: 外殻, mat: 金網と左官 2 層、浸透性の防水材（仮）, dims: [shell.thickness], doc: 02-configuration.md}
-  - {id: landing, name: 前室と焚き口, mat: 耐火粘土レンガ, dims: [door.width, door.height_ratio, landing.depth, landing.wall], doc: 03-structural-design.md}
-  - {id: door, name: 扉, mat: 内側を耐火材、外側を断熱にした板（仮）, dims: [door.thickness, door.width], doc: 02-configuration.md}
-  - {id: chimney, name: 煙突とダンパー, mat: ステンレスの煙突 φ120、H 笠、ダンパーは自作, dims: [chimney.diameter, chimney.top], doc: 02-configuration.md}
-  - {id: hood, name: 焚き口のひさし, mat: ガルバリウム鋼板を曲げる（仮）, dims: [hood.depth], doc: 02-configuration.md}
-  - {id: vent, name: 頂部のベント, mat: ステンレスのフード付きガラリ 100 mm, dims: [vent.diameter], doc: 02-configuration.md}
-  - {id: roof, name: 屋根と柱, mat: 架けない（2026-10-18、施主の判断）, dims: [roof.use], doc: 02-configuration.md}
-  - {id: wood, name: 薪置き, mat: 乾いた広葉樹。テーブルの下に置くときは天板から 0.25 m 以上離す, dims: [], doc: 06-operation.md}
+  - {id: foundation, name: 据え台, mat: 締めた砕石 10 cm の上にコンクリートピンコロ 200 角（3 か所）。粘土質なら穴を 45 cm 角にし、砕石を 15 cm にする。風の留めの平板は各脚から外へ 0.66 m の所に別に埋める, dims: [pad.size, pad.height, pad.top, pad.gravel, pad.pit, frost.depth], doc: 03-structural-design.md}
+  - {id: anchor, name: 風の留め, mat: 各脚から外へ水平から 60°で張る。土かぶり 0.6 m に、コンクリート平板 400 角を 2 枚並べて引く向きに直角に埋め（3 か所で 6 枚）、下に当てた山形鋼の受け材から M16 の全ねじ（溶融亜鉛めっき）を地面の上へ出す。全ねじの頭のアイナットから脚の耳へ、シャックルと鎖とターンバックルでつなぐ。手で掘り出せる, dims: [anchor.angle, anchor.depth, anchor.slab, anchor.slabs, anchor.lug], doc: 03-structural-design.md}
+  - {id: stand, name: 台, mat: 前の T と後ろの門形（角パイプ 50 × 50 × 2.3、めっきの無い鋼を溶接する）に、側梁と根太（40 × 40 × 2.3）をボルトで留める 3 本脚。後ろの脚を左右 ±0.90 m に張り出す。側梁と横梁の交点は山形鋼の当て板で固め、方杖は付けない。脚に鎖を掛ける耳を溶接する。足は M24 の全ねじ（溶融亜鉛めっき）を SGP 25A のさや管に通し、ナット A と底板のあいだに座金を入れる, dims: [table.top, table.offset_z, table.joist, table.joist_n, table.beam, table.side, table.beam_x, table.front_z, table.rear_z, table.rear_leg_x, foot.rod, foot.stack, foot.free, foot.plate, foot.plate_w], doc: 03-structural-design.md}
+  - {id: slab, name: 天板, mat: 鋼板 2.3 mm（0.95 × 0.48 m と 0.95 × 0.69 m の 2 枚）。M8 で根太に留め、水抜きの穴をあけ、全面に不織布を敷く, dims: [deck.thickness, table.width, table.depth], doc: 03-structural-design.md}
+  - {id: hearthIns, name: 炉床の下の断熱, mat: セメントとパーライト 体積で 1:5。75 mm の板を 4 区画と前室の下の 1 枚、炉床の外の縁の帯 65 mm を 5 本、先に打つ, dims: [hearth.insulation, hearth.strip, hearth.ins_quarter], doc: 02-configuration.md}
+  - {id: hearth, name: 炉床, mat: 耐火粘土レンガ 65 mm を切らずに寝かせ、0.684 × 0.69 m の四角に並べる（18 個、6 列 × 3 個、列は前後の向き）。ドームの足はこの上に載る, dims: [hearth.firebrick, hearth.width, hearth.depth, dome.inner_diameter], doc: 03-structural-design.md}
+  - {id: chamber, name: ドーム, mat: 耐火キャスタブル CA-13T 40 mm を 4 個に分けて流す（後ろの輪、前の輪、蓋、入口の枠。1 個 22 kg 以下）, dims: [dome.inner_diameter, dome.inner_height, dome.thickness, dome.split_lat, collar.depth], doc: 02-configuration.md}
+  - {id: seam, name: 継ぎ目, mat: 段付きの継ぎ目に生体溶解性のペーパー 1 mm を挟み、外を耐火モルタルで薄く塗る。ドームの足とレンガのあいだに縄を敷き、焚き口の両脇で止める, dims: [dome.step, dome.gasket, dome.skim, dome.seat], doc: 02-configuration.md}
+  - {id: band, name: 足元の帯, mat: 平鋼 3 × 40 の半円 2 本。内向きのつめでドームの足に流し込み、両端の耳をステンレスの M8 で締める, dims: [band.width, band.thickness], doc: 03-structural-design.md}
+  - {id: insulation, name: 毛布, mat: 生体溶解性の毛布 25 mm を 3 層。継ぎ目をずらして巻き、外をガラスクロスで包み、ステンレスの針金で留める, dims: [insulation.thickness], doc: 02-configuration.md}
+  - {id: shell, name: 殻, mat: 山形鋼 L25 の枠に、塗った鋼板の小板（0.27 × 455 × 910）と塗った小波の波板を張る勾配 45°の切妻の箱。天板に M8 で留め、外せる, dims: [shell.width, shell.eave, shell.pitch, shell.overhang, shell.frame, shell.gap, shell.bottom_gap], doc: 02-configuration.md}
+  - {id: vent, name: 頂部のベント, mat: ステンレスのフード付きガラリ 100 mm。後ろの妻の頂に付け、口の内に網を張る（ネズミと虫よけ）, dims: [vent.diameter], doc: 02-configuration.md}
+  - {id: landing, name: 前室と焚き口, mat: 縞鋼板 3.2 mm の箱。焚き口の敷居と床にレンガ 3 個と、前室の口に 1 個を 3 つに切った小片、天井の内に薄いレンガ 32 mm（3 枚を切って張り、鋼板の天井は床から 0.232 m）。外は 600℃ の耐熱塗料。焚く日は天板の前の縁に前掛けを掛ける, dims: [landing.width, landing.height, landing.depth, landing.plate, landing.overhang, door.width, door.height, apron.width, apron.depth, apron.rim], doc: 03-structural-design.md}
+  - {id: door, name: 扉, mat: 焼くときに焚き口に差し込んで閉める断熱の扉（ケイカル板と毛布を焚き口の形に切り、ステンレス板の面 0.33 × 0.19 m で入口の枠に当てて止める）と、前室の口の引き戸（縞鋼板 3.2 mm、ケイカル板 6 mm、毛布 25 mm）。引き戸は L25 のレールで受け、1/4、1/2、全開でピンで止める, dims: [door.plug, door.leaf_w, door.leaf_h, door.thickness, door.stops], doc: 02-configuration.md}
+  - {id: damper, name: ダンパー, mat: 縞鋼板 3.2 mm の差し板。前室の天板の上で、煙突の付け根とのあいだの L25 の溝で受け、丸棒の柄で引く, dims: [damper.width, damper.length], doc: 02-configuration.md}
+  - {id: chimney, name: 煙突, mat: ステンレスの煙突 φ120 の直筒 1 本と H 笠。H 笠の内に火の粉止めの網。支持金具で殻の前の妻の枠に留める, dims: [chimney.diameter, chimney.top, chimney.z], doc: 02-configuration.md}
+  - {id: wood, name: 薪置き, mat: 乾いた広葉樹。炉床の真下と前室の下には置かない。台の下に置くなら中心から 0.45 m より外の隅で、天板から 0.25 m 以上離す（隅に置く決まりは仮で、施主が確かめる）, dims: [], doc: 06-operation.md}
   - {id: person, name: 人（大きさの目安）, mat: 目安, dims: [person.height], doc: ""}
   - {id: frost, name: 凍結深度, mat: 地盤, dims: [frost.depth], doc: 01-requirements.md}
 
@@ -58,13 +59,14 @@ categories:
 sheets:
   - id: bake
     title: 焼いている間の熱の流れ
-    caption: 熾火を掻き出して扉を閉めたあと。蓄熱から窯壁と炉床を通ってパンへ熱が入り、外へも逃げる。
+    caption: 熾火を掻き出して焚き口の差し込みの扉を閉めたあと。ドームと炉床にためた熱がパンへ入り、毛布と継ぎ目を通って外へも逃げる。
     size: [1260, 600]
     pos:
       outside: [90, 310]
       shell: [260, 120]
       insulation: [435, 120]
       chamber: [785, 120]
+      seam: [610, 260]
       slab: [260, 500]
       hearthIns: [435, 500]
       hearth: [785, 500]
@@ -77,13 +79,15 @@ sheets:
       - [air, bread, conv, ピザ窯の試験で約 15%（P6）]
       - [hearth, bread, cond, 炉床からの伝導。ピザ窯の試験で約 12%（P6）。耐火レンガは炉床の温度差の 5〜6 割を底に伝える（P7）]
       - [bread, air, steam, 焼き始めは扉で閉じ込める（R-02c）]
-      - [chamber, insulation, loss, 窯壁のレンガ 114 mm が熱をため、断熱を通って逃げる。損失 0.61〜0.81 kW（03 の 3.2）]
+      - [chamber, insulation, loss, キャスタブル 40 mm と炉床 65 mm が熱をため、毛布 75 mm を通って逃げる（03 の 3.2）]
+      - [chamber, seam, loss, 継ぎ目と細いひびから湿った空気が抜ける。熱の設計は漏れ 0.5 W/K を基本に 1.0 W/K まで見た（03 の 3.2）]
+      - [seam, insulation, loss, ""]
       - [insulation, shell, loss, ""]
       - [shell, outside, loss, ""]
       - [hearth, hearthIns, loss, ""]
       - [hearthIns, slab, loss, ""]
       - [slab, outside, loss, ""]
-      - [hearth, door, rad, 扉の内面が冷たいと焚き口の側の炉床が冷える（P38 による計算）。扉は内側を耐火材、外側を断熱にする]
+      - [hearth, door, rad, 扉の内面が冷たいと焚き口の側の炉床が冷える（P38 による計算）。焚き口の差し込みの扉は内側を断熱にし、煙道より奥で閉める]
   - id: fire
     title: 焚く間の熱と煙
     caption: 窯の中で薪を焚き、蓄熱層と炉床に熱をためる。煙は焚き口の上から前室と煙突へ出る。
@@ -91,6 +95,7 @@ sheets:
     pos:
       outside: [90, 330]
       chimney: [90, 140]
+      damper: [190, 40]
       landing: [290, 140]
       door: [290, 450]
       gas: [500, 140]
@@ -103,15 +108,16 @@ sheets:
       - [door, fire, airin, ""]
       - [fire, gas, conv, ""]
       - [gas, landing, smoke, 煙は焚き口の上から出る]
-      - [landing, chimney, smoke, ""]
+      - [landing, damper, smoke, ""]
+      - [damper, chimney, smoke, 差し板のダンパーは焚く間は開ける]
       - [chimney, outside, smoke, 乾いた広葉樹を使う（R-06）]
-      - [fire, chamber, rad, 窯壁のレンガ 114 mm に熱をためる。熱の届く深さは 6 時間で約 9 cm（P7 から計算）]
+      - [fire, chamber, rad, キャスタブル 40 mm に熱をためる。内面の上がりは 1 時間に 100℃ 以下（R-05）]
       - [gas, chamber, conv, ""]
       - [fire, hearth, rad, 火の位置を動かして炉床のむらを作らない（付録 A.1）]
       - [embers, hearth, cond, 焚き終わりに熾火を炉床全体に広げて 30 分以上（F15、F19）]
   - id: steam
     title: 蒸気の通り道
-    caption: 焼き始めは扉とダンパーで蒸気を閉じ込め、焼き終わりに扉を開けて抜く（R-02c）。
+    caption: 焼き始めは焚き口の差し込みの扉で蒸気を閉じ込め、焼き終わりに扉を外して前室とダンパーから抜く（R-02c）。
     size: [1000, 460]
     pos:
       bread: [820, 300]
@@ -119,12 +125,14 @@ sheets:
       door: [420, 300]
       landing: [420, 120]
       chimney: [200, 120]
+      damper: [310, 40]
       outside: [200, 300]
     flows:
       - [bread, air, steam, 生地から出る水分]
       - [air, door, steam, 焼き始めは扉で閉じ込める]
       - [door, landing, steam, 焼き終わりに扉を開けて抜く（P21）]
-      - [landing, chimney, steam, ダンパーを開ける]
+      - [landing, damper, steam, ""]
+      - [damper, chimney, steam, ダンパーを開ける]
       - [chimney, outside, steam, ""]
 
 # 焚き方と焼き方の流れ（付録 06-operation.md）。lane は列の担当、col は左からの順、row は同じレーンの中の段（0 が上）。
@@ -133,44 +141,54 @@ lanes:
   - {id: dough, name: 生地}
 
 steps:
-  - {id: dry, lane: oven, col: 0, row: 0, kind: step, name: 初めての乾燥, desc: 初めて火を入れる前に、数日かけて段階的に乾かす。, parts: [chamber, insulation, shell], reqs: [R-05], src: [P16, P5]}
-  - {id: burn, lane: oven, col: 1, row: 0, kind: step, name: 焚く, desc: 焚いている間に火の位置を動かす。, parts: [chamber, hearth], reqs: [R-02e, R-06], src: [F34]}
+  - {id: dry, lane: oven, col: 0, row: 0, kind: step, name: 乾燥焚き（初回）, desc: 内面を 1 時間に 50℃ 以下で 150℃ まで上げ、湯気が止まるまで保ち、200℃ と 350℃ で 2 時間ずつ保つ。焼かない。組み直したあとは保つ段を置かず、乾かしの火から 50℃/時のまま 350℃ まで上げて、その日に焼く。, parts: [chamber, seam, hearth, hearthIns, insulation], reqs: [R-05], src: [P106, P107]}
+  - {id: prep, lane: oven, col: 0, row: 1, kind: step, name: 焚く前に見る, desc: 台と殻のまわりの雪を除き、裾の網とベントが塞がっていないか、脚が傾いていないかを見る。窯が 0℃ 以下なら冬の日、殻の裾か前室に水か氷が見えれば濡れたあとの日にする。組み直したあとの最初の日は、乾かしの火から 50℃/時のまま 350℃ まで上げる。扉とダンパーを開ける。, parts: [shell, vent, stand, door, damper], reqs: [R-08], src: [P79]}
+  - {id: dryfire, lane: oven, col: 0, row: 2, kind: step, name: 乾かしの火, desc: 冬の日と、雨や雪どけで濡れたおそれのあるあとは、内面を 1 時間に 50℃ 以下で 150℃ まで上げ、ベントの湯気が止まるまで保つ（約 1.7 時間）。, parts: [chamber, insulation, hearthIns, vent], reqs: [R-05, R-08], src: [F68, F69]}
+  - {id: burn, lane: oven, col: 1, row: 0, kind: step, name: 焚く, desc: 火は炉床の中央で小さく始め、内面の上がりを 30 分ごとに測る。ふだん 1 時間に 100℃、冬は 90℃、初めの 10 回は 60℃ までにする。乾いた日も速めない。内面 380℃ で止めて保つ。, parts: [chamber, hearth], reqs: [R-05, R-02a, R-06], src: [F34]}
   - {id: spread, lane: oven, col: 2, row: 0, kind: step, name: 熾火を広げる, desc: 焚き終わりに熾火を炉床全体に広げて 30 分以上置く。, parts: [hearth], reqs: [R-02e], src: [F15, F19]}
-  - {id: rake, lane: oven, col: 3, row: 0, kind: step, name: 掻き出して拭く, desc: 熾火と灰を掻き出し、炉床を掃いて湿った布で手早く拭く。, parts: [hearth], reqs: [R-02e], src: [P67, S19, F35, F17]}
-  - {id: soak, lane: oven, col: 4, row: 0, kind: step, name: 閉じて均す, desc: 扉を閉めて 30〜60 分置き、温度を揃える。, parts: [door, chamber, hearth], reqs: [R-02e], src: [F36, F16]}
-  - {id: measure, lane: oven, col: 5, row: 0, kind: gate, name: 測る, desc: 炉床の 5 点の差が 20℃以内で、炉床が 250〜300℃なら窯入れする。, parts: [hearth], reqs: [R-02e, R-02a], src: [P38]}
-  - {id: load1, lane: oven, col: 6, row: 0, kind: step, name: 1 回目の窯入れ, desc: 手早く入れる。焚き口の前 10 cm には置かない。大きいパンは奥と中央。, parts: [door, hearth, landing], reqs: [R-01, R-04], src: [P38, F18]}
-  - {id: bake1, lane: oven, col: 7, row: 0, kind: step, name: 焼く, desc: 扉で蒸気を閉じ込め、焼成時間の半分で前後を入れ替える。焼き終わりに扉を開けて蒸気を抜く。, parts: [door, chimney], reqs: [R-02b, R-02c, R-02e], src: [P40, P21]}
-  - {id: rest, lane: oven, col: 8, row: 0, kind: step, name: 取り出して待つ, desc: 取り出したら扉を閉め、10〜30 分待って奥の熱を表面へ戻す。, parts: [door, hearth], reqs: [R-04b], src: [P1]}
-  - {id: check2, lane: oven, col: 9, row: 0, kind: gate, name: 250℃以上か, desc: 2 回目は炉床が 250℃以上あることを確かめてから入れる。, parts: [hearth], reqs: [R-04b], src: [P1]}
-  - {id: refire, lane: oven, col: 9, row: 1, kind: step, name: 焚き直す, desc: 小さい火を 30 分焚いて 30 分均す。, parts: [chamber, hearth], reqs: [R-04b], src: [F21]}
-  - {id: load2, lane: oven, col: 10, row: 0, kind: step, name: 2 回目の窯入れ, desc: 1 回目と同じ手順で入れて焼く。, parts: [door, hearth], reqs: [R-04, R-04b], src: [P1]}
-  - {id: after, lane: oven, col: 11, row: 0, kind: step, name: 低い温度で使う, desc: 3 回目より後は型焼き、甘いパン、料理、乾燥に回す。, parts: [chamber], reqs: [], src: [P41]}
-  - {id: prep, lane: oven, col: 0, row: 1, kind: step, name: 覆いを外して乾かす, desc: 覆いを外し、窯の中の雪と水を取る。濡れていればゆるい火で乾かす。, parts: [shell, door, chimney], reqs: [R-08, R-05], src: [P80, P85]}
-  - {id: cover, lane: oven, col: 12, row: 0, kind: step, name: 冷めてから覆う, desc: 扉とダンパーを閉め、窯が冷めてから覆いを掛ける。裾は開ける。, parts: [shell, door, chimney], reqs: [R-08], src: [P80, F52]}
-  - {id: mix, lane: dough, col: 1, row: 0, kind: step, name: 仕込む, desc: 量の多い日は手で折りたたむ製法。ミニはふだん粉 360 g ほどから練る。, parts: [], reqs: [R-04a], src: [S27, P56]}
+  - {id: rake, lane: oven, col: 3, row: 0, kind: step, name: 掻き出して拭く, desc: 熾火と灰を掻き出し、炉床を掃いて、よく絞った布で灰を取る（1〜2 回）。冷ますために拭かない。, parts: [hearth], reqs: [R-02e], src: [P67, S19, F17]}
+  - {id: soak, lane: oven, col: 4, row: 0, kind: step, name: 閉じて均す, desc: 焚き口の差し込みの扉とダンパーを閉めて 20 分置く。, parts: [door, damper, chamber, hearth], reqs: [R-02e], src: [F36, F16]}
+  - {id: measure, lane: oven, col: 5, row: 0, kind: gate, name: 測る, desc: 炉床が 305〜320℃（狙いは 315〜320℃）で、5 点の差が 20℃ 以内なら入れる。320℃ を超えていれば閉じて待つ。305℃ に届かなければ 15〜30 分焚き足す。, parts: [hearth], reqs: [R-02a, R-02e, R-04b], src: [P38]}
+  - {id: load1, lane: oven, col: 6, row: 0, kind: step, name: 1 回目の窯入れ, desc: 2 個を左右に入れる。焚き口の前 10 cm には置かない。, parts: [door, hearth, landing], reqs: [R-01, R-04], src: [P38, F18]}
+  - {id: bake1, lane: oven, col: 7, row: 0, kind: step, name: 焼く, desc: 焚き口の差し込みの扉で蒸気を閉じ込め、焼き終わりに扉を外して抜く。1 回目は差し込みの扉を外さない（ふつうの日だけ引き戸の 1/4 まで。2 回目が下がる）。, parts: [door, damper, chamber], reqs: [R-02b, R-02c, R-02e], src: [P40, P21]}
+  - {id: rest, lane: oven, col: 8, row: 0, kind: step, name: 取り出して閉める, desc: 取り出したら差し込みの扉を閉めて待つ。, parts: [door, hearth], reqs: [R-04b], src: [P1]}
+  - {id: check2, lane: oven, col: 9, row: 0, kind: gate, name: 250℃ 以上か, desc: 1 回目から 60 分で、2 回目を入れる所の炉床が 250℃ 以上かを確かめる。, parts: [hearth], reqs: [R-04b], src: [P1]}
+  - {id: load2, lane: oven, col: 10, row: 0, kind: step, name: 2 回目の窯入れ, desc: 焚き直さずに、1 回目を 90 度回した前と奥に入れて焼く。差し込みの扉を外すなら、引き戸は 1/4 まで（ふつうの日は 1/2 まで）。, parts: [door, hearth], reqs: [R-04, R-04b, R-02b], src: [P1]}
+  - {id: refire, lane: oven, col: 11, row: 0, kind: step, name: 焚き直す, desc: 2 回目を出したら、ふだん 0.75 時間、寒い日は 1.0 時間焚き直す。初めの 10 回は 60℃/時で上げ、寒い日と冬の日は 1.25 時間にする。, parts: [chamber, hearth], reqs: [R-04, R-05], src: [F21]}
+  - {id: check3, lane: oven, col: 12, row: 0, kind: gate, name: 3 回目を入れてよいか, desc: 熾火を出して 20 分以上おき、炉床が 250〜300℃ なら入れる。, parts: [hearth], reqs: [R-04, R-02a], src: []}
+  - {id: load3, lane: oven, col: 13, row: 0, kind: step, name: 3 回目の窯入れ, desc: 3 回目を焼く。ドームを下げたいときは、20 分から差し込みの扉を外して引き戸を 1/4、1/2、全開で止めるか、入れるのを 20〜40 分遅らせる。寒い日は 1/2 開けまで。, parts: [door, damper, hearth, chamber], reqs: [R-04, R-02b], src: []}
+  - {id: after, lane: oven, col: 14, row: 0, kind: step, name: 低い温度で使う, desc: 3 回目より後は型焼き、甘いパン、料理、乾燥に回す。, parts: [chamber], reqs: [], src: [P41]}
+  - {id: cover, lane: oven, col: 15, row: 0, kind: step, name: 閉じて冷ます, desc: 差し込みの扉、引き戸、ダンパーを閉め、灰を蓋付きの灰入れに出す。冷めてから、継ぎ目とベントの煙の跡を見る。, parts: [door, damper, seam, vent], reqs: [R-12, R-15], src: [F72]}
+  - {id: mix, lane: dough, col: 1, row: 0, kind: step, name: 仕込む, desc: 1 日に生地 1 kg を 6 個。ミニはふだん粉 360 g ほどから練る。, parts: [], reqs: [R-04, R-04a], src: [S27, P56]}
   - {id: bulk, lane: dough, col: 2, row: 0, kind: step, name: 一次発酵, desc: 30 分ごとに折りたたむ。, parts: [], reqs: [], src: [S27]}
   - {id: shape, lane: dough, col: 3, row: 0, kind: step, name: 成形して冷蔵, desc: 成形した生地を一晩（8〜12 時間）冷蔵する。, parts: [], reqs: [], src: [S25]}
   - {id: out1, lane: dough, col: 5, row: 0, kind: step, name: 1 回目の分を出す, desc: 十分に膨らんでいれば冷たいまま窯に入れてよい。, parts: [], reqs: [], src: [F29, F28]}
   - {id: out2, lane: dough, col: 9, row: 0, kind: step, name: 2 回目の分を出す, desc: 1 回目から約 30 分後に冷蔵庫から出す。, parts: [], reqs: [R-04b], src: [F28]}
+  - {id: out3, lane: dough, col: 12, row: 0, kind: step, name: 3 回目の分を出す, desc: 焚き直しを始めるころに冷蔵庫から出す。, parts: [], reqs: [R-04], src: [F28]}
 
 # 流れの矢印。[from, to, ラベル]。ラベルが「いいえ」の矢印は戻りとして描く。
 edges:
-  - [dry, burn, 初回だけ]
-  - [prep, burn, ""]
+  - [dry, burn, 初回の乾燥焚きのあと]
+  - [prep, burn, 冬と濡れたあと以外]
+  - [prep, dryfire, 冬と濡れたあと]
+  - [dryfire, burn, ""]
   - [burn, spread, ""]
   - [spread, rake, ""]
   - [rake, soak, ""]
   - [soak, measure, ""]
   - [measure, load1, はい]
   - [measure, soak, いいえ]
+  - [measure, burn, いいえ]
   - [load1, bake1, ""]
   - [bake1, rest, ""]
   - [rest, check2, ""]
   - [check2, load2, はい]
   - [check2, refire, いいえ]
-  - [refire, check2, ""]
-  - [load2, after, ""]
+  - [load2, refire, ""]
+  - [refire, check3, ""]
+  - [check3, load3, はい]
+  - [check3, refire, いいえ]
+  - [load3, after, ""]
   - [after, cover, ""]
   - [mix, bulk, ""]
   - [bulk, shape, ""]
@@ -178,27 +196,30 @@ edges:
   - [out1, load1, ""]
   - [shape, out2, ""]
   - [out2, load2, ""]
+  - [shape, out3, ""]
+  - [out3, load3, ""]
 
 # 要求の割り当て。要求の番号は docs/01-requirements.md の 1.2 の表から読む。
 alloc:
   R-01: {parts: [hearth], steps: [load1]}
   R-02: {parts: [], steps: []}
-  R-02a: {parts: [hearth, chamber], steps: [measure]}
-  R-02b: {parts: [insulation, hearth, chamber], steps: [bake1]}
-  R-02c: {parts: [door, chimney, landing], steps: [bake1]}
+  R-02a: {parts: [hearth, chamber], steps: [burn, measure, check3]}
+  R-02b: {parts: [insulation, hearth, chamber, door, damper], steps: [bake1, load2, load3]}
+  R-02c: {parts: [door, damper, landing, seam], steps: [bake1]}
   R-02d: {parts: [hearth, chamber], steps: []}
-  R-02e: {parts: [hearth, door], steps: [burn, spread, rake, soak, measure, bake1]}
+  R-02e: {parts: [hearth, door], steps: [spread, rake, soak, measure, bake1]}
   R-03: {parts: [chamber, hearth, door], steps: []}
-  R-04: {parts: [hearth], steps: [load1, load2]}
+  R-04: {parts: [hearth, chamber], steps: [load1, load2, refire, check3, load3, mix, out3]}
   R-04a: {parts: [door, landing], steps: [mix]}
-  R-04b: {parts: [hearth, chamber, insulation], steps: [rest, check2, refire, load2, out2]}
-  R-05: {parts: [chamber, insulation, shell], steps: [dry]}
+  R-04b: {parts: [hearth, chamber, insulation, hearthIns, seam], steps: [measure, rest, check2, load2, out2]}
+  R-05: {parts: [chamber, seam, hearth, hearthIns, insulation], steps: [dry, dryfire, burn, refire]}
   R-06: {parts: [wood], steps: [burn]}
-  R-07: {parts: [stand, slab, foundation], steps: []}
-  R-08: {parts: [shell, vent, hood, chimney, slab, stand, foundation, insulation, frost], steps: [prep, cover]}
+  R-07: {parts: [chamber, band, stand, slab, shell, hearthIns, foundation], steps: []}
+  R-08: {parts: [shell, vent, landing, slab, stand, foundation, anchor, insulation, frost], steps: [prep, dryfire]}
   R-09: {parts: [], steps: []}
   R-10: {parts: [], steps: []}
-  R-11: {parts: [chimney], steps: []}
-  R-12: {parts: [door, insulation, shell, chimney], steps: []}
-  R-13: {parts: [foundation, stand], steps: []}
-  R-14: {parts: [stand, slab, foundation, hearthIns, hearth, chamber, insulation, shell], steps: []}
+  R-11: {parts: [chimney, stand, anchor], steps: []}
+  R-12: {parts: [door, landing, insulation, shell, chimney, wood], steps: [cover]}
+  R-13: {parts: [chamber, seam, band, hearth, hearthIns, insulation, shell, stand], steps: []}
+  R-14: {parts: [stand, slab, foundation, anchor, hearthIns, hearth, chamber, band, insulation, shell], steps: []}
+  R-15: {parts: [seam, chamber, insulation, vent], steps: [cover]}

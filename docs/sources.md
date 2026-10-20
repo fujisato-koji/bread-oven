@@ -1,7 +1,10 @@
 # 出典
 
 本文の数値は、ここの記号で引く。
-取得日は 2026-10-17。P77 から P105、M64 から M113、F48 から F62 は 2026-10-18。
+取得日は 2026-10-17 である。
+P77 から P105、M64 から M113、F48 から F62 は 2026-10-18 である。
+P106 から P110、M114 から M127、F63 から F73 は 2026-10-19 である。
+P111、P112、M128 から M135 は 2026-10-20 である。
 
 | 記号 | 種別 |
 |------|------|
@@ -108,6 +111,13 @@ P1 と P41 は Google Books の抜粋で該当の頁を確かめた。
 | P103 | CMHA「TEK 17-02A Precast Concrete Lintels for Concrete Masonry Construction」（補強のない組積を支える梁のたわみを L/600 に抑える。ACI 530/TMS 402 を引く） | <https://www.cmha.org/resource/tek-17-02a/> |
 | P104 | 国土交通省 北陸地方整備局の単価資料（縞鋼板 t = 3.2 の材料単価 149,000 円/t、鋼板 SS400 t = 3.2 は 134,550〜140,400 円/t。2026-10-18 に開くと 404 で、検索結果の抜粋のみ） | <https://www.hrr.mlit.go.jp/hsikou/data/kensetu/541/930san.pdf> |
 | P105 | 御厩敷公平ほか（寒地土木研究所）「のり面の凍上対策に関する手引き（案）について」第69回北海道開発技術研究発表会 2025（凍上は温度、水分、土質の 3 つがそろって起こり、水の補給が十分なほど凍上量が大きい） | <https://www.hkd.mlit.go.jp/ky/jg/gijyutu/jtfkjs0000002uu5-att/jtfkjs0000002v2e.pdf> |
+| P106 | AGC セラミックス「アサヒキャスター取扱説明書」2021-06（CA-13T はこて塗りの品で、施工所要量 1,750 kg/m³、混練水量 20〜22%。練ったら 30 分以内に使う。練る水は 20℃、養生は 24 時間以上で、硬化するまでに 0℃ 以下で凍ると割れと強度低下。硬化から乾燥までと乾燥のあとは凍結の対策が要らない。叩いて金属音がすれば硬化している。硬化の発熱で出る表面のヘアークラックは耐火の性能に問題ない、養生のあとなるべく早く、1 週間以内を目安に乾燥焚き、乾燥焚きは 50℃/時で 200℃ に上げて厚さ 20 mm ごとに 1 時間保ち、50℃/時で 350℃ に上げて同じく保つ、購入後 1 年以内に使う、練るときは DS2 の防じんマスク） | <https://agcc.jp/agcwp/wp-content/uploads/2025/05/アサヒキャスター-取扱説明書r2.pdf> |
+| P107 | キャスタブルの乾燥と爆裂の総説 arXiv:2201.04959（セメントの水和物は 120〜370℃ で水を出す。充填が密で透過性が低い材ほど爆裂しやすく、慣行は 30℃/時未満と何段かの保持） | <https://arxiv.org/pdf/2201.04959v1> |
+| P108 | Forno Bravo「About your Primavera oven」の Hairline Cracks（細いひびは加熱と冷却で出る普通のもので、焼き上がりにも寿命にも効かない）。本サイトが 403 のため Wayback の保存版（2026-03-08）で読んだ | <http://web.archive.org/web/20260308095707/https://www.fornobravo.com/residential-pizza-ovens/about-your-primavera-oven/> |
+| P109 | 平成 12 年建設省告示第 1454 号（基準風速 V0 と、地表面粗度区分ごとの Zb、ZG、α、ガスト影響係数）。式は建築基準法施行令第 87 条（P26）。窯の台は建築物でないので、目安として使う。告示の頁は未確認で、URL は入れていない（2026-10-20 に探したが、告示の全文の頁は見つからなかった） | |
+| P110 | PP 繊維と耐火キャスタブルの爆裂の論文（SciELO、Cerâmica。PP 繊維 0.09 wt% を入れた試験体は 20℃/分で上げても割れず、入れないものは 149℃ で爆裂した） | <https://scielo.br/j/ce/a/JqP9YWbGyZWMHT84BxcwQPM/?lang=pt> |
+| P111 | ロックウール工業会「ロックウール全般 Q&A」10 環境問題他（2025 年 10 月改定）。ロックウール保温材は接着剤としてフェノール樹脂を 4.5 質量%以下含み、200℃以上に熱すると一時に熱分解の生成物が出て煙となるので、初めて熱するときは換気を十分にする（Q10-3、Q10-4）。住宅用のマットはポリエチレンの袋に包まれている（Q10-5）。2026-10-20 に読んだ | <https://rwa.gr.jp/download/data/faq/rockwool/Q%26A_%E3%83%AD%E3%83%83%E3%82%AF%E3%82%A6%E3%83%BC%E3%83%AB%E5%85%A8%E8%88%AC_10.pdf> |
+| P112 | ニチアス「ホームマット」の案内（住宅用のロックウールの断熱材。ロックウールは 700℃でも形を保つ）。2026-10-20 に読んだ | <https://nichias.co.jp/products/download/PDF/M23.PDF> |
 
 ## 二次資料
 
@@ -159,7 +169,7 @@ P1 と P41 は Google Books の抜粋で該当の頁を確かめた。
 | M22 | ジオトーロ（東洋炉材株式会社）「耐火コンクリート（25kg入）」 | <https://www.geo-toro.com/product-page/%E8%80%90%E7%81%AB%E3%83%A2%E3%83%AB%E3%82%BF%E3%83%AB-%E3%82%AD%E3%83%A3%E3%82%B9%E3%82%BF%E3%83%96%E3%83%AB> |
 | M23 | モノタロウ「キャスタブル耐火材 耐火モルタル 25kg（マツモト産業）」 | <https://www.monotaro.com/g/06093127/> |
 | M24 | クラフトショップNAVI（楽天市場）「耐火断熱レンガ C-1 並形」 | <https://item.rakuten.co.jp/c-navi/702012/> |
-| M25 | 建材ショップ（楽天市場）「【大型】イソウールＢＳＳＲ １３００ ブランケット ７２００Ｘ６００Ｘ２５ｍｍ」 | <https://item.rakuten.co.jp/firebrick/10000319/> |
+| M25 | 建材ショップ（楽天市場）「【大型】イソウールＢＳＳＲ １３００ ブランケット ７２００Ｘ６００Ｘ２５ｍｍ」（税込 19,432 円、7,200 × 600 × 25 mm、4.32 m²、送料別、北海道は大型宅配便 1,500 円（M116）、AES で特化則の対象外） | <https://item.rakuten.co.jp/firebrick/10000319/> |
 | M26 | ねん土の丸石（楽天市場）「陶芸粘土 磁器土「C土」プレスケーキ（20kg）」 | <https://item.rakuten.co.jp/maruisi-nendo/549662/> |
 | M27 | ビバホーム オンライン 楽天市場店「荒木田土 18L」 | <https://item.rakuten.co.jp/vivahome/31121230/> |
 | M28 | コメリ（検索結果の抜粋）「セメント用 砂 ２０ｋｇ の通販」 | <https://www.komeri.com/shop/g/g454977/> |
@@ -248,6 +258,28 @@ P1 と P41 は Google Books の抜粋で該当の頁を確かめた。
 | M111 | コメリ カラー角パイプ 2.3 × 100 × 100 × 6000 mm（10,500 円、41.7 kg、1 kg あたり約 252 円。2026-10-18 に頁で確かめた） | <https://www.komeri.com/shop/g/g130023/> |
 | M112 | コメリ カラー角パイプ 2.3 × 60 × 60 × 6000 mm（6,780 円、24.36 kg。2026-10-18 に頁で確かめた） | <https://www.komeri.com/shop/g/g244212/> |
 | M113 | コメリ 角パイプのエンドキャップ（1 個 378 円、最低販売数 50、寸法は 100 角、75 角、50 角、75 × 45 角。2026-10-18 に頁で確かめた） | <https://www.komeri.com/shop/g/g2128429/> |
+| M114 | れんが屋（Amazon）「アサヒキャスター CA-13T 25 kg」（5,550 円、北海道の届け先で送料 600 円の表示。何袋で 1 個口かは未確認） | <https://www.amazon.co.jp/dp/B004TNGIQ4> |
+| M115 | ヒットネット（Yahoo!）「CA-13T 25 kg」と店の案内（5,400 円、北海道の送料 1,200 円） | <https://store.shopping.yahoo.co.jp/hit-net/hitnet-0271.html>、<https://store.shopping.yahoo.co.jp/hit-net/guide.html> |
+| M116 | 建材ショップ（楽天市場）「CA-13T 25 kg」と会社概要と送料（5,450 円、大型宅配便は北海道 1,500 円） | <https://item.rakuten.co.jp/firebrick/13t/>、<https://www.rakuten.co.jp/firebrick/info.html> |
+| M117 | モノタロウ 久宝金属 カラー鉄板 K371 0.27 × 455 × 910 mm 白（3,298 円、亜鉛めっきの鉄板に塗った板、北海道を除く表示なし） | <https://www.monotaro.com/g/03709495/> |
+| M118 | DIY FACTORY（楽天市場）TETSUKO「ガルバリウムカラー鋼板 波板 小浪 0.35mm*700mm*1000mm」と店の案内（5,447 円、北海道の送料は 3,980 円以上で 0 円） | <https://item.rakuten.co.jp/tuzukiya/t627-152122/>、<https://www.rakuten.co.jp/tuzukiya/info.html> |
+| M119 | DCM オンライン 光 ステンレス板 0.5 × 400 × 600 mm HS0564（2,500 円、メーカー直送。送料は 5,000 円以上で無料、離島と山間部は 1,980 円で、この品は離島エリアの特別送料 1,000 円） | <https://www.dcm-ekurashi.com/goods/276459> |
+| M120 | DCM オンライン 光 ステンレスメッシュ 0.3 × 400 × 500 mm（1,550 円。離島エリアの特別送料 1,000 円。2026-10-19 に頁で確かめた） | <https://www.dcm-ekurashi.com/goods/276019> |
+| M121 | DCM オンライン ニッペ 速乾さび止め 0.7 L（2,743 円） | <https://www.dcm-ekurashi.com/goods/334820> |
+| M122 | DCM オンライン カンペハピオ 油性トタン用 0.7 L（2,380 円、住所へ配送でき 6〜10 営業日） | <https://www.dcm-ekurashi.com/goods/872269> |
+| M123 | モノタロウ スリーボンド シリコーンシーラント TB5211A 330 mL（2,638 円、使用温度 −60〜200℃） | <https://www.monotaro.com/p/3704/5084/> |
+| M124 | モノタロウ エスコの全ねじとナットとボルト（M96 から M102 と同じ品番で同じ値。北海道へ届く。M20 のナットは 2026-10-19 に欠品中で出荷予定 2026-10-21） | <https://www.monotaro.com/p/6465/7469/>、<https://www.monotaro.com/g/02449626/>、<https://www.monotaro.com/g/05000040/>、<https://www.monotaro.com/g/02449623/>、<https://www.monotaro.com/g/02449341/>、<https://www.monotaro.com/g/02449622/> |
+| M125 | れんが屋（Amazon）「SK34 ウス半丁 230 × 114 × 32 mm」（10 枚 4,900 円、送料 600 円。2026-10-19 に頁で確かめた） | <https://www.amazon.co.jp/dp/B07RJB738S> |
+| M126 | タキゲン「B-132 アイナット」（一般構造用圧延鋼材、電気亜鉛めっき。使用荷重は M10 が 1,470 N、M12 が 2,160 N、M16 が 4,410 N、M20 が 6,180 N。頁は配電盤の用途の品として載せている。2026-10-19 に頁で確かめた） | <https://www.takigen.com/products/detail/B-132> |
+| M127 | mybest「溶接機のおすすめ」のスズキッド バディ 80（SBD-80SB）とバディ 140（SBD-140）の仕様（バディ 80 は 100 V、定格出力電流 80 A、定格入力電流 24.4 A、適用板厚 鉄 0.8〜4.0 mm。バディ 140 は 100 V と 200 V の兼用、定格出力電流 140 A、定格入力電流 28.5 A。100 V のときの出力は書かれていない。2026-10-19 に頁で確かめた） | <https://my-best.com/20359> |
+| M128 | DIY FACTORY（楽天市場）サンコーインダストリー「ドブ メーター寸切 M24X1000」（1 本 5,493 円。北海道の送料は M118 と同じ店の案内で 3,980 円以上 0 円）。2026-10-20 に頁で確かめた | <https://item.rakuten.co.jp/tuzukiya/s261-188750/> |
+| M129 | モノタロウ エスコ「M24 六角ナット（どぶメッキ/1 種/4 個）」EA949LT-624（776 円、翌日出荷）と、エスコの頁（六角対辺 36 mm）。2026-10-20 に頁で確かめた | <https://www.monotaro.com/g/05000119/>、<https://www.esco-net.com/wcs/escort/ed/detail?hHinCd=EA949LT-624> |
+| M130 | モノタロウ 大阪魂「ドブ ナミマルW（M24）」26 × 44 × 4.5 mm（6 個 734 円）。2026-10-20 に頁で確かめた | <https://www.monotaro.com/g/07545285/> |
+| M131 | モノタロウ 八幡ねじ「六角ナット 1 種（鉄/ドブ）」（1 種は高さが呼び径の 8 割。M24 は高さ 19 mm、六角 36 mm）。2026-10-20 に頁で確かめた | <https://www.monotaro.com/g/07826091/> |
+| M132 | モノタロウ PROST's「FRP ガラスクロス #200」（幅 100 cm × 1 m のパック 1,428 円、ガラス繊維の織物）。2026-10-20 に頁で確かめた | <https://www.monotaro.com/g/07669879/> |
+| M133 | KUROUTO（楽天市場）JFE ロックファイバー「アムマット」BHM355（住宅用のロックウール、厚さ 55 × 425 × 1,360 mm、19 枚入り、防湿フィルム付き、14,320 円。北海道は追加の送料が掛かる）。2026-10-20 に頁で確かめた | <https://item.rakuten.co.jp/kurouto-shop/bhm355/> |
+| M134 | 建材ショップ（楽天市場）「イソウール BSSR 1300 ブランケット 切り売り 600 × 600 × 25 mm」（1,980 円）。2026-10-20 に頁で確かめた | <https://item.rakuten.co.jp/firebrick/10000320/> |
+| M135 | KUROUTO（楽天市場）JFE ロックファイバー「ロクセラムフェルト」（ロックウール、厚さ 25 mm × 幅 910 mm × 長さ 11 m、10,120 円。北海道へは届けられない）。2026-10-20 に頁で確かめた | <https://item.rakuten.co.jp/kurouto-shop/bf04025z/> |
 
 ## フォーラム（経験則）
 
@@ -305,3 +337,14 @@ P1 と P41 は Google Books の抜粋で該当の頁を確かめた。
 | F60 | Forno Bravo「When can I cure oven」2015。養生焚きは 7 日で 7 回が普通。左官の仕上げと防水の前に養生焚きを済ませる意見。シートを掛けて結露を見る | <https://community.fornobravo.com/forum/oven-management/firing-your-oven/383516-when-can-i-cure-oven> |
 | F61 | Forno Bravo「Insulate before curing」2011。手順は完成後 1 週間置く。左官は 1 週間湿らせて強くする | <https://community.fornobravo.com/forum/pizza-oven-design-and-installation/pompeii-oven-construction/13677-insulate-before-curing> |
 | F62 | Decksgo「Rising deck every year from frost」。凍結線より浅い基礎は毎冬少しずつ上がり、融けたときに下のすきまへ土が入るので元に戻らないという経験 | <https://www.decksgo.com/rising-deck-every-year-from-frost.html> |
+| F63 | Forno Bravo の掲示板（node 454599）2023〜2024、英国。内径 650 mm、50 mm を一体で流し、頂の近くに弱い目地を入れた。ひびは口の向かいに出て、弱い目地で止まった | <https://community.fornobravo.com/node/454599> |
+| F64 | Forno Bravo の掲示板（node 427382 ほか、david s）。一体の窯を 14 年使い、毛細ひびはまず悪化しない。今は 3 分割で作ると書く | <https://community.fornobravo.com/node/427382> |
+| F65 | Forno Bravo「Gaps between floor and walls」。同社の社員が、組立窯の床と壁の隙間（1/4〜1/2 インチ、6〜13 mm）は炉床の熱の膨張のための普通のもので、やがて灰で埋まると書く | <https://community.fornobravo.com/forum/pizza-oven-design-and-installation/modular-refractory-oven-installation/14213-gaps-between-floor-and-walls> |
+| F66 | Forno Bravo「2024 Neapolitan oven build」4 頁。鋳込みの窯で帯を締めすぎてドームが押し出された例。半球は帯なしで自立する | <https://community.fornobravo.com/forum/pizza-oven-design-and-installation/pompeii-oven-construction/456982-2024-neapolitan-oven-build/page4> |
+| F67 | Forno Bravo「Pompeii oven insulation」。同社の担当者はドームを毛布 3 インチで覆うよう勧める（2012-08-07）。窯の湿気を出し切るにはまともな火を約 10 回焚く（2012-08-12） | <https://community.fornobravo.com/forum/pizza-oven-design-and-installation/pompeii-oven-construction/15784-pompeii-oven-insulation> |
+| F68 | Forno Bravo「Winter」2 頁。−24℃ から −32℃ で焚く人が、冷えた窯は暖かい火でゆっくり上げ、霜を先に抜くと書く | <https://community.fornobravo.com/forum/regional-forums/canada/16312-winter/page2> |
+| F69 | Forno Bravo「Winter time WFO use」。氷点下で窯の中に湿気が見え、濡れた窯は小さな火から少しずつ上げて乾かすよう助言された（2013〜2014） | <https://community.fornobravo.com/forum/oven-management/firing-your-oven/17747-winter-time-wfo-use> |
+| F70 | Forno Bravo「Cracks during Casa 100G curing, opinions requested」。鋳込みの組立窯の養生のひびを、冷えた窯でひびに紙クリップが入るかで見て、入るならどこまで入るかを記録するよう、技術支援の責任者を名乗る投稿者が書く（2018-01-16） | <https://community.fornobravo.com/forum/oven-management/firing-your-oven/392135-cracks-during-casa-100g-curing-opinions-requested> |
+| F71 | Forno Bravo の掲示板（node 417172）2019-10。40 インチの自家配合の窯で、床から天井まで最大 3.2 mm の光が通るひび。封止材は同じ線で再び割れた | <https://community.fornobravo.com/node/417172> |
+| F72 | Forno Bravo「Cracks leaking smoke」。冬を越したあとの最初の焚きで、頂部を横切るひびから煙が出た例（2013-06） | <https://community.fornobravo.com/forum/oven-management/firing-your-oven/17200-cracks-leaking-smoke> |
+| F73 | Forno Bravo「Hairline cracks」。目地の細いひびは心配いらず、レンガを貫くひびは別だという経験則 | <https://community.fornobravo.com/forum/oven-management/heat-management/9313-hairline-cracks> |
