@@ -113,13 +113,13 @@ items:
 
   # 煙突
   - {id: i-flue, name: ステン煙突 直筒 φ120, qty: 1, unit: 本, price: 1880, cat: chim, shop: コメリ, how: 店頭, batch: b-buy2,
-     use: [b-chim], parts: [chimney], src: [M73, M42], note: "長さは未確認（カインズの同じ形は 910 mm、有効 83 cm、M42）。頂は 2.145〜2.148 m で、殻の棟より 0.594〜0.597 m 高い（計算、構造設計 3.6.4）"}
+     use: [b-chim], parts: [chimney], src: [M73, M42], note: "長さは未確認（カインズの同じ形は 910 mm、有効 83 cm、M42）。付け根の筒に差し込む長さを 3〜6 mm 浅くして、頂を 2.151 m 以上にし、殻の棟より 0.600 m 以上高くする（施主の決定 2026-10-21、構造設計 3.6.4）。差し込みの重なりが足りるかは、買う品を見て確かめる（未確認）"}
   - {id: i-cap, name: 煙突 H 笠 φ120, qty: 1, unit: 個, price: 2880, cat: chim, shop: コメリ, how: 店頭, batch: b-buy2,
      use: [b-chim], parts: [chimney], src: [M74], note: 内に火の粉止めの網を入れる}
   - {id: i-bracket, name: 煙突の自在支持金具, qty: 1, unit: 個, price: 1380, cat: chim, shop: コメリ, how: 店頭, batch: b-buy2,
      use: [b-chim], parts: [chimney], src: [M75]}
   - {id: i-flange, name: 煙突の付け根の筒（φ120 の短い筒）と、継ぎ目のステンレスのねじ, qty: 1, unit: 式, price: 2000, cat: chim, shop: 未定, how: 店頭, batch: b-buy2, tentative: true,
-     use: [b-door, b-chim], parts: [chimney, landing], src: [], note: "下の端を 1/20 に斜めに切り（後ろを 6 mm 短く）、前室の天板の口の上に鉛直に立て、天板に溶接した L の留め金 3 枚（平鋼 3 × 25 の残り）にねじで留める。ダンパーの溝に載せる形はやめた（施主の決定 2026-10-20）。1,000〜3,000 円と置いた（仮）。品と、直筒との重なりは未確認"}
+     use: [b-door, b-chim], parts: [chimney, landing], src: [], note: "下の端を 1/20 に斜めに切り（後ろを 6 mm 短く）、前室の天板の口の上に鉛直に立て、天板に溶接した L の留め金 3 枚（平鋼 3 × 25 の残り）にねじで留める。ダンパーの溝に載せる形はやめた（施主の決定 2026-10-20）。1,000〜3,000 円と置いた（仮）。品と、直筒の差し込みを 3〜6 mm 浅くしたときの重なりが足りるかは未確認（施主の決定 2026-10-21）"}
 
   # 前室、扉、温度計、灰入れ
   - {id: i-plate, name: 縞鋼板 3.2 × 450 × 900 mm（前室の箱）, qty: 1, unit: 枚, price: 4480, cat: door, shop: コメリ, how: 取り寄せ, batch: b-order,
