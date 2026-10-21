@@ -182,14 +182,14 @@
       <label><input type="checkbox" id="seeThrough"> 地面を透かして据え台を見る</label>
       <label><input type="checkbox" id="shellFade"> 殻を透かす</label>
       <label><input type="checkbox" id="apron"> 焚き口の前掛けを掛ける</label>
+      <label><input type="checkbox" id="lip"> 前室の口に垂れ壁を掛ける（焚く間）</label>
     </div>
-    <h2>扉の開け幅</h2>
+    <h2>差し込みの扉の位置</h2>
     <select id="doorState" style="width:100%;font:inherit;padding:5px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink)">
-      <option value="plug">差し込みの扉あり（焼くとき）</option>
-      <option value="closed">差し込みの扉を外し、引き戸を閉</option>
-      <option value="q1">差し込みの扉を外し、引き戸を 1/4</option>
-      <option value="q2">差し込みの扉を外し、引き戸を 1/2</option>
-      <option value="open">差し込みの扉を外し、引き戸を全開</option>
+      <option value="plug">差し込みの扉で閉じる（焼くとき）</option>
+      <option value="loose">差し込みの扉を緩める（面の板と枠のすきま 10 mm）</option>
+      <option value="pulled">差し込みの扉を抜いて立てる（毛布の面と枠のすきま 25 mm）</option>
+      <option value="off">差し込みの扉を外す</option>
     </select>
 
     <h2>空気の流れ</h2>
@@ -200,7 +200,7 @@
       <option value="cool">温度を下げる</option>
       <option value="shell">殻の換気</option>
     </select>
-    <p class="note">場面を選ぶと、差し込みの扉、引き戸、ダンパーも場面に合わせます。断面で見ると、焼き室の中の流れが見えます。</p>
+    <p class="note">場面を選ぶと、差し込みの扉の位置と垂れ壁も場面に合わせます。焚く場面で垂れ壁を外すと、こぼれる流れが増えます。断面で見ると、焼き室の中の流れが見えます。</p>
 
     <h2>部品</h2>
     <div id="parts"></div>

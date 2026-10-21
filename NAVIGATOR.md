@@ -86,3 +86,5 @@ build.yaml と bom.yaml の行に知らない鍵があると E17 で落ちる（
 | 3D からナビゲータ | `{ type: 'v3d:ready' }`、`{ type: 'v3d:pick', part: 部品の id }` |
 
 3D の図（`docs/viewer/`）を単独で開くときは、URL の `flow=fire`、`flow=bake`、`flow=cool`、`flow=shell` で空気の流れの場面を選べる。
+差し込みの扉の位置は `door=plug`、`door=loose`、`door=pulled`、`door=off` で、外せる垂れ壁は `lip=1`（掛ける）と `lip=0`（外す）で選べる。
+場面を選ぶと扉の位置と垂れ壁は場面に合わせて替わり、ナビゲータからの `v3d:flow` でも同じに替わる（焚くは扉を外して垂れ壁を掛け、焼くは扉で閉じ、温度を下げるは扉を抜いて立てる）。
