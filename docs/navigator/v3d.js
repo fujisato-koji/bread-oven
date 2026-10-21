@@ -1,5 +1,6 @@
 // 3D モード。docs/viewer/ を iframe で開き、postMessage で部品を光らせる。
 // 帯のボタンで、断面、見る向き、まわりを透かす、空気の流れの場面を 3D の図へ伝える。
+// 左の欄（開け閉めできる）で、部品ごとに表示と非表示を切り替える。隠した部品は URL の hide=id,id に残す。
 NavApp.register('v3d', (api) => {
   'use strict';
 
@@ -7,7 +8,7 @@ NavApp.register('v3d', (api) => {
   const note = api.$('#v3d-note');
   const bar = api.$('#mode-v3d .modebar');
   if (!stage || !bar) return null;
-  if (note) note.textContent = '部品を選ぶと 3D でも光る。3D で部品を押すと選ばれ、何もない所を押すと選択が外れる。空気の流れの場面を選ぶと、流れを矢印で描く。';
+  if (note) note.textContent = '部品を選ぶと 3D でも光る。3D で部品を押すと選ばれ、何もない所を押すと選択が外れる。空気の流れの場面を選ぶと、流れを矢印で描く。左の欄で部品を隠せる。';
 
   const style = document.createElement('style');
   style.textContent = `
@@ -25,7 +26,32 @@ NavApp.register('v3d', (api) => {
       border: 1px solid var(--rule); background: var(--card); color: var(--ink); border-radius: 6px;
       padding: 1px 6px; font: inherit; font-size: 12px;
     }
-    @media (max-width: 899px) { #mode-v3d .modebar { flex-wrap: wrap; } }
+    #mode-v3d .v3d-side[hidden] { display: none; }
+    #mode-v3d .v3d-side .tools { flex-direction: row; flex-wrap: wrap; }
+    #mode-v3d .v3d-side .tools button {
+      border: 1px solid var(--rule); background: var(--paper); color: var(--ink); border-radius: 6px;
+      padding: 2px 10px; font: inherit; font-size: 12px; cursor: pointer;
+    }
+    #mode-v3d .v3d-side .tools button:hover { border-color: var(--accent); }
+    #mode-v3d .v3d-side .row { align-items: center; padding-top: 3px; padding-bottom: 3px; }
+    #mode-v3d .v3d-side .row input { margin: 0; flex: none; accent-color: var(--accent); }
+    #mode-v3d .v3d-side .row.off .nm { color: var(--muted); text-decoration: line-through; }
+    #mode-v3d .v3d-side .row.lit { box-shadow: inset 3px 0 0 var(--hl); }
+    #mode-v3d .v3d-side .sw { width: 12px; height: 12px; border-radius: 3px; border: 1px solid var(--rule); flex: none; }
+    #mode-v3d .v3d-side .row.off .sw { opacity: .35; }
+    #mode-v3d .v3d-side .cnt { padding: 0 16px 4px; font-size: 12px; color: var(--muted); }
+    #mode-v3d .v3d-side .msg { margin: 8px 16px 0; font-size: 12px; color: var(--muted); }
+    #mode-v3d .v3d-side .msg:empty { display: none; }
+    @media (max-width: 899px) {
+      #mode-v3d .modebar { flex-wrap: wrap; }
+      /* 狭い画面では、見出しを省き、一覧を 2 列以上に並べて、3D の図の上に多くの部品を出す */
+      #mode-v3d .v3d-side { max-height: 50%; padding: 4px 0 8px; }
+      #mode-v3d .v3d-side h2 { display: none; }
+      #mode-v3d .v3d-side .tools { align-items: center; }
+      #mode-v3d .v3d-side .cnt { padding-top: 0; }
+      #mode-v3d .v3d-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+      #mode-v3d .v3d-side .row { padding-left: 12px; padding-right: 8px; }
+    }
   `;
   document.head.append(style);
 
@@ -41,9 +67,32 @@ NavApp.register('v3d', (api) => {
   for (const [v, t] of AIR) selAir.append(api.el('option', { value: v, text: t }));
   const airLabel = api.el('label', { text: '空気の流れ' });
   airLabel.append(selAir);
-  tools.append(btnCut, btnFade, api.el('span', { class: 'sep', 'aria-hidden': 'true' }), ...views,
+  const btnSide = api.el('button', { type: 'button', 'aria-controls': 'v3d-side', text: '部品の表示' });
+  tools.append(btnSide, api.el('span', { class: 'sep', 'aria-hidden': 'true' }), btnCut, btnFade,
+    api.el('span', { class: 'sep', 'aria-hidden': 'true' }), ...views,
     api.el('span', { class: 'sep', 'aria-hidden': 'true' }), airLabel);
   bar.append(tools);
+
+  // 部品の表示の欄。部品の一覧は 3D の図が v3d:ready で渡す（id、名、色）。届くまでは model.yaml の部品で作る。
+  const side = api.el('aside', { class: 'side v3d-side', id: 'v3d-side', 'aria-label': '部品の表示' });
+  const btnAll = api.el('button', { type: 'button', text: '全部表示' });
+  const btnNone = api.el('button', { type: 'button', text: '全部隠す' });
+  const sideTools = api.el('div', { class: 'tools' });
+  sideTools.append(btnAll, btnNone);
+  const cnt = api.el('div', { class: 'cnt' });
+  const list = api.el('div', { class: 'v3d-list' });
+  const msg = api.el('p', { class: 'msg', 'aria-live': 'polite' });
+  side.append(api.el('h2', { text: '部品の表示' }), sideTools, cnt, list, msg);
+  stage.before(side);
+
+  function setSide(open) {
+    side.hidden = !open;
+    btnSide.setAttribute('aria-expanded', String(open));
+    btnSide.setAttribute('aria-pressed', String(open));
+  }
+  // 広い画面では開いておき、狭い画面では閉じておく。
+  setSide(!window.matchMedia || window.matchMedia('(min-width: 900px)').matches);
+  btnSide.addEventListener('click', () => setSide(side.hidden));
 
   let frame = null;
   let ready = false;
@@ -51,6 +100,15 @@ NavApp.register('v3d', (api) => {
   let section = false;
   let fade = false;
   let air = '';
+  let hidden = new Set();      // 隠した部品の id
+  let parts = null;            // 3D の図から届いた部品の一覧 [{ id, label, color }]
+  let lastSel = '';            // 最後に見た選択（種類:id）
+  let adopt = true;            // 次の選択は URL から来たもので、隠した部品を戻さない
+
+  const PART_IDS = api.data.parts.map((p) => p.id);
+  const known = (id) => PART_IDS.includes(id);
+  const hideOrder = () => PART_IDS.filter((id) => hidden.has(id));
+  const parseHide = (v) => new Set(String(v || '').split(',').map((x) => x.trim()).filter(known));
 
   function send(msg) {
     if (!frame || !frame.contentWindow || !ready) return;
@@ -64,6 +122,55 @@ NavApp.register('v3d', (api) => {
       return t && t.kind === 'part';
     });
   }
+
+  function listParts() {
+    return parts || api.data.parts.map((p) => ({ id: p.id, label: p.name, color: null }));
+  }
+
+  function renderList() {
+    list.replaceChildren();
+    for (const p of listParts()) {
+      const row = api.el('label', { class: 'row', 'data-part': p.id });
+      const box = api.el('input', { type: 'checkbox', 'aria-label': `${p.label}を表示する` });
+      box.dataset.part = p.id;
+      const sw = api.el('span', { class: 'sw', 'aria-hidden': 'true' });
+      if (p.color) sw.style.background = p.color;   // 3D の図の部品の色（データ）
+      row.append(box, sw, api.el('span', { class: 'nm', text: p.label }));
+      list.append(row);
+    }
+    syncList();
+  }
+
+  function syncList() {
+    const lit = new Set(pending);
+    for (const row of list.querySelectorAll('.row')) {
+      const id = row.dataset.part;
+      const off = hidden.has(id);
+      row.querySelector('input').checked = !off;
+      row.classList.toggle('off', off);
+      row.classList.toggle('lit', lit.has(id));
+    }
+    const n = listParts().filter((p) => hidden.has(p.id)).length;
+    cnt.textContent = n ? `${n} 個を隠している` : 'すべて表示している';
+  }
+
+  function setHidden(next, opts = {}) {
+    hidden = new Set([...next].filter(known));
+    syncList();
+    send({ type: 'v3d:visible', hidden: hideOrder() });
+    if (opts.url !== false) api.writeUrl(false);
+  }
+
+  list.addEventListener('change', (e) => {
+    const id = e.target.dataset && e.target.dataset.part;
+    if (!id) return;
+    const next = new Set(hidden);
+    if (e.target.checked) next.delete(id); else next.add(id);
+    msg.textContent = '';
+    setHidden(next);
+  });
+  btnAll.addEventListener('click', () => { msg.textContent = ''; setHidden([]); });
+  btnNone.addEventListener('click', () => { msg.textContent = ''; setHidden(listParts().map((p) => p.id)); });
 
   function syncButtons() {
     btnCut.setAttribute('aria-pressed', String(section));
@@ -94,6 +201,12 @@ NavApp.register('v3d', (api) => {
     if (!m || typeof m !== 'object') return;
     if (m.type === 'v3d:ready') {
       ready = true;
+      if (Array.isArray(m.parts)) {
+        const got = m.parts.filter((p) => p && typeof p.id === 'string' && known(p.id))
+          .map((p) => ({ id: p.id, label: typeof p.label === 'string' ? p.label : p.id, color: /^#[0-9a-f]{6}$/i.test(p.color) ? p.color : null }));
+        if (got.length) { parts = got; renderList(); }
+      }
+      if (hidden.size) send({ type: 'v3d:visible', hidden: hideOrder() });
       if (section) send({ type: 'v3d:section', on: true });
       if (fade) send({ type: 'v3d:fade', on: true });
       if (air) send({ type: 'v3d:flow', scene: air });
@@ -114,10 +227,32 @@ NavApp.register('v3d', (api) => {
     window.addEventListener('message', onMessage);
   }
 
+  // 選択が変わり、光らせる部品に隠した部品があれば、表示に戻す（選んだものが見えるように）。
+  // URL から開いたときの選択（hide と同じ URL にある）は戻さず、URL のとおりにする。
+  // URL は外枠が選択のあとで書くので、ここでは書かない（書くと選択の履歴が積まれない）。
   function highlight(sel) {
     pending = partsOf(sel);
+    const key = sel && sel.kind ? `${sel.kind}:${sel.id}` : '';
+    if (adopt) {
+      adopt = false;
+    } else if (key !== lastSel) {
+      const back = pending.filter((id) => hidden.has(id));
+      if (back.length) {
+        const next = new Set(hidden);
+        for (const id of back) next.delete(id);
+        const names = back.map((id) => { const p = listParts().find((x) => x.id === id); return p ? p.label : id; });
+        msg.textContent = `選んだものに関係する部品（${names.join('、')}）を表示に戻した。`;
+        setHidden(next, { url: false });
+      } else if (key) {
+        msg.textContent = '';
+      }
+    }
+    lastSel = key;
+    syncList();
     send({ type: 'v3d:focus', parts: pending });
   }
+
+  renderList();
 
   return {
     enter(params) {
@@ -131,10 +266,16 @@ NavApp.register('v3d', (api) => {
         selAir.value = air;
         send({ type: 'v3d:flow', scene: air });
       }
+      // hide が URL にあれば、そのとおりに隠す（無ければ今のまま）。同じ URL の選択では隠した部品を戻さない。
+      if (params && typeof params.hide === 'string') {
+        const h = parseHide(params.hide);
+        adopt = true;
+        if (h.size !== hidden.size || [...h].some((id) => !hidden.has(id))) setHidden(h, { url: false });
+      }
       make();
     },
     leave() {},
-    params() { return { cut: section ? '1' : '', air }; },
+    params() { return { cut: section ? '1' : '', air, hide: hideOrder().join(',') }; },
     highlight,
     escape() { return false; },
   };

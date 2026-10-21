@@ -58,7 +58,7 @@ build.yaml と bom.yaml の行に知らない鍵があると E17 で落ちる（
 | フロー | `flow.js` | 焚き方と焼き方の流れ図。窯と生地の 2 つのレーン |
 | 系統図 | `sys.js` | 熱、煙、蒸気の流れ。見方は焼いている間、焚く間、蒸気の通り道 |
 | 図面 | `dwg.js` | 平面図、正面図、断面図。寸法は oven.json から描く |
-| 3D | `v3d.js` | `docs/viewer/` を iframe で開き、postMessage で部品を光らせる |
+| 3D | `v3d.js` | `docs/viewer/` を iframe で開き、postMessage で部品を光らせる。左の欄（帯の「部品の表示」で開け閉めする）で部品を隠す |
 | タイムライン | `tl.js` | 製作の日程の横棒の図。build.yaml の工程を、始める日と作業する日の決め方（毎日か土日だけか）から日程に組む |
 | 調達 | `proc.js` | 部品リストと道具の表。費用の内訳の棒、届く工程ごと（費用の分け方ごと、買う所ごと）の表、届く日と最初に使う日と余裕、手配の状態 |
 
@@ -75,6 +75,10 @@ build.yaml と bom.yaml の行に知らない鍵があると E17 で落ちる（
 - タイムラインの引数は `cp=0`（日程を決めている流れを描かない）、調達の引数は `t=tools`（道具の表）と `g=cat` か `g=shop`（分け方）。
 - 3D の引数は `cut=1`（中心で切った断面）と `air=fire`、`air=bake`、`air=cool`、`air=shell`（空気の流れの場面）。
   流れ図の `k=flow` と紛れないよう、空気の流れは `air` にした。
+  隠した部品は `hide=shell,insulation` のように部品の id を model.yaml の並びで `,` でつなぎ、全部見えているときは載せない。
+- 3D で選択が変わり、光らせる部品に隠した部品があれば、その部品を表示に戻し、欄に戻した部品の名を出す。
+  URL から開いたときの選択では戻さず、URL の `hide` のとおりに隠す。
+  隠した部品は 3D で押しても選ばれない。
 
 3D とのやり取りは同じ生成元に限り、次の伝言を使う。
 
@@ -83,8 +87,10 @@ build.yaml と bom.yaml の行に知らない鍵があると E17 で落ちる（
 | ナビゲータから 3D | `{ type: 'v3d:focus', parts: [部品の id] }`（空なら光らせない） |
 | ナビゲータから 3D | `{ type: 'v3d:section', on: 真か偽 }`（断面）、`{ type: 'v3d:fade', on: 真か偽 }`（地面を透かす）、`{ type: 'v3d:view', view: 見る向き }` |
 | ナビゲータから 3D | `{ type: 'v3d:flow', scene: 'fire' か 'bake' か 'cool' か 'shell' か 'none' }`（空気の流れ。知らない名は 'none' として扱う） |
-| 3D からナビゲータ | `{ type: 'v3d:ready' }`、`{ type: 'v3d:pick', part: 部品の id }` |
+| ナビゲータから 3D | `{ type: 'v3d:visible', hidden: [部品の id] }`（隠す部品。空なら全部見せる。知らない id は無視する） |
+| 3D からナビゲータ | `{ type: 'v3d:ready', parts: [{ id, label, color }] }`（部品の一覧で、ナビゲータはこれで部品の表示の欄を作る）、`{ type: 'v3d:pick', part: 部品の id }` |
 
 3D の図（`docs/viewer/`）を単独で開くときは、URL の `flow=fire`、`flow=bake`、`flow=cool`、`flow=shell` で空気の流れの場面を選べる。
 差し込みの扉の位置は `door=plug`、`door=loose`、`door=pulled`、`door=off` で、外せる垂れ壁は `lip=1`（掛ける）と `lip=0`（外す）で選べる。
+部品は `hide=shell,insulation` で隠して開け、左の欄で切り替えると URL の `hide` も書き替わる。
 場面を選ぶと扉の位置と垂れ壁は場面に合わせて替わり、ナビゲータからの `v3d:flow` でも同じに替わる（焚くは扉を外して垂れ壁を掛け、焼くは扉で閉じ、温度を下げるは扉を抜いて立てる）。
