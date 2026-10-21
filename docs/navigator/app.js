@@ -593,7 +593,8 @@
     if (planOpts.start && planOpts.start !== defaultStart()) sp.set('s', planOpts.start);
     const mod = mode && mods[mode];
     if (mod && mod.params) for (const [k, v] of Object.entries(mod.params() || {})) if (v != null && v !== '') sp.set(k, v);
-    return '#/?' + sp.toString();
+    // 値の中の , は読めるようにそのまま書く（3D の hide=id,id）。読むときは URLSearchParams がどちらも同じに読む。
+    return '#/?' + sp.toString().replace(/%2C/gi, ',');
   }
   let writing = false;
   function writeUrl(push) {

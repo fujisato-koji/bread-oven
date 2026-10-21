@@ -2536,7 +2536,8 @@ function applyFocus(recenter) {
       // 断面の蓋は薄くしない（透かすと描く順が変わり、stencil の数がずれる）。蓋は syncCaps で隠す。
       setGlow(o.material, on, keys.length > 0 && !o.userData.passThrough);
     });
-    if (on) box.expandByObject(current.groups[p.key]);
+    // 隠した部品へは寄せない（見えない所へ向きを移さない）。
+    if (on && state.visible[p.key]) box.expandByObject(current.groups[p.key]);
   }
   syncCaps();
   if (recenter && keys.length && !box.isEmpty()) {
@@ -2584,6 +2585,8 @@ window.addEventListener('message', (e) => {
   } else if (m.type === 'v3d:flow') {
     const name = typeof m.scene === 'string' && m.scene in FLOW_SCENES ? m.scene : 'none';
     if (name !== state.flow) setFlow(name);
+  } else if (m.type === 'v3d:visible') {
+    setHidden(m.hidden);
   }
 });
 
@@ -2695,17 +2698,45 @@ function renderInfo(inf) {
   $('info').innerHTML = `<div class="name">${fullName(inf)}</div><div>${inf.mat}</div><div class="muted">${inf.dims}</div>`;
 }
 
+const hexOf = (p) => '#' + p.color.toString(16).padStart(6, '0');
+
 function renderParts() {
-  $('parts').innerHTML = PARTS.map((p) => {
-    const hex = '#' + p.color.toString(16).padStart(6, '0');
-    return `<label class="part"><input type="checkbox" data-part="${p.key}" checked><span class="sw" style="background:${hex}"></span>${p.label}</label>`;
-  }).join('');
+  const btns = '<div class="partbtns">'
+    + '<button class="btn" type="button" data-all="show">全部表示</button>'
+    + '<button class="btn" type="button" data-all="hide">全部隠す</button></div>';
+  $('parts').innerHTML = btns + PARTS.map((p) =>
+    `<label class="part"><input type="checkbox" data-part="${p.key}" checked><span class="sw" style="background:${hexOf(p)}"></span>${p.label}</label>`).join('');
   $('parts').addEventListener('change', (e) => {
     const k = e.target.dataset.part;
-    if (!k) return;
-    state.visible[k] = e.target.checked;
-    applyVisibility();
+    if (!k || !Object.hasOwn(PART, k)) return;
+    setHidden(PARTS.filter((p) => p.key === k ? !e.target.checked : !state.visible[p.key]).map((p) => p.key));
   });
+  $('parts').addEventListener('click', (e) => {
+    const all = e.target.dataset && e.target.dataset.all;
+    if (all) setHidden(all === 'hide' ? PARTS.map((p) => p.key) : []);
+  });
+}
+
+// 隠す部品をそろえる。知らない id は無視する。隠した部品は描かず、押しても選ばない（pick は見えている物だけを当てる）。
+// 単独で開いたときは、URL の hide=id,id に残す（全部見えているときは載せない）。
+let infoKey = null;
+function setHidden(ids, opts = {}) {
+  const hide = new Set((Array.isArray(ids) ? ids : []).filter((k) => typeof k === 'string' && Object.hasOwn(PART, k)));
+  for (const p of PARTS) state.visible[p.key] = !hide.has(p.key);
+  for (const inp of document.querySelectorAll('#parts input[data-part]')) inp.checked = state.visible[inp.dataset.part];
+  if (current) applyVisibility();
+  if (infoKey && !state.visible[infoKey]) { infoKey = null; renderInfo(null); }
+  if (!EMBED && opts.url !== false) {
+    const u = new URL(location.href);
+    const h = hiddenKeys();
+    if (h.length) u.searchParams.set('hide', h.join(','));
+    else u.searchParams.delete('hide');
+    history.replaceState(null, '', u.pathname + u.search.replace(/%2C/gi, ',') + u.hash);
+  }
+}
+
+function hiddenKeys() {
+  return PARTS.filter((p) => !state.visible[p.key]).map((p) => p.key);
 }
 
 // 左の欄の型式のボタンと、殻を透かす、前掛け、垂れ壁、差し込みの扉の位置、空気の流れの切替をそろえる（index.html に無ければ足す）。
@@ -2776,6 +2807,7 @@ canvas.addEventListener('pointerup', (ev) => {
   if (!downAt || Math.hypot(ev.clientX - downAt[0], ev.clientY - downAt[1]) > 4) return;
   const h = pick(ev);
   renderInfo(h ? h.object.userData.info : null);
+  infoKey = h ? h.object.userData.info.key : null;
   if (EMBED && window.parent !== window) {
     window.parent.postMessage({ type: 'v3d:pick', part: h ? h.object.userData.info.key : null }, location.origin);
   }
@@ -2825,7 +2857,7 @@ if ($('doorState')) {
 }
 if ($('flow')) $('flow').addEventListener('change', (e) => setFlow(e.target.value));
 
-// URL の ?type=brick&section=1&view=side&door=pulled&lip=1&apron=1&shellFade=1&flow=fire で初期状態を指定できる。
+// URL の ?type=brick&section=1&view=side&door=pulled&lip=1&apron=1&shellFade=1&flow=fire&hide=shell,insulation で初期状態を指定できる。
 // door は plug、loose、pulled、off。flow は none、fire、bake、cool、shell で、扉の位置が場面に合わなければ場面に合わせる
 // （cool は既定で抜いた段、door=loose で緩めた段、door=off で外した段）。焚く場面は垂れ壁を掛けて描き、lip=0 で外した形にする。
 const q = new URLSearchParams(location.search);
@@ -2834,6 +2866,7 @@ if (q.get('section') === '1') { state.section = true; $('section').checked = tru
 if (q.get('door') in DOOR_STATES) state.door = q.get('door');
 if (q.get('apron') === '1') state.apron = true;
 if (q.get('shellFade') === '1') state.shellFade = true;
+if (q.get('hide')) setHidden(q.get('hide').split(','), { url: false });
 if (q.get('flow') in FLOW_SCENES) setFlow(q.get('flow'), { rebuild: false });
 if (q.get('lip') === '1' || q.get('lip') === '0') {
   const want = q.get('lip') === '1';
@@ -2856,7 +2889,12 @@ function resize() {
 }
 new ResizeObserver(resize).observe(canvas.parentElement);
 resize();
-if (EMBED && window.parent !== window) window.parent.postMessage({ type: 'v3d:ready' }, location.origin);
+// 準備ができたら、部品の一覧（id、名、色）を親に渡す。親はこれで部品の表示の欄を作る。
+// 垂れ壁のように場面で形が出る部品もあるので、いま形の無い部品も渡す。
+if (EMBED && window.parent !== window) {
+  const parts = PARTS.map((p) => ({ id: p.key, label: p.label, color: hexOf(p) }));
+  window.parent.postMessage({ type: 'v3d:ready', parts }, location.origin);
+}
 
 const clock = new THREE.Clock();
 renderer.setAnimationLoop(() => {
