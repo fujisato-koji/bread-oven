@@ -3,6 +3,8 @@
 表は 05 の中の印（<!-- bom:items --> と <!-- /bom:items -->、<!-- bom:tools --> と <!-- /bom:tools -->）の間に書く。
 印の外の文（単価の前提など）は手で書く。
 gen_nav.py は、05 の表がここで作る表と同じかを点検する（E16）。
+届く工程が後で足す段階（build.yaml の phase が later）の品は、合計の下に「後で足す分」として数え、
+合計から引いた額を「いまの出費」とする。
 
 使い方:
     python tools/gen_bom.py            # 05 の表を書き直す
@@ -20,6 +22,7 @@ DOCS = ROOT / "docs"
 BOM = DOCS / "data" / "bom.yaml"
 BUILD = DOCS / "data" / "build.yaml"
 PARTS_MD = DOCS / "05-parts-list.md"
+LATER = "later"  # 後で足す段階の id（build.yaml の phases）
 
 
 def load():
@@ -54,6 +57,14 @@ def render_items(bom, build):
     diff = total - bom["meta"]["budget"]
     rows.append(f"| **合計** |  |  | **{yen(total)}** |  |  |  |")
     rows.append(f"| **10 万円との差** |  |  | **{'+' if diff > 0 else ''}{yen(diff)}** |  |  |  |")
+    phase = {t["id"]: t.get("phase") for t in build["tasks"]}
+    later = sum(i["amount"] for i in bom["items"] if phase.get(i["batch"]) == LATER)
+    if later:
+        now = total - later
+        ndiff = now - bom["meta"]["budget"]
+        rows.append(f"| **後で足す分（後で足す段階で届く品）** |  |  | **{yen(later)}** |  |  |  |")
+        rows.append(f"| **いまの出費（合計から後で足す分を引く）** |  |  | **{yen(now)}** |  |  |  |")
+        rows.append(f"| **いまの出費と 10 万円との差** |  |  | **{'+' if ndiff > 0 else ''}{yen(ndiff)}** |  |  |  |")
     return "\n".join(rows)
 
 

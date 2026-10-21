@@ -171,6 +171,13 @@
       <button type="button" data-type="brick">レンガのドーム（参考）</button>
     </div>
 
+    <h2>煙突と垂れ壁</h2>
+    <div class="seg" id="stage">
+      <button type="button" data-stage="first">初めの形（煙突なし）</button>
+      <button type="button" data-stage="full">煙突を足した形</button>
+    </div>
+    <p class="note">初めのうちは煙突と垂れ壁を付けずに焚き、後で足します（施主の決定 2026-10-21）。初めの形は前室の天板の付け根の筒に蓋をし、垂れ壁は掛けません。</p>
+
     <h2>見る向き</h2>
     <div class="row" id="views">
       <button class="btn" type="button" data-view="iso">斜め</button>
@@ -183,7 +190,7 @@
       <label><input type="checkbox" id="seeThrough"> 地面を透かして据え台を見る</label>
       <label><input type="checkbox" id="shellFade"> 殻を透かす</label>
       <label><input type="checkbox" id="apron"> 焚き口の前掛けを掛ける</label>
-      <label><input type="checkbox" id="lip"> 前室の口に垂れ壁を掛ける（焚く間）</label>
+      <label><input type="checkbox" id="lip"> 前室の口に垂れ壁を掛ける（煙突を足した形の焚く間）</label>
     </div>
     <h2>差し込みの扉の位置</h2>
     <select id="doorState" style="width:100%;font:inherit;padding:5px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink)">
@@ -201,7 +208,7 @@
       <option value="cool">温度を下げる</option>
       <option value="shell">殻の換気</option>
     </select>
-    <p class="note">場面を選ぶと、差し込みの扉の位置と垂れ壁も場面に合わせます。焚く場面で垂れ壁を外すと、こぼれる流れが増えます。断面で見ると、焼き室の中の流れが見えます。</p>
+    <p class="note">場面を選ぶと、差し込みの扉の位置と垂れ壁も場面に合わせます。初めの形では、煙は前室の口の上からだけ出ます。煙突を足した形の焚く場面で垂れ壁を外すと、こぼれる流れが増えます。断面で見ると、焼き室の中の流れが見えます。</p>
 
     <h2>部品</h2>
     <div id="parts"></div>

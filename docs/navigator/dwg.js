@@ -60,6 +60,7 @@ NavApp.register('dwg', (api) => {
   const PIN_Y = 0.19; // 同じく炉床からの高さ
   const PIN_L = 0.02; // 同じく出（丸棒 φ8）
   const CLIP_H = 0.04; // 煙突の付け根の L の留め金の高さ（平鋼 3 × 25 を 40 mm）
+  const STUB_CAP_T = 0.003; // 付け根の筒の蓋を見せる厚さ（図のための値。筒の出と蓋の径は oven.json の chimney.stub と chimney.cap_d）
   const HCAP = 0.18; // H 笠の高さ（1.7）
   const HCAP_W = 0.42; // H 笠の左右の幅（仮）
   const BRACKET_W = 0.02; // 煙突の支持金具の帯の幅（仮）
@@ -305,6 +306,9 @@ NavApp.register('dwg', (api) => {
     m.yChAt = (z) => m.yRoofTop + m.roofDy(z); // 天板の上の面（付け根の筒の下の端）
     m.yChBase = m.yChAt(m.zCh); // 付け根（中心）
     m.yCap0 = m.yChTop - HCAP;
+    // 初めの形の付け根の筒の天板からの出と、蓋の半径（どちらも図のための値で、品は未確認、構造設計 3.9.8）。
+    m.stubH = P('chimney.stub');
+    m.stubCapR = P('chimney.cap_d') / 2;
     // 外せる垂れ壁（焚く間だけ前室の口の上に掛ける）。下の縁は口の上の端から landing.lip 下げる。
     m.lipH = P('landing.lip');
     m.yLip0 = m.yCeil - m.lipH;
@@ -651,7 +655,7 @@ NavApp.register('dwg', (api) => {
     const items = [
       ['外形線', 'sh fn'],
       ['隠れ線（台の下、地面の下、切り口より上）', 'hid'],
-      ['中心線と想像線（前掛け、垂れ壁、凍結深度）', 'ctr'],
+      ['中心線と想像線（前掛け、垂れ壁、煙突、凍結深度）', 'ctr'],
       ['継ぎ目と縄', 'sm'],
       ['寸法線と補助線', 'dlk'],
     ];
@@ -885,7 +889,12 @@ NavApp.register('dwg', (api) => {
     ]);
     // 入口の枠の鍔（切り口より上、隠れ線）
     part(L, 'chamber', hidRects([[-M.lo - M.fo, M.zCol - M.ft, M.lo + M.fo, M.zCol]], X, Z));
-    part(L, 'chimney', [...hid(circEl(X(0), Z(M.zCh), M.cr * S)), ...hidRects([[-HCAP_W / 2, M.zCh - M.cr, HCAP_W / 2, M.zCh + M.cr]], X, Z)]);
+    // 煙突の付け根の筒と蓋（初めの形。切り口より上なので隠れ線）と、後で足す H 笠（想像線）
+    part(L, 'chimney', [
+      ...hid(circEl(X(0), Z(M.zCh), M.cr * S)),
+      ...hid(circEl(X(0), Z(M.zCh), M.stubCapR * S)),
+      ...withHit(rc(-HCAP_W / 2, M.zCh - M.cr, HCAP_W / 2, M.zCh + M.cr, 'ctr')),
+    ]);
 
     // 天板の下の台（隠れ線）。側梁、横梁、根太、交点の当て板。脚は横梁の下にあるので、天板の外でも隠れ線。
     const st = [];
@@ -948,9 +957,10 @@ NavApp.register('dwg', (api) => {
     L.extra.push(caption(`平面図（炉床の面から ${mm(PLAN_CUT)} mm 上で切る）  S=1:20`));
     L.extra.push(notesEl([
       `炉床の面から ${mm(PLAN_CUT)} mm 上の高さで切り、上から見る。`,
-      '殻の屋根、ベント、前室の天板、煙突は切り口より上にあるので、隠れ線で描く。',
+      '殻の屋根、ベント、前室の天板、煙突の付け根の筒と蓋は切り口より上にあるので、隠れ線で描く。',
       '天板の下の台と、地面の下の据え台と風の留めも、隠れ線で描く。',
       '前掛けと垂れ壁は焚く日だけ掛けるので、想像線で描く。',
+      '煙突の H 笠と垂れ壁は後で足す（施主の決定 2026-10-21）。H 笠は想像線で描く。',
       '差し込みの扉は閉じた形で描く。面の板の前の足は、この高さで立ちが切れる。前室の口はいつも開いている。',
       `炉床のレンガは切らずに ${COLS} 列 × ${ROWS} 個に並べ、列を前後の向きに通す。`,
       `前と後ろの輪の継ぎ目は z = ${zmm(M.split)} の縦の面に置く。`,
@@ -1050,15 +1060,19 @@ NavApp.register('dwg', (api) => {
     const ycm0 = yc0 + (HCAP - 2 * cr) / 2;
     const ycm1 = ycm0 + 2 * cr;
     // 付け根の筒の下の端は天板の勾配に合わせて斜めに切るので、前から見える下の端は前の縁（天板の上の面）にとる。
+    // 初めの形は付け根の筒に蓋をし（実線）、直筒、H 笠、支持金具は後で足す（想像線、施主の決定 2026-10-21）。
     const yChF = M.yChAt(M.zCh + cr);
+    const yStub = M.yChBase + M.stubH;
     part(L, 'chimney', [
-      polyEl([
-        [X(-cr), Y(yChF)], [X(-cr), Y(ycm0)], [X(-hx + 2 * cr), Y(ycm0)], [X(-hx + 2 * cr), Y(yc0)], [X(-hx), Y(yc0)],
+      rc(-cr, yChF, cr, yStub, 'sh fp'),
+      rc(-M.stubCapR, yStub, M.stubCapR, yStub + STUB_CAP_T, 'sh fp'),
+      ...withHit(polyEl([
+        [X(-cr), Y(yStub + STUB_CAP_T)], [X(-cr), Y(ycm0)], [X(-hx + 2 * cr), Y(ycm0)], [X(-hx + 2 * cr), Y(yc0)], [X(-hx), Y(yc0)],
         [X(-hx), Y(M.yChTop)], [X(-hx + 2 * cr), Y(M.yChTop)], [X(-hx + 2 * cr), Y(ycm1)], [X(hx - 2 * cr), Y(ycm1)],
         [X(hx - 2 * cr), Y(M.yChTop)], [X(hx), Y(M.yChTop)], [X(hx), Y(yc0)], [X(hx - 2 * cr), Y(yc0)], [X(hx - 2 * cr), Y(ycm0)],
-        [X(cr), Y(ycm0)], [X(cr), Y(yChF)],
-      ], 'sh fp'),
-      rc(-cr - 0.004, M.yBracket - BRACKET_W / 2, cr + 0.004, M.yBracket + BRACKET_W / 2, 'sh fp'),
+        [X(cr), Y(ycm0)], [X(cr), Y(yStub + STUB_CAP_T)],
+      ], 'ctr')),
+      ...withHit(rc(-cr - 0.004, M.yBracket - BRACKET_W / 2, cr + 0.004, M.yBracket + BRACKET_W / 2, 'ctr')),
       rc(-FOOT_W / 2, yChF, FOOT_W / 2, yChF + CLIP_H, 'sh fp'),
     ]);
     // 前室の下の断熱の板、縁の帯、敷居と前室の床の小口
@@ -1128,7 +1142,7 @@ NavApp.register('dwg', (api) => {
       [Y(M.yFloor), `炉床の面 GL+${mm(M.yFloor)}`, X(hs)],
       [Y(M.eave), `殻の軒 GL+${mm(M.eave)}`, X(M.sw)],
       [Y(M.ridge), `殻の棟 GL+${mm(M.ridge)}`, X(cr)],
-      [Y(M.yChTop), `煙突の頂 GL+${mm(M.yChTop)}`, X(hx)],
+      [Y(M.yChTop), `煙突の頂（後で足す）GL+${mm(M.yChTop)}`, X(hx)],
     ]);
     // 地面の下。平板の土かぶり。
     const a1 = ra.find((a) => a.g.x > 0);
@@ -1152,7 +1166,9 @@ NavApp.register('dwg', (api) => {
     L.extra.push(notesEl([
       '前から見る。差し込みの扉は閉じた形で描く。前室の口はいつも開いている。',
       '焚き口は差し込みの扉の面の板の奥にあるので、隠れ線で描く。',
-      '垂れ壁は焚く間だけ前室の口の上に掛けるので、想像線で描く。',
+      '垂れ壁は煙突を足してから、焚く間だけ前室の口の上に掛けるので、想像線で描く。',
+      '煙突の直筒、H 笠、支持金具は後で足す（施主の決定 2026-10-21）ので、想像線で描く。',
+      '初めの形は、付け根の筒に蓋をする（筒の出は図のための値）。',
       '地面の下の据え台、砕石、全ねじ、平板、受け材は、隠れ線で描く。',
       `鎖の角度 ${Math.round((M.angle * 180) / Math.PI)}° は、鎖を含む縦の面で測る。`,
       `後ろの鎖はこの図の面から ${tilt}° 傾くので、図の上では ${seen}° に見える。`,
@@ -1354,7 +1370,8 @@ NavApp.register('dwg', (api) => {
     const lipS = rc(M.zLF, M.yLip0, M.zLF + LIP_T, M.yLip1, 'ctr');
     part(L, 'lip', [lipS, hitOf(lipS)]);
     part(L, 'landing', hid(circEl(X(M.zLF - PIN_Z), Y(M.yFloor + PIN_Y), 0.004 * S)));
-    // 前室の天井（薄いレンガと鋼板。煙突の口を切り欠く）と水切り。天板は前へ下げるので、口からの上がりを足して描く。
+    // 前室の天井（薄いレンガと鋼板）と水切り。鋼板には煙突の口をあけ、薄いレンガは煙突を足すまで切り欠かない（構造設計 3.9.8）。
+    // 天板は前へ下げるので、口からの上がりを足して描く。
     const zh0 = M.zCh - M.cr;
     const zh1 = M.zCh + M.cr;
     const zTop1 = M.zTop;
@@ -1362,8 +1379,7 @@ NavApp.register('dwg', (api) => {
       [X(z0), Y(y0 + M.roofDy(z0))], [X(z1), Y(y0 + M.roofDy(z1))], [X(z1), Y(y1 + M.roofDy(z1))], [X(z0), Y(y1 + M.roofDy(z0))],
     ], cls);
     part(L, 'landing', [
-      sl(M.zCol, M.yCeil, zh0, M.yRoofIn, 'sh fbrick'),
-      sl(zh1, M.yCeil, M.zLF, M.yRoofIn, 'sh fbrick'),
+      sl(M.zCol, M.yCeil, M.zLF, M.yRoofIn, 'sh fbrick'),
       sl(M.zCol, M.yRoofIn, zh0, M.yRoofTop, 'sh fsteel'),
       sl(zh1, M.yRoofIn, zTop1, M.yRoofTop, 'sh fsteel'),
       sl(zTop1 - DRIP_SET - FB_T, M.yRoofIn - M.drip, zTop1 - DRIP_SET, M.yRoofIn, 'sh fsteel'),
@@ -1377,20 +1393,23 @@ NavApp.register('dwg', (api) => {
       ], X, Y),
       ...hid(lineEl(X(M.zHead - BOLT_L), Y(M.boltY), X(M.zHead + 0.0053), Y(M.boltY))),
     ]);
-    // 煙突。奥の H 笠の縦の管、切れた管の壁と横の管、支持金具。管の下の端は天板の勾配に合わせて斜めに切り（後ろが短い）、
-    // 前の L の留め金（この面で切れる）で天板に留める。ダンパーは付けない。
+    // 煙突。管の下の端は天板の勾配に合わせて斜めに切り（後ろが短い）、前の L の留め金（この面で切れる）で天板に留める。ダンパーは付けない。
+    // 初めの形は付け根の筒（切れた壁）に蓋をする（実線）。直筒、奥の H 笠の縦の管、横の管、支持金具は後で足す（想像線、施主の決定 2026-10-21）。
     const cz = M.zCh;
     const ycm = M.yCap0 + HCAP / 2;
     const zc1 = cz + M.cr + 0.004;
+    const yStub = M.yChBase + M.stubH;
     part(L, 'chimney', [
-      rc(cz - M.cr, M.yCap0, cz + M.cr, M.yChTop, 'sh fp'),
       polyEl([[X(cz - M.cr), Y(M.yChAt(cz - M.cr))], [X(cz + M.cr), Y(M.yChAt(cz + M.cr))], [X(cz + M.cr), Y(ycm - M.cr)], [X(cz - M.cr), Y(ycm - M.cr)]], 'hitf'),
-      rc(cz - M.cr - 0.004, M.yChAt(cz - M.cr), cz - M.cr, ycm - M.cr, 'fi'),
-      rc(cz + M.cr, M.yChAt(cz + M.cr), cz + M.cr + 0.004, ycm - M.cr, 'fi'),
+      rc(cz - M.cr - 0.004, M.yChAt(cz - M.cr), cz - M.cr, yStub, 'fi'),
+      rc(cz + M.cr, M.yChAt(cz + M.cr), cz + M.cr + 0.004, yStub, 'fi'),
+      rc(cz - M.stubCapR, yStub, cz + M.stubCapR, yStub + STUB_CAP_T, 'sh fsteel'),
       polyEl([[X(zc1), Y(M.yChAt(zc1))], [X(zc1 + 0.015), Y(M.yChAt(zc1 + 0.015))], [X(zc1 + 0.015), Y(M.yChAt(zc1 + 0.015) + FOOT_T)],
         [X(zc1 + FOOT_T), Y(M.yChAt(zc1 + FOOT_T) + FOOT_T)], [X(zc1 + FOOT_T), Y(M.yChAt(zc1) + CLIP_H)], [X(zc1), Y(M.yChAt(zc1) + CLIP_H)]], 'sh fsteel'),
-      circEl(X(cz), Y(ycm), M.cr * S, 'sh fn'),
-      rc(sw, M.yBracket - BRACKET_W / 2, cz - M.cr - 0.004, M.yBracket + BRACKET_W / 2, 'sh fsteel'),
+      ...withHit(rc(cz - M.cr, M.yCap0, cz + M.cr, M.yChTop, 'ctr')),
+      ...withHit(rc(cz - M.cr - 0.004, yStub + STUB_CAP_T, cz + M.cr + 0.004, ycm - M.cr, 'ctr')),
+      ...withHit(circEl(X(cz), Y(ycm), M.cr * S, 'ctr')),
+      ...withHit(rc(sw, M.yBracket - BRACKET_W / 2, cz - M.cr - 0.004, M.yBracket + BRACKET_W / 2, 'ctr')),
     ]);
 
     // 窯の中心線
@@ -1443,14 +1462,14 @@ NavApp.register('dwg', (api) => {
     const RX = X(1.02);
     const leadR = (p, ty, s) => leader(L, p[0], p[1], RX, ty, s, 'start');
     const sFr = Math.PI - (lat + Math.asin(Math.min(1, M.dh / (H + t / 2)))) / 2;
-    leadR([X(cz + M.cr), Y(M.yChTop - 0.03)], 40, 'H 笠（中に火の粉止め）');
-    leadR([X(cz + M.cr + 0.002), Y(1.70)], 47, `煙突 φ${mm(2 * M.cr)}`);
-    leadR([X((sw + cz - M.cr) / 2), Y(M.yBracket)], 54, '支持金具（殻の前の妻の枠に留める）');
+    leadR([X(cz + M.cr), Y(M.yChTop - 0.03)], 40, 'H 笠（中に火の粉止め、後で足す）');
+    leadR([X(cz + M.cr + 0.002), Y(1.70)], 47, `煙突 φ${mm(2 * M.cr)}（後で足す。初めは付け根の筒に蓋）`);
+    leadR([X((sw + cz - M.cr) / 2), Y(M.yBracket)], 54, '支持金具（殻の前の妻の枠に留める、後で足す）');
     leadR([X(M.zCol + 0.03), Y((M.yCeil + M.yRoofIn) / 2 + M.roofDy(M.zCol + 0.03))], 68, `天井の薄いレンガ ${mm(LINER)}、縞鋼板 ${(M.pl * 1000).toFixed(1)}（前へ 1/${Math.round(1 / M.slope)}）`);
     leadR(E(t / 2, sFr), 75, '前の輪（キャスタブル）');
     leadR([X((zo(M.ch) + M.zCol) / 2), Y(yc + (M.dh + M.ch) / 2)], 82, `入口の枠と鍔（キャスタブル、鍔の厚さ ${mm(M.ft)}）`);
     leadR([X(zTop1 - DRIP_SET - FB_T / 2), Y(M.yRoofIn + M.roofDy(zTop1) - M.drip * 0.8)], 110, `天板の水切り（平鋼 3 × ${mm(M.drip)}、溶接）`);
-    leadR([X(M.zLF + LIP_T / 2), Y(M.yLip0 + 0.012)], 116, `垂れ壁（焚く間だけ掛ける、口の上の端を ${mm(M.lipH)} 下げる）`);
+    leadR([X(M.zLF + LIP_T / 2), Y(M.yLip0 + 0.012)], 116, `垂れ壁（煙突を足してから焚く間だけ掛ける、口の上の端を ${mm(M.lipH)} 下げる）`);
     leadR([X(M.zLF - 0.04), Y(M.yInsTop + 0.02)], 128, '敷居と前室の床（耐火レンガ）');
     leadR([X(zf0 + FOOT_FWD - 0.006), Y(M.yFloor + FOOT_T)], 134, '差し込みの扉の足（平鋼 3 × 25 の L）');
     leadR([X(M.zCol - M.plug / 2), Y(M.yFloor + 0.03)], 140, `差し込みの扉（焼くときに閉める。閉のほかに ${M.stops} 段）`);
@@ -1467,8 +1486,10 @@ NavApp.register('dwg', (api) => {
       '入口の枠の鍔は、この面では入口の枠の上の帯として切れる。前室の箱は鍔に毛布の帯を挟んで当てる（帯の厚さは描かない）。',
       `前室の天板は前へ 1/${Math.round(1 / M.slope)} 下げ、奥で ${mm(M.rise)} mm 上げる（奥の内のり ${mm(M.lph + M.rise)}）。`,
       '煙突の付け根の筒は、下の端を天板の勾配に合わせて 1/20 に斜めに切り、天板にじかに鉛直に立てる（ダンパーは付けない）。',
+      '初めの形は付け根の筒に蓋をし、天井の薄いレンガは切り欠かずに張る。',
+      '煙突の直筒、H 笠、支持金具は後で足す（施主の決定 2026-10-21）ので、想像線で描く。',
       '差し込みの扉は閉じた形で描く。面の板の前の L の足（x = ±110 mm）は、この面の奥に見える。',
-      '垂れ壁は焚く間だけ前室の口の上に掛けるので、想像線で描く。',
+      '垂れ壁は煙突を足してから、焚く間だけ前室の口の上に掛けるので、想像線で描く。',
       '前の風の留めの平板 2 枚はこの面をはさんで左右に並ぶので、奥の 1 枚を隠れ線で描く。',
       '地面の下で切り口より奥にある物は、隠れ線で描く。',
     ]));

@@ -23,8 +23,8 @@ parts:
   - {id: vent, name: 頂部のベント, mat: ステンレスのフード付きガラリ 100 mm。後ろの妻の頂に付け、口の内に網を張る（ネズミと虫よけ）, dims: [vent.diameter], doc: 02-configuration.md}
   - {id: landing, name: 前室と焚き口, mat: 縞鋼板 3.2 mm の箱。焚き口の敷居と床にレンガ 3 個と、前室の口に 1 個を 3 つに切った小片、天井の内に薄いレンガ 32 mm（3 枚を切って張り、鋼板の天井は床から口で 0.232 m、奥で 0.244 m）。外は 600℃ の耐熱塗料。天板は前へ 1/20 下げ（袖を台形に切り、奥を 12 mm 上げる）、前の縁の下に平鋼 3 × 25 の水切りを溶接する。前室の口はいつも開いている。奥の縁は毛布の帯を挟んで入口の枠の鍔に当て、袖の耳を台の天板に留めた受け金の引きボルトに掛け、押しばねで片側 40 N で引く（耳の長穴で熱の伸びを逃がす）。殻の外の前の縁の帯と前室の下の板の脇は、後ろの端を立ち上げたステンレスの脇の水切り板で、前室の下の板の前の面の先まで覆う。焚く日は天板の前の縁に前掛けを掛ける, dims: [landing.width, landing.height, landing.depth, landing.plate, landing.overhang, landing.drip, landing.slope, landing.ear_z, landing.press, collar.flange, collar.flange_out, door.width, door.height, apron.width, apron.depth, apron.rim], doc: 03-structural-design.md}
   - {id: door, name: 扉, mat: 焼くときに焚き口に差し込んで閉める断熱の扉（ケイカル板と毛布を焚き口の形に切り、四角いステンレス板の面 0.33 × 0.19 m で入口の枠に当てて止める）。面の板の前に平鋼の L の足を 2 個付けて自分で立たせ、上の隅に掛ける当てで、焼き終わりに緩める（面の板と枠のすきま 10 mm）か抜く（毛布の面と枠のすきま 25 mm）。45 分からは外してもよい。段はこの 3 つで確定した（施主の決定 2026-10-21）。取っ手は下寄りに 1 個で、耐熱手袋で持つ（施主の決定 2026-10-21）, dims: [door.plug, door.loose, door.pull, door.stops], doc: 03-structural-design.md}
-  - {id: lip, name: 垂れ壁, mat: 縞鋼板 3.2 mm（前掛けの板の残り）の 0.406 × 0.060 m の両端を後ろへ折った耳で、箱の袖の外の面のピンに掛ける外せる板。焚く間だけ前室の口の上に掛けて口の上の端を 4 cm 下げ、煙突へ行く煙を増やす。差し込みの扉を差す前に外す, dims: [landing.lip, landing.width, landing.height], doc: 03-structural-design.md}
-  - {id: chimney, name: 煙突, mat: ステンレスの煙突 φ120 の直筒 1 本と H 笠。H 笠の内に火の粉止めの網。ダンパーは付けない。付け根の筒の下の端を 1/20 に斜めに切り、前室の天板に L の留め金 3 枚で留める。直筒は付け根の筒に差し込む長さを 3〜6 mm 浅くし、頂を 2.151 m 以上にする（施主の決定 2026-10-21）。支持金具で殻の前の妻の枠に留める, dims: [chimney.diameter, chimney.top, chimney.z, landing.slope], doc: 03-structural-design.md}
+  - {id: lip, name: 垂れ壁, mat: 縞鋼板 3.2 mm（前掛けの板の残り）の 0.406 × 0.060 m の両端を後ろへ折った耳で、箱の袖の外の面のピンに掛ける外せる板。煙突を足してから、焚く間だけ前室の口の上に掛けて口の上の端を 4 cm 下げ、煙突へ行く煙を増やす。板とピンは今作り、煙突を足すまで掛けない（施主の決定 2026-10-21）。差し込みの扉を差す前に外す, dims: [landing.lip, landing.width, landing.height], doc: 03-structural-design.md}
+  - {id: chimney, name: 煙突, mat: ステンレスの煙突 φ120 の直筒 1 本と H 笠。H 笠の内に火の粉止めの網。ダンパーは付けない。付け根の筒の下の端を 1/20 に斜めに切り、前室の天板に L の留め金 3 枚で留める。初めのうちは付け根の筒に蓋をして煙突を付けず、直筒と H 笠と支持金具は後で足す（施主の決定 2026-10-21）。直筒は付け根の筒に差し込む長さを 3〜6 mm 浅くし、頂を 2.151 m 以上にする（施主の決定 2026-10-21）。支持金具で殻の前の妻の枠に留める, dims: [chimney.diameter, chimney.top, chimney.z, chimney.stub, chimney.cap_d, landing.slope], doc: 03-structural-design.md}
   - {id: wood, name: 薪置き, mat: 乾いた広葉樹。炉床の真下と前室の下には置かない。台の下に置くなら中心から 0.45 m より外の隅で、天板から 0.25 m 以上離す（隅に置く決まりは仮で、施主が確かめる）, dims: [], doc: 06-operation.md}
   - {id: person, name: 人（大きさの目安）, mat: 目安, dims: [person.height], doc: ""}
   - {id: frost, name: 凍結深度, mat: 地盤, dims: [frost.depth], doc: 01-requirements.md}
@@ -90,7 +90,7 @@ sheets:
       - [hearth, door, rad, 扉の内面が冷たいと焚き口の側の炉床が冷える（P38 による計算）。焚き口の差し込みの扉は内側を断熱にし、煙道より奥で閉める]
   - id: fire
     title: 焚く間の熱と煙
-    caption: 窯の中で薪を焚き、ドームと炉床に熱をためる。煙は焚き口の上から前室へ出て、一部は煙突を上がり、残りは前室の口の上からこぼれる。垂れ壁はこぼれを減らす。
+    caption: 窯の中で薪を焚き、ドームと炉床に熱をためる。煙は焚き口の上から前室へ出る。初めのうちは煙突が無く、窯から出る煙の 98% が前室の口の上からこぼれる。煙突を足したあとは一部が煙突を上がり、垂れ壁がこぼれを減らす。
     size: [1100, 560]
     pos:
       outside: [90, 330]
@@ -108,8 +108,9 @@ sheets:
       - [door, fire, airin, ""]
       - [fire, gas, conv, ""]
       - [gas, landing, smoke, 煙は焚き口の上から出る]
-      - [landing, chimney, smoke, 煙突にダンパーは無く、いつも開いている。煙突へ行く煙の割合は計算の扱いで 3 割から全部まで幅がある（03 の 3.9.7）]
-      - [landing, lip, smoke, 残りは前室の口の上からこぼれる。垂れ壁 4 cm で口の上の端を 0.16 m に下げ、煙突へ行く煙を約 3〜5 割から約 5〜7 割にする（計算）]
+      - [landing, outside, smoke, 初めのうち（煙突なし）は、窯から出る煙の 98%（温めきったあとで 8.9 g/s、巻き込んだ空気を含めて 10.4 g/s）が前室の口の上からこぼれ、箱の前を上がる（03 の 3.9.8、計算）。垂れ壁は掛けない。薪は火ばさみで入れる（R-12）]
+      - [landing, chimney, smoke, 煙突は後で足す（施主の決定 2026-10-21）。足したあとはダンパーが無く、いつも開いている。煙突へ行く煙の割合は計算の扱いで 3 割から全部まで幅がある（03 の 3.9.7）]
+      - [landing, lip, smoke, 煙突を足したあとも、残りは前室の口の上からこぼれる。垂れ壁 4 cm で口の上の端を 0.16 m に下げ、煙突へ行く煙を約 3〜5 割から約 5〜7 割にする（計算）]
       - [lip, outside, smoke, こぼれた煙は箱の前を上がる。薪は火ばさみで入れる（R-12）]
       - [chimney, outside, smoke, 乾いた広葉樹を使う（R-06）]
       - [fire, chamber, rad, キャスタブル 40 mm に熱をためる。内面の上がりは 1 時間に 100℃ 以下（R-05）]
@@ -118,7 +119,7 @@ sheets:
       - [embers, hearth, cond, 焚く時間の終わりの 30 分に熾火を炉床全体に広げる（焚く時間に含む、F15、F19）]
   - id: steam
     title: 蒸気の通り道
-    caption: 焼き始めは焚き口の差し込みの扉で蒸気を閉じ込め、焼き終わりに扉を緩めるか抜くか外して、前室の口と煙突から抜く（R-02c）。
+    caption: 焼き始めは焚き口の差し込みの扉で蒸気を閉じ込め、焼き終わりに扉を緩めるか抜くか外して、前室の口から抜く。煙突を足したあとは煙突からも抜ける（R-02c）。
     size: [1000, 460]
     pos:
       bread: [820, 300]
@@ -131,7 +132,7 @@ sheets:
       - [bread, air, steam, 生地から出る水分]
       - [air, door, steam, 焼き始めは扉で閉じ込める]
       - [door, landing, steam, 焼き終わりに扉を緩めるか抜くか外して抜く（P21）]
-      - [landing, chimney, steam, 煙突はいつも開いている]
+      - [landing, chimney, steam, 煙突を足したあとは、煙突はいつも開いている（初めのうちは煙突が無い）]
       - [chimney, outside, steam, ""]
       - [landing, outside, steam, 前室の口の上からも出る]
 
@@ -141,24 +142,24 @@ lanes:
   - {id: dough, name: 生地}
 
 steps:
-  - {id: dry, lane: oven, col: 0, row: 0, kind: step, name: 乾燥焚き（初回）, desc: 内面を 1 時間に 50℃ 以下で 150℃ まで上げ、湯気が止まるまで保ち、200℃ と 350℃ で 2 時間ずつ保つ。焼かない。組み直したあとは保つ段を置かず、乾かしの火から 50℃/時のまま 350℃ まで上げて、その日に焼く。, parts: [chamber, seam, hearth, hearthIns, insulation], reqs: [R-05], src: [P106, P107]}
-  - {id: prep, lane: oven, col: 0, row: 1, kind: step, name: 焚く前に見る, desc: 台と殻のまわりの雪を除き、裾の網とベントが塞がっていないか、脚が傾いていないかを見る。窯が 0℃ 以下なら冬の日、殻の裾か前室に水か氷が見えれば濡れたあとの日にする。組み直したあとの最初の日は、乾かしの火から 50℃/時のまま 350℃ まで上げる。差し込みの扉を外し、前室の口に垂れ壁を掛ける（初めて焚く日は、掛けたときと外したときのこぼれを見て使い方を決める）。, parts: [shell, vent, stand, door, lip], reqs: [R-08], src: [P79]}
+  - {id: dry, lane: oven, col: 0, row: 0, kind: step, name: 乾燥焚き（初回）, desc: 内面を 1 時間に 50℃ 以下で 150℃ まで上げ、湯気が止まるまで保ち、200℃ と 350℃ で 2 時間ずつ保つ。焼かない。殻を付けてから焚き、煙突はまだ付けない。組み直したあとは保つ段を置かず、乾かしの火から 50℃/時のまま 350℃ まで上げて、その日に焼く。, parts: [chamber, seam, hearth, hearthIns, insulation], reqs: [R-05], src: [P106, P107]}
+  - {id: prep, lane: oven, col: 0, row: 1, kind: step, name: 焚く前に見る, desc: 台と殻のまわりの雪を除き、裾の網とベントが塞がっていないか、脚が傾いていないかを見る。窯が 0℃ 以下なら冬の日、殻の裾か前室に水か氷が見えれば濡れたあとの日にする。組み直したあとの最初の日は、乾かしの火から 50℃/時のまま 350℃ まで上げる。全体の覆いを外し、差し込みの扉を外す。煙突を足すまでは垂れ壁を掛けない（施主の決定 2026-10-21）。乾燥焚きの日と、初めて焼く日の温めきったあとは、線香で前室の熱い層の下の面と、窯から出た煙が焚き口の下の部分から吸い戻されないかを見る。煙突を足したあとは前室の口に垂れ壁を掛ける（煙突を足した最初の焚く日に、掛けたときと外したときのこぼれを見て使い方を決める）。, parts: [shell, vent, stand, door, lip], reqs: [R-08], src: [P79]}
   - {id: dryfire, lane: oven, col: 0, row: 2, kind: step, name: 乾かしの火, desc: 冬の日と、雨や雪どけで濡れたおそれのあるあとは、内面を 1 時間に 50℃ 以下で 150℃ まで上げ、ベントの湯気が止まるまで保つ（約 1.7 時間）。, parts: [chamber, insulation, hearthIns, vent], reqs: [R-05, R-08], src: [F68, F69]}
-  - {id: burn, lane: oven, col: 1, row: 0, kind: step, name: 焚く, desc: 火は炉床の中央で小さく始め、内面の上がりを 30 分ごとに測る。ふだん 1 時間に 100℃、冬は 90℃、初めの 10 回は 60℃ までにする。乾いた日も速めない。内面 380℃ で止めて保つ。薪は火ばさみで入れる。, parts: [chamber, hearth, lip], reqs: [R-05, R-02a, R-06], src: [F34]}
+  - {id: burn, lane: oven, col: 1, row: 0, kind: step, name: 焚く, desc: 火は炉床の中央で小さく始め、内面の上がりを 30 分ごとに測る。ふだん 1 時間に 100℃、冬は 90℃、初めの 10 回は 60℃ までにする。乾いた日も速めない。内面 380℃ で止めて保つ。薪は火ばさみで入れる（垂れ壁の有り無しによらない）。焚き口をのぞくと風が無くても顔の際に煙が来るので、のぞく時間を短くし、顔を横へ外す（施主の決定 2026-10-21）。煙突を足すまでは、前室の口の上から火の粉が上がるかを見て、前室の口の前方 2 m に燃える物を置かない（付録 A.1）。, parts: [chamber, hearth, lip], reqs: [R-05, R-02a, R-06], src: [F34]}
   - {id: spread, lane: oven, col: 2, row: 0, kind: step, name: 熾火を広げる, desc: 焚く時間の終わりの 30 分に、熾火を炉床全体に広げる（焚く時間に含む）。, parts: [hearth], reqs: [R-02e], src: [F15, F19]}
   - {id: rake, lane: oven, col: 3, row: 0, kind: step, name: 掻き出して拭く, desc: 熾火と灰を掻き出し、炉床を掃く。灰は炉床のブラシで払い、冷ますために濡れた布で拭かない。, parts: [hearth], reqs: [R-02e], src: [P67, S19, F17]}
-  - {id: soak, lane: oven, col: 4, row: 0, kind: step, name: 閉じて均す, desc: 前室の口の垂れ壁を外し、焚き口の差し込みの扉を閉めて 20 分置く。, parts: [door, lip, chamber, hearth], reqs: [R-02e], src: [F36, F16]}
+  - {id: soak, lane: oven, col: 4, row: 0, kind: step, name: 閉じて均す, desc: 前室の口の垂れ壁を外し（煙突を足したあと）、焚き口の差し込みの扉を閉めて 20 分置く。, parts: [door, lip, chamber, hearth], reqs: [R-02e], src: [F36, F16]}
   - {id: measure, lane: oven, col: 5, row: 0, kind: gate, name: 測る, desc: 炉床が 305〜320℃（狙いは 315〜320℃）で、5 点の差が 20℃ 以内なら入れる。320℃ を超えていれば閉じて待つ。305℃ に届かなければ 15〜30 分焚き足す。, parts: [hearth], reqs: [R-02a, R-02e, R-04b], src: [P38]}
   - {id: load1, lane: oven, col: 6, row: 0, kind: step, name: 1 回目の窯入れ, desc: 2 個を左右に入れる。焚き口の前 10 cm には置かない。, parts: [door, hearth, landing], reqs: [R-01, R-04], src: [P38, F18]}
   - {id: bake1, lane: oven, col: 7, row: 0, kind: step, name: 焼く, desc: 焚き口の差し込みの扉で蒸気を閉じ込め、窯入れから 20 分は閉じたままにする。ドームを下げるなら、15〜45 分は扉を緩めるか抜くだけにする。1 回目は外さず、寒い日は緩めまでにする（下げすぎると 2 回目が下がる）。下げる段は 1 日に 1 つの回だけで使う（1 回目に緩めて 3 回目に段を使う組みと、3 回とも緩める組みは使ってよい。ずれはその日ずっと閉じたままの見込みとの差で数える読み a による、施主の決定 2026-10-21、03 の 3.2.8）。, parts: [door, chamber], reqs: [R-02b, R-02c, R-02e], src: [P40, P21]}
   - {id: rest, lane: oven, col: 8, row: 0, kind: step, name: 取り出して閉める, desc: 取り出したら差し込みの扉を閉めて待つ。, parts: [door, hearth], reqs: [R-04b], src: [P1]}
   - {id: check2, lane: oven, col: 9, row: 0, kind: gate, name: 250℃ 以上か, desc: 1 回目から 60 分で、2 回目を入れる所の炉床が 250℃ 以上かを確かめる。, parts: [hearth], reqs: [R-04b], src: [P1]}
   - {id: load2, lane: oven, col: 10, row: 0, kind: step, name: 2 回目の窯入れ, desc: 焚き直さずに、1 回目を 90 度回した前と奥に入れて焼く。ドームを下げるなら、緩める、抜く、45 分から外すのどれか 1 つか、抜いて 45 分から外す組みにする。この組みを使ったら、焚き直しを 0.25 時間延ばす。, parts: [door, hearth], reqs: [R-04, R-04b, R-02b], src: [P1]}
-  - {id: refire, lane: oven, col: 11, row: 0, kind: step, name: 焚き直す, desc: 2 回目を出したら、ふだん 0.75 時間、寒い日は 1.0 時間焚き直す。初めの 10 回は 60℃/時で上げ、寒い日と冬の日は 1.25 時間にする。焚き直すあいだは垂れ壁を掛け、差し込みの扉を差す前に外す。, parts: [chamber, hearth, lip], reqs: [R-04, R-05], src: [F21]}
+  - {id: refire, lane: oven, col: 11, row: 0, kind: step, name: 焚き直す, desc: 2 回目を出したら、ふだん 0.75 時間、寒い日は 1.0 時間焚き直す。初めの 10 回は 60℃/時で上げ、寒い日と冬の日は 1.25 時間にする。煙突を足したあとは、焚き直すあいだも垂れ壁を掛け、差し込みの扉を差す前に外す。, parts: [chamber, hearth, lip], reqs: [R-04, R-05], src: [F21]}
   - {id: check3, lane: oven, col: 12, row: 0, kind: gate, name: 3 回目を入れてよいか, desc: 熾火を出して 20 分以上おき、炉床が 250〜300℃ なら入れる。, parts: [hearth], reqs: [R-04, R-02a], src: []}
   - {id: load3, lane: oven, col: 13, row: 0, kind: step, name: 3 回目の窯入れ, desc: 3 回目を焼く。ドームを下げたいときは、下げる段を 1 日に 1 つの回だけで使う決まり（03 の 3.2.8）の範囲で、15〜45 分は扉を緩めるか抜き、45 分からは外してもよい。入れるのを 20〜40 分遅らせてもよい。, parts: [door, hearth, chamber], reqs: [R-04, R-02b], src: []}
   - {id: after, lane: oven, col: 14, row: 0, kind: step, name: 低い温度で使う, desc: 3 回目より後は型焼き、甘いパン、料理、乾燥に回す。, parts: [chamber], reqs: [], src: [P41]}
-  - {id: cover, lane: oven, col: 15, row: 0, kind: step, name: 閉じて冷ます, desc: 差し込みの扉を閉め、灰を蓋付きの灰入れに出し、垂れ壁と前掛けを外してしまう。冷めてから、継ぎ目とベントの煙の跡を見る。前室が冷めた次の日から、前室と煙突に覆いを掛ける。, parts: [door, lip, seam, vent, chimney], reqs: [R-12, R-15], src: [F72]}
+  - {id: cover, lane: oven, col: 15, row: 0, kind: step, name: 閉じて冷ます, desc: 差し込みの扉を閉め、灰を蓋付きの灰入れに出し、垂れ壁と前掛けを外してしまう。冷めてから、継ぎ目とベントの煙の跡を見る。前室が冷めた次の日から、差し込みの扉を閉めたまま全体をシートで覆う。殻の裾の網と頂のベントは塞がない掛け方にする（施主の決定 2026-10-21、付録 A.7）。, parts: [door, lip, seam, vent, chimney, shell], reqs: [R-12, R-15], src: [F72]}
   - {id: mix, lane: dough, col: 1, row: 0, kind: step, name: 仕込む, desc: 1 日に生地 1 kg を 6 個。ミニはふだん粉 360 g ほどから練る。, parts: [], reqs: [R-04, R-04a], src: [S27, P56]}
   - {id: bulk, lane: dough, col: 2, row: 0, kind: step, name: 一次発酵, desc: 30 分ごとに折りたたむ。, parts: [], reqs: [], src: [S27]}
   - {id: shape, lane: dough, col: 3, row: 0, kind: step, name: 成形して冷蔵, desc: 成形した生地を一晩（8〜12 時間）冷蔵する。, parts: [], reqs: [], src: [S25]}
