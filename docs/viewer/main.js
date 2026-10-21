@@ -47,8 +47,8 @@ const PARTS = [
   { key: 'vent', label: '頂部のベント', color: 0xb9bec2, mat: 'ステンレスのフード付きガラリ 100 mm' },
   { key: 'landing', label: '前室と焚き口', color: 0x45484d, mat: '縞鋼板 3.2 mm の箱（天板を前へ 1/20 下げ、耳と水切りを溶接）、敷居と床と天井にレンガ、台の受け金と押しばね、脇の水切り板、焚き口の前掛け' },
   { key: 'door', label: '扉', color: 0x4a3b30, mat: '焚き口の差し込みの扉（閉じる、緩める、抜く、外す。L の足 2 個で立ち、上の隅に掛ける当てですきまを決める）' },
-  { key: 'lip', label: '垂れ壁', color: 0x2f3236, mat: '縞鋼板 3.2 mm の外せる垂れ壁（焚く間だけ前室の口の上に掛ける）' },
-  { key: 'chimney', label: '煙突', color: 0x5d6066, mat: 'ステンレス φ120、H 笠、火の粉止め。ダンパーは付けず、付け根の筒を前室の天板に留める' },
+  { key: 'lip', label: '垂れ壁', color: 0x2f3236, mat: '縞鋼板 3.2 mm の外せる垂れ壁（後で足す。煙突を足してから、焚く間だけ前室の口の上に掛ける）' },
+  { key: 'chimney', label: '煙突', color: 0x5d6066, mat: 'ステンレス φ120、H 笠、火の粉止め（後で足す）。ダンパーは付けず、付け根の筒を前室の天板に留める。初めの形は付け根の筒に蓋をする' },
   { key: 'wood', label: '薪置き', color: 0xa0703f, mat: '薪置き（目安。炉床の真下と前室の下には置かない。隅に置く決まりは仮）' },
   { key: 'person', label: '人（大きさの目安）', color: 0x6c8fb3, mat: '背丈の目安' },
   { key: 'frost', label: '凍結深度', color: 0x5aa0d8, mat: '凍結深度の面' },
@@ -69,6 +69,7 @@ const DOOR_STATES = {
 
 // 空気の流れの場面。doors は場面に合う扉の位置（先頭を既定にする）で、null ならどれでもよい。
 // lip は前室の口の垂れ壁で、true なら場面を選んだときに掛け、false なら外す（null はそのまま）。第一案（cast）だけに描く。
+// 初めの形（煙突なし）では垂れ壁を掛けないので、焚く場面も外す（sceneLip、施主の決定 2026-10-21）。
 const FLOW_SCENES = {
   none: { label: 'なし', doors: null, lip: null },
   fire: { label: '焚く', doors: ['off'], lip: true },
@@ -85,6 +86,7 @@ const state = {
   shellFade: false,
   apron: false,
   lip: false,
+  chim: false,        // false は初めの形（煙突と垂れ壁は後で足す）、true は煙突と垂れ壁を足した形
   door: 'plug',
   flow: 'none',
   visible: Object.fromEntries(PARTS.map((p) => [p.key, true])),
@@ -116,6 +118,10 @@ const PLUG_FIT = { fb: 0.025, fbT: 0.003, up: 0.05, fwd: 0.05, footX: 0.11, stop
 const LIP = { t: 0.0032, over: 0.02, ear: 0.03, pinD: 0.008, pinL: 0.02, pinZ: 0.015, pinY: 0.19 };
 // 煙突の付け根（構造設計 3.9.3）。L の留め金（平鋼 3 × 25 を 40 mm）を 3 枚、120°おきに天板に溶接する。
 const STUB_CLIP = { w: 0.025, h: 0.04, t: 0.003 };
+// 初めの形の付け根の筒と蓋（構造設計 3.9.8）。筒の天板からの出 h（chimney.stub）と蓋の径（chimney.cap_d）は oven.json から読む
+// （どちらも図のための値で、品の長さは未確認、計算は 0.05〜0.15 m で振った）。
+// 蓋はステンレス板 0.5 mm の円板で、縁の爪 tabs 枚を down だけ下へ折る（形は仮）。capT は蓋を見せる厚さ（図のための値）。
+const STUB = { h: P('chimney.stub'), capR: P('chimney.cap_d') / 2, capT: 0.002, tabs: 4, tabW: 0.02, down: 0.012 };
 // 前室の箱の留め（構造設計 3.9）。耳は平鋼 6 × 100 を 60 mm に切り、外へ out 出し、下から長穴（幅 slotW、深さ slotD）を切る。
 // boltIn は耳の先から引きボルトの軸まで、lift は耳の下の端の炉床の面からの上がり。
 const EAR = { out: 0.10, h: 0.06, t: 0.006, lift: 0.005, slotW: 0.012, slotD: 0.036, boltIn: 0.016 };
@@ -1071,10 +1077,11 @@ function buildCast(ctx) {
     const zc1 = collarZ + ld;
     // 天井の内張りは煙突の口（すきま 3 mm）を切り欠く。口が内張りの前の縁に届くときは、丸い穴を小さくせず、前の縁から切り欠く
     // （穴を小さくすると、内張りの切り口が煙突の口にかかって描かれる）。
+    // 初めの形では切り欠かずに張り、煙突を足すときに口にかかる 2〜4 枚（割り付けで決まる）を切り欠いた物に替える（構造設計 3.9.3、3.9.8）。
     const notchR = rc + 0.003;
     let linerPts = rectXZ(-lw / 2, lw / 2, collarZ, zc1);
-    let linerHoles = [{ x: 0, z: cz, r: Math.max(0.01, Math.min(notchR, cz - collarZ - 0.003)) }];
-    if (zc1 - cz < notchR) {
+    let linerHoles = state.chim ? [{ x: 0, z: cz, r: Math.max(0.01, Math.min(notchR, cz - collarZ - 0.003)) }] : [];
+    if (state.chim && zc1 - cz < notchR) {
       const t0 = Math.acos(Math.max(-1, (zc1 - cz) / notchR));
       const arcPts = Array.from({ length: 25 }, (_, i) => {
         const t = t0 + ((2 * Math.PI - 2 * t0) * i) / 24;
@@ -1084,7 +1091,7 @@ function buildCast(ctx) {
       linerHoles = [];
     }
     add('landing', slopeUp(mesh(slabXZ(linerPts, linerHoles, yCeil, LAND_CEIL - 0.0005), brick,
-      info('landing', `厚さ ${mm(LAND_CEIL)} mm。煙突の口を切り欠く。天板と同じ勾配で張る`, '薄いレンガ（SK34 ウス半丁）を天井の内に張る', '天井のレンガ'))));
+      info('landing', `厚さ ${mm(LAND_CEIL)} mm。${state.chim ? '煙突の口を切り欠く（煙突を足すときに、口にかかる 2〜4 枚を替えた形）' : '煙突を足すまで、煙突の口の所を切り欠かずに張る'}。天板と同じ勾配で張る`, '薄いレンガ（SK34 ウス半丁）を天井の内に張る', '天井のレンガ'))));
     // 焚き口の敷居と前室の床に、丸ごと 3 個と、前室の口の小片 3 個を並べる。
     const sillInfo = info('landing', `幅 ${f3(3 * bw)} m、z = ${f3(hz)}〜${f3(hz + bl + SILL_SMALL)} m`, '耐火粘土レンガ（丸ごと 3 個と小片 3 個）', '敷居と前室の床');
     for (let i = -1; i <= 1; i++) {
@@ -1226,7 +1233,7 @@ function buildCast(ctx) {
     for (const sx of [-1, 1]) {
       add('landing', cylAlong(LIP.pinD / 2, V3(sx * xo, yFloor + LIP.pinY, zLF - LIP.pinZ), V3(sx * (xo + LIP.pinL), yFloor + LIP.pinY, zLF - LIP.pinZ), pinM, pinInfo, 10));
     }
-    if (state.lip) {
+    if (state.lip && state.chim) {
       const lipH = P('landing.lip');
       const lm2 = material('lip', { metalness: 0.35, roughness: 0.6 });
       const y0 = yCeil - lipH;                            // 下の縁（口の上の端を lipH 下げる）
@@ -1343,13 +1350,20 @@ function buildCast(ctx) {
   }
 
   // ---- 煙突（ダンパーは付けず、付け根の筒の下の端を天板の勾配に合わせて斜めに切り、前室の天板にじかに立てる）
+  // 初めの形は付け根の筒を立てて蓋をし、直筒、H 笠、支持金具は後で足す（施主の決定 2026-10-21、構造設計 3.9.8）。
   const yCT = P('chimney.top') - CHIMNEY_CAP;     // H 笠の下の端
   const yH = yCT + CHIMNEY_CAP / 2;               // H 笠の横の管の中心
   const capX = 2 * rc;                            // H 笠の縦の管の中心の左右の位置
   {
     const cm = material('chimney', { metalness: 0.4, roughness: 0.5 });
-    const cInfo = info('chimney', `内径 ${f2(2 * rc)} m、付け根（中心の天板の上の面）${f3(yCB)} m、頂部の高さ ${f3(P('chimney.top'))} m、z = ${f2(cz)} m。付け根の筒の下の端は 1/${Math.round(1 / lslope)} に斜めに切り（後ろが ${mm(2 * rc * lslope)} mm 短い）、L の留め金 3 枚で天板に留める`);
-    const pg = new THREE.CylinderGeometry(rc + 0.002, rc + 0.002, yH - yCB, 32, 1, true);
+    const cut = `付け根の筒の下の端は 1/${Math.round(1 / lslope)} に斜めに切り（後ろが ${mm(2 * rc * lslope)} mm 短い）、L の留め金 3 枚で天板に留める`;
+    const cInfo = state.chim
+      ? info('chimney', `内径 ${f2(2 * rc)} m、付け根（中心の天板の上の面）${f3(yCB)} m、頂部の高さ ${f3(P('chimney.top'))} m、z = ${f2(cz)} m。${cut}`)
+      : info('chimney', `内径 ${f2(2 * rc)} m、付け根（中心の天板の上の面）${f3(yCB)} m、z = ${f2(cz)} m。${cut}。筒の出 ${f2(STUB.h)} m は図のための値（品の長さは未確認）。煙突を足すと頂は ${f3(P('chimney.top'))} m 以上`,
+        '付け根の筒に蓋をした初めの形（直筒、H 笠、支持金具は後で足す、施主の決定 2026-10-21）', '付け根の筒');
+    // 筒。煙突を足した形は H 笠の横の管まで、初めの形は付け根の筒の出 STUB.h まで描く。
+    const yPipeTop = state.chim ? yH : yCB + STUB.h;
+    const pg = new THREE.CylinderGeometry(rc + 0.002, rc + 0.002, yPipeTop - yCB, 32, 1, true);
     // 下の端の点を、天板の上の面（前へ 1/20 下がる）まで動かす。後ろの点は上へ、前の点は下へ動く。
     const pp = pg.attributes.position;
     for (let i = 0; i < pp.count; i++) {
@@ -1357,7 +1371,7 @@ function buildCast(ctx) {
     }
     pg.computeVertexNormals();
     const pipe = mesh(pg, cm, cInfo);
-    pipe.position.set(0, (yCB + yH) / 2, cz);
+    pipe.position.set(0, (yCB + yPipeTop) / 2, cz);
     add('chimney', pipe);
     // L の留め金（平鋼 3 × 25 を 40 mm、3 枚を 120°おき）。天板に溶接し、筒にステンレスのねじで留める。
     const clipInfo = info('chimney', cInfo.dims, `L の留め金（平鋼 3 × 25 を ${mm(STUB_CLIP.h)} mm、3 枚。天井の内張りを張る前に天板に溶接する）。継ぎ目の外は耐火モルタルで塞ぐ`, '付け根の留め金');
@@ -1373,21 +1387,37 @@ function buildCast(ctx) {
       foot.rotation.y = a;
       add('chimney', up, foot);
     }
-    const capInfo = info('chimney', cInfo.dims, 'H 笠（内に火の粉止めの網）', 'H 笠');
-    const xs = capX;
-    add('chimney', cylAlong(rc * 0.9, V3(-xs, yH, cz), V3(xs, yH, cz), cm, capInfo, 24));
-    for (const s of [-1, 1]) {
-      const o = mesh(new THREE.CylinderGeometry(rc * 0.9, rc * 0.9, CHIMNEY_CAP, 24, 1, true), cm, capInfo);
-      o.position.set(s * xs, yH, cz);
-      add('chimney', o);
+    if (state.chim) {
+      const capInfo = info('chimney', cInfo.dims, 'H 笠（内に火の粉止めの網）', 'H 笠');
+      const xs = capX;
+      add('chimney', cylAlong(rc * 0.9, V3(-xs, yH, cz), V3(xs, yH, cz), cm, capInfo, 24));
+      for (const s of [-1, 1]) {
+        const o = mesh(new THREE.CylinderGeometry(rc * 0.9, rc * 0.9, CHIMNEY_CAP, 24, 1, true), cm, capInfo);
+        o.position.set(s * xs, yH, cz);
+        add('chimney', o);
+      }
+      // 支持金具。殻の前の妻の頂の枠に留める。
+      const yB = Math.min(yR - 1.5 * fr, yCT - 0.05);
+      const bInfo = info('chimney', cInfo.dims, '自在支持金具（殻の前の妻の枠に留める）', '支持金具');
+      const clamp = mesh(new THREE.TorusGeometry(rc + 0.006, 0.003, 6, 32), cm, bInfo);
+      clamp.rotation.x = Math.PI / 2;
+      clamp.position.set(0, yB, cz);
+      add('chimney', clamp, box(0.02, 0.006, cz - rc - sw2, 0, yB, (cz - rc + sw2) / 2, cm, bInfo));
+    } else {
+      // 付け根の筒の蓋。円板の縁の爪を下へ折り、筒にねじで留める（形は仮）。
+      const lidInfo = info('chimney', cInfo.dims, `付け根の筒の蓋（ステンレス板 0.5 mm、φ${mm(2 * STUB.capR)} mm の円板の縁の爪 ${STUB.tabs} 枚を下へ折り、ねじで筒に留める。形は仮）`, '蓋');
+      const yLid = yCB + STUB.h;
+      const lid = mesh(new THREE.CylinderGeometry(STUB.capR, STUB.capR, STUB.capT, 32), cm, lidInfo);
+      lid.position.set(0, yLid + STUB.capT / 2, cz);
+      add('chimney', lid);
+      for (let k = 0; k < STUB.tabs; k++) {
+        const a = (k * 2 * Math.PI) / STUB.tabs + Math.PI / STUB.tabs;
+        const r0 = rc + 0.002 + 0.0015;
+        const tab = box(STUB.tabW, STUB.down, 0.0015, r0 * Math.sin(a), yLid - STUB.down / 2, cz + r0 * Math.cos(a), cm, lidInfo);
+        tab.rotation.y = a;
+        add('chimney', tab);
+      }
     }
-    // 支持金具。殻の前の妻の頂の枠に留める。
-    const yB = Math.min(yR - 1.5 * fr, yCT - 0.05);
-    const bInfo = info('chimney', cInfo.dims, '自在支持金具（殻の前の妻の枠に留める）', '支持金具');
-    const clamp = mesh(new THREE.TorusGeometry(rc + 0.006, 0.003, 6, 32), cm, bInfo);
-    clamp.rotation.x = Math.PI / 2;
-    clamp.position.set(0, yB, cz);
-    add('chimney', clamp, box(0.02, 0.006, cz - rc - sw2, 0, yB, (cz - rc + sw2) / 2, cm, bInfo));
   }
 
   // ---- 天板と台
@@ -1626,6 +1656,7 @@ function buildCast(ctx) {
   const dSlab = ANCHOR.inset + (P('anchor.lug') + P('anchor.depth') + ANCHOR.slabT / 2) / Math.tan(deg(P('anchor.angle')));
   const rows = [
     ['型式', TYPE_LABEL.cast, '算出', true],
+    ['煙突と垂れ壁', state.chim ? '足した形（後で足す段階のあと）' : '初めの形（付け根の筒に蓋。煙突と垂れ壁は後で足す、施主の決定 2026-10-21）', '決定', true],
     ['炉床の面の高さ', `${f2(yFloor)} m`],
     ['炉床の四角', `${f3(hw)} × ${f2(hd)} m（${HEARTH_COLS} 列 × ${HEARTH_ROWS} 個）`],
     ['ドームの内の炉床の面積', `${f2(Math.PI * R * R)} m²`],
@@ -1642,10 +1673,11 @@ function buildCast(ctx) {
     ['梁の下の面の高さ（雪を下ろす目安）', `${f2(yBb)} m`],
     ['脚の長さ', `${f2(legLen)} m`],
     ['後ろの横梁と前の横梁の長さ', `${f2(2 * xR + bm)} m、${f2(2 * bx + bm)} m`],
-    ['煙突の付け根（中心）と頂', `${f3(yCB)} m、${f3(P('chimney.top'))} m`],
+    ['煙突の付け根（中心）と頂', state.chim ? `${f3(yCB)} m、${f3(P('chimney.top'))} m` : `${f3(yCB)} m、煙突を足すと ${f3(P('chimney.top'))} m 以上`],
     ['全ねじが地面に入る所（脚の中心から外へ）', `${f2(dGround)} m`],
     ['平板の中心（脚の中心から外へ、深さ）', `${f2(dSlab)} m、${f2(P('anchor.depth') + ANCHOR.slabT / 2)} m`],
-    ...CALC_ROWS,
+    // 全体の重さは、初めの形では煙突の行が付け根の筒と蓋になる（構造設計 3.5.8）。
+    ...CALC_ROWS.map((r, i) => (i === 0 && !state.chim ? ['全体の重さ（計算、初めの形）', '272〜294 kg（煙突を足すと 276〜300 kg）', '算出'] : r)),
   ];
 
   // 空気の流れの曲線を作るための寸法（buildFlow が使う）
@@ -1656,7 +1688,8 @@ function buildCast(ctx) {
     roofDy, roofTopAt: (z) => yRoofTop + roofDy(z), zTopL,
     yDrip: yRoof + roofDy(zTopL - DRIP_SET - FB_T / 2) - P('landing.drip'),   // 天板の水切りの下の端
     door: state.door, doorPull: doorNow.pull, plugBody: PLUG_BODY, plugW: PLUG.w, plugH: PLUG.h, faceW: PLUG.faceW, faceH: PLUG.faceH,
-    lip: state.lip, yMouth: state.lip ? yCeil - P('landing.lip') : yCeil,     // 前室の口の上の端（垂れ壁を掛けたときは下の縁）
+    lip: state.lip && state.chim, yMouth: state.lip && state.chim ? yCeil - P('landing.lip') : yCeil,     // 前室の口の上の端（垂れ壁を掛けたときは下の縁）
+    chim: state.chim,                                                        // 煙突を足した形か（初めの形は煙が前室の口からだけ出る）
   };
 
   return {
@@ -1863,7 +1896,7 @@ const flowGeom = {
   })(),
 };
 
-const air = { root: new THREE.Group(), streams: [], arrows: [], steam: [], flames: [], built: [], ghosts: [], arrowMesh: null, steamMesh: null, t: 0, autoFade: false, autoLip: false };
+const air = { root: new THREE.Group(), streams: [], arrows: [], steam: [], flames: [], built: [], ghosts: [], arrowMesh: null, steamMesh: null, t: 0, autoFade: false, autoLip: false, autoChim: false };
 air.root.name = 'flow';
 air.root.visible = false;
 scene.add(air.root);
@@ -2029,7 +2062,8 @@ function flowScene(name, g) {
     // 5 本。中ほどの 1 本は奥の火へ、両脇の 4 本は奥の脇と横の火へ向かう。
     // 出る煙は、垂れ壁を掛けたとき 3 本が煙突へ、2 本が前室の口の上からこぼれ、外したときは 2 本が煙突へ、3 本がこぼれる
     // （煙突へ行く煙は、垂れ壁 4 cm で約 5〜7 割、垂れ壁なしで約 3〜5 割の見込み。構造設計 3.9.7 の割りの目安）。
-    const toChimney = g.lip ? [-0.5, 0, 0.5] : [-0.5, 0.5];
+    // 初めの形（煙突なし）は、5 本とも前室の口の上からこぼれる（窯から出る煙の 98%、構造設計 3.9.8）。
+    const toChimney = !g.chim ? [] : g.lip ? [-0.5, 0, 0.5] : [-0.5, 0.5];
     for (const s of [-1, -0.5, 0, 0.5, 1]) {
       const r = ovenRoute({
         x: s * (g.dHalf - 0.05), az: Math.PI - s * 1.3, azFront: s * 0.25, mid: s === 0,
@@ -2044,7 +2078,7 @@ function flowScene(name, g) {
     for (const x of [-0.11, 0, 0.11]) {
       const r = ovenRoute({
         x, az: Math.PI - 0.9 * (x / (g.lw / 2)), azFront: -0.15, mid: x === 0, side: -1, fire: false,
-        tail: x === 0 ? 'chimney' : 'spill',
+        tail: x === 0 && g.chim ? 'chimney' : 'spill',
       });
       out.streams.push(makeStream(r.pts, { speed: 0.12, gap: 0.1 }));
     }
@@ -2103,7 +2137,7 @@ function flowScene(name, g) {
         at(V3(sx * 0.08, yF + g.faceH + 0.005, zFace + 0.001), 'warm'),
         at(V3(sx * 0.07, yF + g.faceH + 0.006, zFaceF + 0.02), 'warm'),
       ];
-      const tail = sx < 0 ? chimneyTail(sx * 0.16, -1, 'warm') : spillTail(sx * 0.07);
+      const tail = sx < 0 && g.chim ? chimneyTail(sx * 0.16, -1, 'warm') : spillTail(sx * 0.07);
       out.streams.push(makeStream([...head, ...pocket, ...over, ...tail], opt));
     }
   } else if (name === 'bake') {
@@ -2145,13 +2179,13 @@ function flowScene(name, g) {
         at(V3(x, yF + g.faceH + 0.008, g.collarZ + 0.015), 'leak'),
         at(V3(x, g.yCeil - 0.01, g.collarZ + 0.07), 'leak'),
       ];
-      const tail = x < 0
+      const tail = x < 0 && g.chim
         ? [...chimneyTail(x * 2, -1, 'leak', 'leak').slice(0, 2), at(V3(x * 0.5, g.yCB + 0.2, g.cz), 'leak')]
         : spillTail(x, 'leak');
       out.streams.push(makeStream([...lead, ...tail], opt));
     }
-    // 煙突はいつも開いているので、外の空気が前室の口の下から少し入り、煙突を上がる（推定）。
-    out.streams.push(makeStream([
+    // 煙突はいつも開いているので、外の空気が前室の口の下から少し入り、煙突を上がる（推定）。初めの形には煙突が無い。
+    if (g.chim) out.streams.push(makeStream([
       at(V3(0.09, yF + 0.03, g.zLF + 0.15), 'cold'),
       at(V3(0.09, yF + 0.03, g.zLF - 0.02), 'cold'),
       at(V3(0.07, yF + 0.10, g.cz + 0.02), 'cold'),
@@ -2399,30 +2433,42 @@ function renderFlowLegend() {
     pulled: `差し込みの扉を抜いて立て、長い当てで止める（毛布の面と枠のすきま ${mm(P('door.pull'))} mm）`,
     off: '差し込みの扉を外す',
   }[state.door] || '差し込みの扉で閉じる';
-  const lipText = state.lip ? `前室の口に垂れ壁（${mm(P('landing.lip'))} mm）を掛ける` : '垂れ壁は掛けない';
+  const lipText = !state.chim ? '垂れ壁は煙突を足すまで掛けない'
+    : state.lip ? `前室の口に垂れ壁（${mm(P('landing.lip'))} mm）を掛ける` : '垂れ壁は掛けない';
   const stand = state.door === 'loose' || state.door === 'pulled';
+  const out = state.chim ? '煙突と前室の口の上' : '前室の口の上';
   const rows = {
-    fire: [
+    fire: state.chim ? [
       ['cold', '外の冷たい空気が前室の口の下から入り、焚き口の下の側を通って炉床を奥へ流れる。'],
       ['hot', '奥と脇の火で温まって上がり、ドームの天井に沿って前へ回る。'],
       ['warm', '焚き口の上の側から前室の天井の下へ出て、前へ流れる。'],
       ['smoke', '一部は煙突を上がり、H 笠の縦の管から外へ出る。'],
       ['spill', `残りは前室の口の上（${state.lip ? '垂れ壁の下の縁' : '天井の薄いレンガの前の縁'}）からこぼれ、箱の前を上がる。煙突へ行く割合は計算の扱いで 3 割から全部まで幅があり、垂れ壁 4 cm で約 5〜7 割、垂れ壁なしで約 3〜5 割と見込む。`],
+    ] : [
+      ['cold', '外の冷たい空気が前室の口の下から入り、焚き口の下の側を通って炉床を奥へ流れる。'],
+      ['hot', '奥と脇の火で温まって上がり、ドームの天井に沿って前へ回る。'],
+      ['warm', '焚き口の上の側から前室の天井の下へ出て、前へ流れる。'],
+      ['spill', '煙突が無いので、窯から出る煙の 98% が前室の口の上（天井の薄いレンガの前の縁）からこぼれ、箱の前を上がる（計算、構造設計 3.9.8）。のぞくと風が無くても顔の際に煙が来るので、のぞく時間を短くし、顔を横へ外す。'],
     ],
     bake: [
       ['warm', '焼き室の熱い空気が、ドームの壁に沿って上がり、天井の下を真ん中へ寄って、パンの上へ下りる。'],
       ['steam', 'パンから出た湯気は、差し込みの扉で閉じ込めて、焼き室の中を回る。'],
-      ['leak', '細い矢印は差し込みの扉のまわりのわずかな漏れで、前室の天井の下を通って、煙突と前室の口の上へ抜ける。'],
-      ['cold', '煙突はいつも開いているので、外の空気が前室の口の下から少し入り、煙突を上がる。'],
+      ['leak', `細い矢印は差し込みの扉のまわりのわずかな漏れで、前室の天井の下を通って、${out}へ抜ける。`],
+      ...(state.chim ? [['cold', '煙突はいつも開いているので、外の空気が前室の口の下から少し入り、煙突を上がる。']] : []),
     ],
     cool: stand ? [
       ['cold', '外の空気が前室の口の下から入り、面の板の左右の 5 mm のすきまの下の側を通って、焚き口の下から焼き室へ入る。'],
-      ['warm', `焼き室の熱い空気は焚き口の上の側から出て、面の板の上のすきまを越え、前室の天井の下を前へ流れて、煙突と前室の口の上から出る。入る量は${state.door === 'pulled' ? '抜く段で 1.24〜1.73 g/s' : '緩める段で 0.70〜0.92 g/s'}で、扉を外したとき（6.7〜9.2 g/s）よりずっと少ない（計算、外気 10℃と −10℃）。`],
+      ['warm', `焼き室の熱い空気は焚き口の上の側から出て、面の板の上のすきまを越え、前室の天井の下を前へ流れて、${out}から出る。入る量は${state.door === 'pulled' ? '抜く段で 1.24〜1.73 g/s' : '緩める段で 0.70〜0.92 g/s'}で、扉を外したとき（6.7〜9.2 g/s）よりずっと少ない（計算、外気 10℃と −10℃）。`],
       ['spill', '前室の口の上から出る分。'],
     ] : [
       ['cold', '外の冷たい空気が前室の口の下から入り、焚き口の下の側から焼き室へ入る。'],
-      ['warm', '熱い空気は焚き口の上の側から前室の天井の下へ出て、一部は煙突を上がる（割合は計算していない）。'],
-      ['spill', '残りは前室の口の上からこぼれる。'],
+      ...(state.chim ? [
+        ['warm', '熱い空気は焚き口の上の側から前室の天井の下へ出て、一部は煙突を上がる（割合は計算していない）。'],
+        ['spill', '残りは前室の口の上からこぼれる。'],
+      ] : [
+        ['warm', '熱い空気は焚き口の上の側から前室の天井の下へ出る。'],
+        ['spill', '煙突が無いので、前室の口の上からこぼれる。'],
+      ]),
     ],
     shell: [
       ['cold', `外の空気が、殻の裾の ${mm(P('shell.bottom_gap'))} mm のすきま（網）から入る。`],
@@ -2432,13 +2478,20 @@ function renderFlowLegend() {
   const sw = (k) => (k === 'steam'
     ? '<span class="fk dot"></span>'
     : `<span class="fk${k === 'leak' ? ' thin' : ''}" style="background:${hex(k)}"></span>`);
-  const how = state.flow === 'shell' ? '扉と垂れ壁によらない。' : `${doorText}。${lipText}。煙突にダンパーは無い。`;
+  const how = state.flow === 'shell' ? '扉と垂れ壁によらない。'
+    : `${doorText}。${lipText}。${state.chim ? '煙突にダンパーは無い。' : '煙突は後で足す（付け根の筒に蓋をした初めの形）。'}`;
   el.hidden = false;
   const see = state.section ? '断面では透かさずに、切り口より奥の流れを描く。' : '壁の向こうの流れは薄く透かして描く。';
   el.innerHTML = `<details${open ? ' open' : ''}><summary>空気の流れ：${FLOW_SCENES[state.flow].label}</summary>`
     + `<div class="fs">${how}</div>`
     + rows.map(([k, s]) => `<div class="fr">${sw(k)}<span>${s}</span></div>`).join('')
-    + `<div class="fn">${state.flow === 'shell' ? '流れの向きと形は説明のための絵で、測っても計算してもいない（推定）。' : '流れの道は構造設計 3.2.8 と 3.9.7 の計算に合わせた絵で、矢印の本数と速さは量を比べる目安である（計算、推定）。'}${see}</div></details>`;
+    + `<div class="fn">${state.flow === 'shell' ? '流れの向きと形は説明のための絵で、測っても計算してもいない（推定）。' : '流れの道は構造設計 3.2.8、3.9.7、3.9.8 の計算に合わせた絵で、矢印の本数と速さは量を比べる目安である（計算、推定）。'}${see}</div></details>`;
+}
+
+// 場面の垂れ壁。初めの形（煙突なし）では垂れ壁を掛けないので、掛ける場面（焚く）も外す（施主の決定 2026-10-21）。
+function sceneLip(name) {
+  const lip = (FLOW_SCENES[name] || FLOW_SCENES.none).lip;
+  return lip === true && !state.chim ? false : lip;
 }
 
 // 場面を選ぶ。扉の位置と垂れ壁を場面に合わせ、殻の換気では殻を透かす。
@@ -2447,7 +2500,8 @@ function setFlow(name, opts = {}) {
   state.flow = name in FLOW_SCENES ? name : 'none';
   const sc = FLOW_SCENES[state.flow];
   if (sc.doors && !sc.doors.includes(state.door)) state.door = sc.doors[0];
-  if (sc.lip != null) { state.lip = sc.lip; air.autoLip = false; }
+  const lip = sceneLip(state.flow);
+  if (lip != null) { state.lip = lip; air.autoLip = false; }
   if (state.flow === 'shell') {
     if (!state.shellFade) { state.shellFade = true; air.autoFade = true; }
   } else if (air.autoFade) {
@@ -2463,6 +2517,20 @@ function syncFlowControls() {
   if ($('doorState')) $('doorState').value = state.door;
   if ($('lip')) $('lip').checked = state.lip;
   if ($('shellFade')) $('shellFade').checked = state.shellFade;
+  for (const btn of document.querySelectorAll('#stage button')) {
+    btn.setAttribute('aria-pressed', String((btn.dataset.stage === 'full') === state.chim));
+  }
+}
+
+// 煙突と垂れ壁を足した形（on）と、初めの形（煙突なし）を切り替える。初めの形では垂れ壁を外す。
+// 焚く場面で煙突を足した形にしたときは、場面のとおり垂れ壁を掛ける。
+function setChim(on, opts = {}) {
+  state.chim = !!on;
+  air.autoChim = false;
+  if (!state.chim) { state.lip = false; air.autoLip = false; }
+  else if (sceneLip(state.flow) === true) state.lip = true;
+  syncFlowControls();
+  if (opts.rebuild !== false) rebuild();
 }
 
 // ---------- 組み替えと表示
@@ -2495,6 +2563,8 @@ function rebuild() {
     btn.setAttribute('aria-pressed', String(btn.dataset.type === state.type));
   }
   for (const id of ['doorState', 'apron', 'lip', 'flow']) if ($(id)) $(id).disabled = state.type !== 'cast';
+  if ($('lip')) $('lip').disabled = state.type !== 'cast' || !state.chim;
+  for (const btn of document.querySelectorAll('#stage button')) btn.disabled = state.type !== 'cast';
   state.selected = null;
   renderInfo(null);
   applyFocus(false);
@@ -2557,16 +2627,24 @@ window.addEventListener('message', (e) => {
     focusKeys = Array.isArray(m.parts) ? m.parts.filter((k) => typeof k === 'string') : [];
     // 垂れ壁は焚く間だけ掛ける物で、ふだんの図には無い。指されたときは掛けて見せ、指されなくなったら外す
     // （垂れ壁を外す場面、焼くと温度を下げるでは掛けない。自分で掛けた垂れ壁と、焚く場面の垂れ壁はそのままにする）。
-    const wantLip = focusKeys.includes('lip') && state.type === 'cast' && FLOW_SCENES[state.flow].lip !== false;
+    // 垂れ壁は後で足す物なので、初めの形で指されたときは煙突を足した形にして見せ、指されなくなったら初めの形に戻す
+    // （初めの形の焚く場面では、垂れ壁を掛けないので見せない）。
+    const wantLip = focusKeys.includes('lip') && state.type === 'cast' && sceneLip(state.flow) !== false;
     if (wantLip && !state.lip) {
+      if (!state.chim) { state.chim = true; air.autoChim = true; }
       state.lip = true;
       air.autoLip = true;
       syncFlowControls();
       rebuild();
-    } else if (!focusKeys.includes('lip') && air.autoLip) {
-      air.autoLip = false;
-      if (state.lip && FLOW_SCENES[state.flow].lip !== true) {
-        state.lip = false;
+    } else if (!focusKeys.includes('lip') && (air.autoLip || air.autoChim)) {
+      // 垂れ壁を指している間に場面を選ぶと、垂れ壁は場面のものになり autoLip が外れるので、autoChim だけでも戻す。
+      let changed = false;
+      if (air.autoLip) {
+        air.autoLip = false;
+        if (state.lip && sceneLip(state.flow) !== true) { state.lip = false; changed = true; }
+      }
+      if (air.autoChim) { air.autoChim = false; state.chim = false; state.lip = false; changed = true; }
+      if (changed) {
         syncFlowControls();
         rebuild();
       }
@@ -2587,6 +2665,8 @@ window.addEventListener('message', (e) => {
     if (name !== state.flow) setFlow(name);
   } else if (m.type === 'v3d:visible') {
     setHidden(m.hidden);
+  } else if (m.type === 'v3d:chimney') {
+    if (!!m.on !== state.chim || air.autoChim) setChim(!!m.on);
   }
 });
 
@@ -2748,6 +2828,10 @@ function setupControls() {
   if (have.length !== want.length || !want.every((k) => have.includes(k))) {
     seg.innerHTML = want.map((k) => `<button type="button" data-type="${k}">${TYPE_BUTTON[k]}</button>`).join('');
   }
+  // 煙突と垂れ壁の形（初めの形と、煙突を足した形）の切替。index.html に無ければ型式の下に足す。
+  if (!$('stage')) {
+    seg.insertAdjacentHTML('afterend', '<h2>煙突と垂れ壁</h2><div class="seg" id="stage"><button type="button" data-stage="first">初めの形（煙突なし）</button><button type="button" data-stage="full">煙突を足した形</button></div>');
+  }
   const tg = document.querySelector('aside .toggles');
   if (!tg) return;
   if (!$('shellFade')) tg.insertAdjacentHTML('beforeend', '<label><input type="checkbox" id="shellFade"> 殻を透かす</label>');
@@ -2826,6 +2910,12 @@ $('type').addEventListener('click', (e) => {
   rebuild();
 });
 $('views').addEventListener('click', (e) => { if (e.target.dataset.view) setView(e.target.dataset.view); });
+if ($('stage')) {
+  $('stage').addEventListener('click', (e) => {
+    const st = e.target.dataset && e.target.dataset.stage;
+    if (st && (st === 'full') !== state.chim) setChim(st === 'full');
+  });
+}
 $('section').addEventListener('change', (e) => {
   state.section = e.target.checked;
   applySection();
@@ -2857,11 +2947,13 @@ if ($('doorState')) {
 }
 if ($('flow')) $('flow').addEventListener('change', (e) => setFlow(e.target.value));
 
-// URL の ?type=brick&section=1&view=side&door=pulled&lip=1&apron=1&shellFade=1&flow=fire&hide=shell,insulation で初期状態を指定できる。
+// URL の ?type=brick&section=1&view=side&chim=1&door=pulled&lip=1&apron=1&shellFade=1&flow=fire&hide=shell,insulation で初期状態を指定できる。
+// chim=1 は煙突と垂れ壁を足した形で、省くと初めの形（煙突なし、垂れ壁は掛けない）にする。
 // door は plug、loose、pulled、off。flow は none、fire、bake、cool、shell で、扉の位置が場面に合わなければ場面に合わせる
-// （cool は既定で抜いた段、door=loose で緩めた段、door=off で外した段）。焚く場面は垂れ壁を掛けて描き、lip=0 で外した形にする。
+// （cool は既定で抜いた段、door=loose で緩めた段、door=off で外した段）。煙突を足した形の焚く場面は垂れ壁を掛けて描き、lip=0 で外した形にする。
 const q = new URLSearchParams(location.search);
 if (q.get('type') in TYPE_LABEL) state.type = q.get('type');
+if (q.get('chim') === '1') state.chim = true;
 if (q.get('section') === '1') { state.section = true; $('section').checked = true; }
 if (q.get('door') in DOOR_STATES) state.door = q.get('door');
 if (q.get('apron') === '1') state.apron = true;
@@ -2870,13 +2962,14 @@ if (q.get('hide')) setHidden(q.get('hide').split(','), { url: false });
 if (q.get('flow') in FLOW_SCENES) setFlow(q.get('flow'), { rebuild: false });
 if (q.get('lip') === '1' || q.get('lip') === '0') {
   const want = q.get('lip') === '1';
-  if (!(want && FLOW_SCENES[state.flow].lip === false)) state.lip = want;
+  if (!(want && sceneLip(state.flow) === false)) state.lip = want && state.chim;
 }
 if ($('doorState')) $('doorState').value = state.door;
 if ($('lip')) $('lip').checked = state.lip;
 if ($('flow')) $('flow').value = state.flow;
 if ($('apron')) $('apron').checked = state.apron;
 if ($('shellFade')) $('shellFade').checked = state.shellFade;
+syncFlowControls();
 
 rebuild();
 setView(q.get('view') || (state.section ? 'cut' : 'iso'));

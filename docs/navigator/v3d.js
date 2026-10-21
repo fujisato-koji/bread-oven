@@ -1,5 +1,6 @@
 // 3D モード。docs/viewer/ を iframe で開き、postMessage で部品を光らせる。
-// 帯のボタンで、断面、見る向き、まわりを透かす、空気の流れの場面を 3D の図へ伝える。
+// 帯のボタンで、煙突を足した形、断面、見る向き、まわりを透かす、空気の流れの場面を 3D の図へ伝える。
+// 既定は初めの形（煙突と垂れ壁は後で足す、施主の決定 2026-10-21）で、「煙突を足した形」を押すと URL に chim=1 を載せる。
 // 左の欄（開け閉めできる）で、部品ごとに表示と非表示を切り替える。隠した部品は URL の hide=id,id に残す。
 NavApp.register('v3d', (api) => {
   'use strict';
@@ -8,7 +9,7 @@ NavApp.register('v3d', (api) => {
   const note = api.$('#v3d-note');
   const bar = api.$('#mode-v3d .modebar');
   if (!stage || !bar) return null;
-  if (note) note.textContent = '部品を選ぶと 3D でも光る。3D で部品を押すと選ばれ、何もない所を押すと選択が外れる。空気の流れの場面を選ぶと、流れを矢印で描く。左の欄で部品を隠せる。';
+  if (note) note.textContent = '部品を選ぶと 3D でも光る。3D で部品を押すと選ばれ、何もない所を押すと選択が外れる。空気の流れの場面を選ぶと、流れを矢印で描く。左の欄で部品を隠せる。図は初めの形（煙突と垂れ壁なし）で、「煙突を足した形」で後で足したあとの形に替わる。';
 
   const style = document.createElement('style');
   style.textContent = `
@@ -57,6 +58,7 @@ NavApp.register('v3d', (api) => {
 
   // 帯のボタン
   const tools = api.el('div', { class: 'v3dbar', role: 'toolbar', 'aria-label': '3D の見方' });
+  const btnChim = api.el('button', { type: 'button', 'aria-pressed': 'false', text: '煙突を足した形', title: '初めの形（煙突と垂れ壁なし）と、煙突と垂れ壁を後で足した形を切り替える' });
   const btnCut = api.el('button', { type: 'button', 'aria-pressed': 'false', text: '断面' });
   const btnFade = api.el('button', { type: 'button', 'aria-pressed': 'false', text: 'まわりを透かす' });
   const views = [['iso', '斜め'], ['front', '正面'], ['side', '側面'], ['top', '上']].map(([v, t]) =>
@@ -68,7 +70,8 @@ NavApp.register('v3d', (api) => {
   const airLabel = api.el('label', { text: '空気の流れ' });
   airLabel.append(selAir);
   const btnSide = api.el('button', { type: 'button', 'aria-controls': 'v3d-side', text: '部品の表示' });
-  tools.append(btnSide, api.el('span', { class: 'sep', 'aria-hidden': 'true' }), btnCut, btnFade,
+  tools.append(btnSide, api.el('span', { class: 'sep', 'aria-hidden': 'true' }), btnChim,
+    api.el('span', { class: 'sep', 'aria-hidden': 'true' }), btnCut, btnFade,
     api.el('span', { class: 'sep', 'aria-hidden': 'true' }), ...views,
     api.el('span', { class: 'sep', 'aria-hidden': 'true' }), airLabel);
   bar.append(tools);
@@ -99,6 +102,7 @@ NavApp.register('v3d', (api) => {
   let pending = [];
   let section = false;
   let fade = false;
+  let chim = false;            // 煙突と垂れ壁を足した形を見せるか（既定は初めの形）
   let air = '';
   let hidden = new Set();      // 隠した部品の id
   let parts = null;            // 3D の図から届いた部品の一覧 [{ id, label, color }]
@@ -173,9 +177,17 @@ NavApp.register('v3d', (api) => {
   btnNone.addEventListener('click', () => { msg.textContent = ''; setHidden(listParts().map((p) => p.id)); });
 
   function syncButtons() {
+    btnChim.setAttribute('aria-pressed', String(chim));
     btnCut.setAttribute('aria-pressed', String(section));
     btnFade.setAttribute('aria-pressed', String(fade));
   }
+
+  btnChim.addEventListener('click', () => {
+    chim = !chim;
+    syncButtons();
+    send({ type: 'v3d:chimney', on: chim });
+    api.writeUrl(false);
+  });
 
   btnCut.addEventListener('click', () => {
     section = !section;
@@ -207,6 +219,7 @@ NavApp.register('v3d', (api) => {
         if (got.length) { parts = got; renderList(); }
       }
       if (hidden.size) send({ type: 'v3d:visible', hidden: hideOrder() });
+      if (chim) send({ type: 'v3d:chimney', on: true });
       if (section) send({ type: 'v3d:section', on: true });
       if (fade) send({ type: 'v3d:fade', on: true });
       if (air) send({ type: 'v3d:flow', scene: air });
@@ -256,6 +269,11 @@ NavApp.register('v3d', (api) => {
 
   return {
     enter(params) {
+      if (params && params.chim === '1' && !chim) {
+        chim = true;
+        syncButtons();
+        send({ type: 'v3d:chimney', on: true });
+      }
       if (params && params.cut === '1' && !section) {
         section = true;
         syncButtons();
@@ -275,7 +293,7 @@ NavApp.register('v3d', (api) => {
       make();
     },
     leave() {},
-    params() { return { cut: section ? '1' : '', air, hide: hideOrder().join(',') }; },
+    params() { return { chim: chim ? '1' : '', cut: section ? '1' : '', air, hide: hideOrder().join(',') }; },
     highlight,
     escape() { return false; },
   };
