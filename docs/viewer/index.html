@@ -140,6 +140,40 @@
   #flowLegend .fk.dot { width: 10px; height: 10px; margin: 4px 4px 0; border-radius: 50%; background: #fff; border: 2px solid #55504a; }
   #flowLegend .fn { color: var(--muted); font-size: 11px; margin-top: 4px; }
   body.embed #flowLegend { font-size: 11px; max-width: min(300px, calc(100% - 20px)); }
+  /* 温度の分布の札（凡例、いまの値、時刻の帯）。図の下に置き、図はその上の高さに縮める（main.js の resize）。 */
+  #thermPanel {
+    position: absolute; left: 10px; right: 10px; bottom: 8px; max-height: calc(100% - 16px); overflow: auto;
+    font-size: 12px; line-height: 1.5; color: var(--ink);
+    background: color-mix(in srgb, var(--panel) 92%, transparent);
+    border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px 8px;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  #thermPanel[hidden] { display: none; }
+  #thermPanel .th-head { display: flex; flex-wrap: wrap; gap: 2px 12px; align-items: baseline; }
+  #thermPanel .th-head span { color: var(--muted); }
+  #thermPanel .th-top { display: flex; flex-wrap: wrap; gap: 4px 20px; align-items: flex-start; }
+  #thermPanel .th-key { flex: 0 1 470px; min-width: 240px; }
+  #thermPanel .th-vals { flex: 1 1 380px; }
+  #thermPanel .th-sw { display: flex; height: 12px; border-radius: 3px; overflow: hidden; border: 1px solid var(--line); }
+  #thermPanel .th-sw span { flex: 1; }
+  #thermPanel .th-tk { position: relative; height: 14px; font-size: 10.5px; line-height: 14px; color: var(--muted); margin: 0 1px; }
+  #thermPanel .th-tk span { position: absolute; transform: translateX(-50%); font-variant-numeric: tabular-nums; }
+  #thermPanel .th-tk span:first-child { transform: none; }
+  #thermPanel .th-tk span:last-child { transform: translateX(-100%); }
+  #thermPanel .th-unit { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 12px; color: var(--muted); font-size: 11px; }
+  #thermPanel .th-nd { display: inline-flex; gap: 4px; align-items: center; }
+  #thermPanel .th-nd i { width: 12px; height: 12px; border-radius: 3px; background: #8d8d8d; display: inline-block; }
+  #thermPanel .th-axi { margin: 0; font-weight: 600; }
+  #thermPanel .th-vals { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0 14px; }
+  #thermPanel .th-vals div { display: flex; justify-content: space-between; gap: 8px; border-bottom: 1px solid var(--line); }
+  #thermPanel .th-vals .k { color: var(--muted); }
+  #thermPanel .th-vals .v { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+  #thermPanel .th-msg { margin: 0; color: var(--muted); }
+  #thermPanel .th-more summary { cursor: pointer; color: var(--muted); font-size: 11.5px; }
+  #thermPanel .th-more ul { margin: 2px 0 0; padding-left: 18px; color: var(--muted); font-size: 11.5px; }
+  body.therm #legend { left: auto; right: 10px; bottom: auto; top: 10px; }
+  body.embed #thermPanel { font-size: 11px; }
+  body.embed #thermBar { display: none; }
   body.embed .app { grid-template-columns: 1fr; }
   body.embed aside { display: none; }
   @media (max-width: 760px) {
@@ -148,6 +182,11 @@
     body.embed .app { grid-template-rows: 100vh; height: 100vh; }
     body.embed main { height: 100vh; }
     aside { order: 2; border-right: 0; border-top: 1px solid var(--line); padding: 12px 16px 24px; }
+    /* 狭い画面で単独で開いたときは、温度の札を図の下に続けて置き、図の高さは変えない。 */
+    body.therm:not(.embed) .app { grid-template-rows: auto auto; }
+    body.therm:not(.embed) main { height: auto; }
+    body.therm:not(.embed) canvas#scene { height: 62vh; }
+    body:not(.embed) #thermPanel { position: static; margin: 8px 10px; max-height: none; background: var(--panel); }
   }
 </style>
 <script type="importmap">
@@ -192,6 +231,12 @@
       <label><input type="checkbox" id="apron"> 焚き口の前掛けを掛ける</label>
       <label><input type="checkbox" id="lip"> 前室の口に垂れ壁を掛ける（煙突を足した形の焚く間）</label>
     </div>
+
+    <h2>温度の分布</h2>
+    <div class="toggles">
+      <label><input type="checkbox" id="temp"> 工程ごとの温度の分布を塗る</label>
+    </div>
+    <p class="note">1 次元と 2 次元の計算（<code>docs/data/thermal.json</code>）を軸対称に当てて、部品を温度の色に塗ります。図の下の帯で、ふつうの日と寒い日、工程と時刻を選びます。断面で見ると、切り口に厚さの向きの温度の縞が出ます。</p>
     <h2>差し込みの扉の位置</h2>
     <select id="doorState" style="width:100%;font:inherit;padding:5px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink)">
       <option value="plug">差し込みの扉で閉じる（焼くとき）</option>
@@ -228,9 +273,19 @@
     <div id="tip"></div>
     <div id="legend">マス目は 0.5 m</div>
     <div id="flowLegend" hidden></div>
+    <div id="thermPanel" hidden>
+      <div class="th-head" id="thermHead"></div>
+      <div class="th-top">
+        <div class="th-key"><div class="th-scale" id="thermScale"></div><p class="th-axi" id="thermAxi"></p></div>
+        <div class="th-vals" id="thermVals"></div>
+      </div>
+      <details class="th-more"><summary>値の置き方と、値の無い所</summary><ul id="thermNotes"></ul></details>
+      <div id="thermBar"></div>
+    </div>
     <div id="err"></div>
   </main>
 </div>
+<script src="tbar.js"></script>
 <script type="module" src="main.js"></script>
 </body>
 </html>

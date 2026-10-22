@@ -23,6 +23,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -r requirements.txt
+      - run: python tools/gen_thermal.py --check
       - name: ナビゲータのデータを点検して作る
         run: python tools/gen_nav.py
       - run: mkdocs build --strict
