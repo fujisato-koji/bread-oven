@@ -306,6 +306,12 @@ function mesh(geom, mat, info) {
   return o;
 }
 
+// 温度の塗り方を形に付ける（温度の分布の TH_MODE の名）。付けない形は部品の既定（TH_PART）で塗る。
+function therm(o, mode) {
+  o.userData.therm = mode;
+  return o;
+}
+
 function box(w, h, d, x, y, z, mat, info) {
   const o = mesh(new THREE.BoxGeometry(w, h, d), mat, info);
   o.position.set(x, y, z);
@@ -519,6 +525,7 @@ function addCaps(b) {
       });
       const win = m.material.userData.win;
       if (win) for (const mt of [back, front, capMat]) cutWindow(mt, win);
+      thermPatch(capMat, m.material.userData.tmode || 'none');   // 切り口も温度の色に塗る（厚さの向きの縞）
       for (const mat of [back, front]) {
         const h = new THREE.Mesh(m.geometry, mat);
         h.renderOrder = order;
@@ -820,6 +827,8 @@ function buildCast(ctx) {
     info('chamber', `厚さ ${mm(ft)} mm、外形 幅 ${f3(2 * ffx)} m、炉床から ${f3(yRoofTop + rise + fo - yFloor)} m（前室の箱の奥より左右と上に ${mm(fo)} mm 大きい）、z = ${f2(collarZ - ft)}〜${f2(collarZ)} m。入口の枠と合わせて ${DOME_PIECES[3][1]}（計算）`,
       '入口の枠の四角い鍔（入口の枠と一体に流す）。前室の箱の奥の縁を毛布の帯（幅 12 mm、図は描かない）で受け、箱の奥の上の隅のすきまを塞ぐ', '入口の枠の鍔'));
   for (const o of [back, front, reveal, lid, collar, flange]) o.position.y = yBase;
+  therm(collar, 'arch');
+  therm(flange, 'arch');
   add('chamber', back, front, reveal, lid, collar, flange);
 
   // ---- 継ぎ目（継ぎ目の線、外の薄塗り、ドームの足の下の縄）
@@ -1069,11 +1078,11 @@ function buildCast(ctx) {
     const brick = material('landing', { color: PART.hearth.color });
     const boxInfo = info('landing', `内のり 幅 ${f2(lw)} × 高さ ${f3(lh)}（口、奥は ${f3(lh + rise)}、薄いレンガの下）× 奥行 ${f2(ld)} m、鋼板の天井は床から口で ${f3(lh + LAND_CEIL)} m、天板は前へ 1/${Math.round(1 / lslope)} 下げる`, '縞鋼板 3.2 mm の袖 2 枚（台形）と天板。外は 600℃ の耐熱塗料で塗る。奥の縁は毛布の帯を挟んで入口の枠の鍔に当てる（図は帯の厚さを描かない）', '箱');
     for (const s of [-1, 1]) {
-      add('landing', slopeUp(box(lp, yRoof - yFloor, zLF - collarZ, s * (lw / 2 + lp / 2), (yFloor + yRoof) / 2, (collarZ + zLF) / 2, lm, boxInfo), (yFloor + yRoof) / 2));
+      add('landing', therm(slopeUp(box(lp, yRoof - yFloor, zLF - collarZ, s * (lw / 2 + lp / 2), (yFloor + yRoof) / 2, (collarZ + zLF) / 2, lm, boxInfo), (yFloor + yRoof) / 2), 'side'));
     }
     const zTop = zTopL;
     // 天板の煙突の口は煙突の内径の丸にする。付け根の筒は口の縁の上にじかに立つ（ダンパーの溝をやめた、図面の断面図と同じ）。
-    add('landing', slopeUp(mesh(slabXZ(rectXZ(-(lw / 2 + lp), lw / 2 + lp, collarZ, zTop), [{ x: 0, z: cz, r: rc }], yRoof, lp), lm, boxInfo)));
+    add('landing', therm(slopeUp(mesh(slabXZ(rectXZ(-(lw / 2 + lp), lw / 2 + lp, collarZ, zTop), [{ x: 0, z: cz, r: rc }], yRoof, lp), lm, boxInfo)), 'top'));
     const zc1 = collarZ + ld;
     // 天井の内張りは煙突の口（すきま 3 mm）を切り欠く。口が内張りの前の縁に届くときは、丸い穴を小さくせず、前の縁から切り欠く
     // （穴を小さくすると、内張りの切り口が煙突の口にかかって描かれる）。
@@ -1090,8 +1099,8 @@ function buildCast(ctx) {
       linerPts = [[-lw / 2, collarZ], [lw / 2, collarZ], [lw / 2, zc1], ...arcPts, [-lw / 2, zc1]];
       linerHoles = [];
     }
-    add('landing', slopeUp(mesh(slabXZ(linerPts, linerHoles, yCeil, LAND_CEIL - 0.0005), brick,
-      info('landing', `厚さ ${mm(LAND_CEIL)} mm。${state.chim ? '煙突の口を切り欠く（煙突を足すときに、口にかかる 2〜4 枚を替えた形）' : '煙突を足すまで、煙突の口の所を切り欠かずに張る'}。天板と同じ勾配で張る`, '薄いレンガ（SK34 ウス半丁）を天井の内に張る', '天井のレンガ'))));
+    add('landing', therm(slopeUp(mesh(slabXZ(linerPts, linerHoles, yCeil, LAND_CEIL - 0.0005), brick,
+      info('landing', `厚さ ${mm(LAND_CEIL)} mm。${state.chim ? '煙突の口を切り欠く（煙突を足すときに、口にかかる 2〜4 枚を替えた形）' : '煙突を足すまで、煙突の口の所を切り欠かずに張る'}。天板と同じ勾配で張る`, '薄いレンガ（SK34 ウス半丁）を天井の内に張る', '天井のレンガ'))), 'lining'));
     // 焚き口の敷居と前室の床に、丸ごと 3 個と、前室の口の小片 3 個を並べる。
     const sillInfo = info('landing', `幅 ${f3(3 * bw)} m、z = ${f3(hz)}〜${f3(hz + bl + SILL_SMALL)} m`, '耐火粘土レンガ（丸ごと 3 個と小片 3 個）', '敷居と前室の床');
     for (let i = -1; i <= 1; i++) {
@@ -1103,8 +1112,8 @@ function buildCast(ctx) {
     // 天板は前へ下げるので、天板の上の水は前の縁へ流れ、殻の当て板へ戻らない（#8 の水返しは外した）。
     const drip = P('landing.drip');
     const zDrip = zTop - DRIP_SET - FB_T / 2;
-    add('landing', slopeUp(box(2 * fx, drip, FB_T, 0, yRoof - drip / 2, zDrip, lm,
-      info('landing', `平鋼 3 × ${mm(drip)}、長さ ${f3(2 * fx)} m。天板の前の縁から ${mm(DRIP_SET)} mm 内の下の面に溶接する。下の端は炉床から ${f3(yRoof + roofDy(zDrip) - drip - yFloor)} m（口の上 ${f3(lh)} m より上）`, '天板の水切り（平鋼を溶接する）', '水切り'))));
+    add('landing', therm(slopeUp(box(2 * fx, drip, FB_T, 0, yRoof - drip / 2, zDrip, lm,
+      info('landing', `平鋼 3 × ${mm(drip)}、長さ ${f3(2 * fx)} m。天板の前の縁から ${mm(DRIP_SET)} mm 内の下の面に溶接する。下の端は炉床から ${f3(yRoof + roofDy(zDrip) - drip - yFloor)} m（口の上 ${f3(lh)} m より上）`, '天板の水切り（平鋼を溶接する）', '水切り'))), 'top'));
     // 箱の耳、受け金、引きボルトと押しばね（左右に 1 組ずつ）。耳は袖の外の面の下の前寄りに溶接し、受け金の引きボルトに上から掛ける。
     const ss = material('landing', { color: 0xa9aeb3, metalness: 0.6, roughness: 0.4 });
     const earZ = P('landing.ear_z');
@@ -2533,6 +2542,556 @@ function setChim(on, opts = {}) {
   if (opts.rebuild !== false) rebuild();
 }
 
+// ---------- 温度の分布
+// docs/data/thermal.json（tools/gen_thermal.py が作る）の 1 次元と 2 次元の計算の値で、部品を温度の色に塗る。
+// ドームのまわりの向き（方位）と高さ（緯度）では同じ温度と置いた（軸対称）。焚き口と火の位置の片寄りは入れていない。
+// 塗り方は部品ごとに決め（TH_PART）、部品の中で塗り方の違う形には therm() で名を付ける。
+//   dome：ドームの壁（キャスタブル、毛布、継ぎ目、足元の帯）。ドームの中心からの距離で、内面から外への列を読む。
+//     炉床の面より下の形（炉床の側面の毛布の切れ端）は 1 次元の模型に無いので値なしにする。
+//   arch：入口の枠と鍔。焚き口の形からの距離で、キャスタブルの厚さの分の列を読む（推定）。
+//   hearth：炉床と炉床の下の断熱。炉床の面からの深さで読む。パン 2 個の下はパンを置く所の列、ほかは空いた所の列で読む。
+//     ドームの内面の円より外（ドームの足の下、縁の帯、前室の下の板）は 1 次元の模型に無いので値なしにする。
+//     2 次元では、中心からの距離と深さで 2 次元の格子を読む（四角の隅は同じ深さの端の値、推定）。
+//   shell：殻。毛布の外面の値（殻の外面の上の限り）で一様に塗る。
+//   lining、top、side：前室の天井の内張り、天板と水切り、袖。袖は層の境より上を熱い層、下を冷たい層の値で塗る。
+//   none：値の無い部品。色を抜いて灰色で描く。
+// 色は 20 K ごとの段で、100 K ごとに線を引く（コンター図）。目盛は 0〜400℃に固め、日と時刻で変えない。
+// 窯の中の空気と、焚く間の炎とガスは塗らない（炎とガスの温度は模型に無い）。
+const TH_MODE = { none: 0, dome: 1, arch: 2, hearth: 3, shell: 4, lining: 5, top: 6, side: 7 };
+const TH_PART = { chamber: 'dome', insulation: 'dome', seam: 'dome', band: 'dome', hearth: 'hearth', hearthIns: 'hearth', shell: 'shell' };
+const TH_N = 32;                                               // 厚さの向きの列を等分に取り直す点の数
+const TH_SCALE = { min: 0, max: 400, band: 20, iso: 100 };     // 色の目盛（℃）、段の幅、線の間（K）
+// 色は ColorBrewer の YlOrRd の 9 段から、白に近い 1 段目を除いた 8 段（薄い黄が低く、濃い赤が高い。明るさは単調に変わる）。
+// 値の無い部品の灰色と紛れないよう、灰色の段は使わない。
+const TH_RAMP = ['#ffeda0', '#fed976', '#feb24c', '#fd8d3c', '#fc4e2a', '#e31a1c', '#bd0026', '#800026'];
+const TH_NR = TH_RAMP.length;
+const TH_MIX = '0.6';                                          // 温度の色を光の当たり方より強く出す割合（図のための値）
+const TH_LAYER = 0.115;   // 前室の熱い層の境の炉床からの高さ（03 の 3.9.8 の F0 の基準で 0.11〜0.12 m、図のための値）
+const TH_GRID = { nr: 93, nz: 29 };                            // 2 次元の格子を取り直す点の数（5 mm ごと）
+const TH_FIRE = new Set(['heat', 'hold', 'refire']);           // 扉を外して焚く工程（扉を描かない）
+const TH_AXI = '1 次元と 2 次元の計算を、ドームのまわりの向き（軸対称）と高さで同じと置いて塗った。焚き口と火の位置の片寄りは入っていない。';
+// 2 次元の主な時刻を、1 次元の時刻表の同じ節目に合わせる（2 次元の模型の中の時刻は 1 回目から 2〜5 分遅れる）。
+const TH_ALIGN = {
+  t380: (e) => e.t380, fire_end: (e) => e.fire_end, L1: (e) => e.loads[0], L1_30: (e) => e.loads[0] + 30,
+  L2: (e) => e.loads[1], R0: (e) => e.refire[0], R1: (e) => e.refire[1], L3: (e) => e.loads[2],
+  L3_30: (e) => e.loads[2] + 30, end: (e) => e.bake_end,
+};
+
+const TH_GLSL = `
+varying vec3 vTPos;
+uniform float uTOn;
+uniform int uTMode;
+uniform float uTD[${TH_N}];
+uniform float uTHL[${TH_N}];
+uniform float uTHO[${TH_N}];
+uniform vec4 uTX;
+uniform vec4 uTS;
+uniform vec4 uTSd;
+uniform vec4 uTG1;
+uniform vec4 uTG2;
+uniform vec4 uTG3;
+uniform sampler2D uTH2;
+uniform vec3 uTRamp[${TH_NR}];
+uniform vec4 uTSc;
+float thIdx(float x, float xmax, out int i) {
+  float u = clamp(x / xmax, 0.0, 1.0) * ${TH_N - 1}.0;
+  i = int(min(floor(u), ${TH_N - 2}.0));
+  return u - float(i);
+}
+float thD(float x) { int i; float f = thIdx(x, uTX.x, i); return mix(uTD[i], uTD[i + 1], f); }
+float thHL(float x) { int i; float f = thIdx(x, uTX.y, i); return mix(uTHL[i], uTHL[i + 1], f); }
+float thHO(float x) { int i; float f = thIdx(x, uTX.y, i); return mix(uTHO[i], uTHO[i + 1], f); }
+float thH2(float r, float d) {
+  ivec2 sz = textureSize(uTH2, 0);
+  vec2 g = vec2(clamp(r / uTG3.y, 0.0, 1.0) * float(sz.x - 1), clamp(d / uTG3.z, 0.0, 1.0) * float(sz.y - 1));
+  ivec2 a = ivec2(min(floor(g), vec2(sz - 2)));
+  vec2 f = g - vec2(a);
+  float v00 = texelFetch(uTH2, a, 0).r;
+  float v10 = texelFetch(uTH2, a + ivec2(1, 0), 0).r;
+  float v01 = texelFetch(uTH2, a + ivec2(0, 1), 0).r;
+  float v11 = texelFetch(uTH2, a + ivec2(1, 1), 0).r;
+  return mix(mix(v00, v10, f.x), mix(v01, v11, f.x), f.y);
+}
+float thField(vec3 p) {
+  if (uTMode == 1) {
+    if (p.y < uTG1.z - 0.002) return -1000.0;
+    return thD(length(p - vec3(0.0, uTG1.x, 0.0)) - uTG1.y);
+  }
+  if (uTMode == 2) {
+    float ax = abs(p.x);
+    float dy = p.y - uTG2.y;
+    float xa = dy < 0.0 ? ax - uTG2.x : length(vec2(ax, dy)) - uTG2.x;
+    return thD(clamp(xa, 0.0, uTG1.w));
+  }
+  if (uTMode == 3) {
+    float d = uTG1.z - p.y;
+    float r = length(p.xz);
+    if (uTG3.x > 0.5) return thH2(r, d);
+    if (r > uTG1.y) return -1000.0;
+    return length(vec2(abs(p.x) - uTG2.z, p.z)) < uTG2.w ? thHL(d) : thHO(d);
+  }
+  if (uTMode == 4) return uTS.x;
+  if (uTMode == 5) return uTS.y;
+  if (uTMode == 6) return uTS.z;
+  if (uTMode == 7) return mix(uTSd.x, uTSd.y, smoothstep(uTSd.z - uTSd.w, uTSd.z + uTSd.w, p.y));
+  return -1000.0;
+}
+vec3 thColor(float T) {
+  float q = (floor((T - uTSc.x) / uTSc.z) + 0.5) * uTSc.z + uTSc.x;
+  float s = clamp((q - uTSc.x) / (uTSc.y - uTSc.x), 0.0, 1.0) * ${TH_NR - 1}.0;
+  int i = int(min(floor(s), ${TH_NR - 2}.0));
+  return mix(uTRamp[i], uTRamp[i + 1], s - float(i));
+}
+`;
+const TH_FRAG_COLOR = `#include <color_fragment>
+  float thT = thField(vTPos);
+  float thF = thT / uTSc.w;
+  float thW = max(fwidth(thF), 1e-4);
+  vec3 thCol = vec3(0.0);
+  float thMix = 0.0;
+  if (uTOn > 0.5) {
+    if (thT < -500.0) {
+      float thL = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
+      diffuseColor.rgb = vec3(mix(thL, 0.18, 0.45));
+    } else {
+      float thLine = 1.0 - smoothstep(0.6 * thW, 1.6 * thW, abs(fract(thF + 0.5) - 0.5));
+      thCol = thColor(thT) * (1.0 - 0.6 * thLine);
+      diffuseColor.rgb = thCol;
+      thMix = ${TH_MIX};
+    }
+  }`;
+const TH_FRAG_OUT = `#include <opaque_fragment>
+  if (thMix > 0.0) gl_FragColor.rgb = mix(gl_FragColor.rgb, thCol, thMix);`;
+
+const TH = {
+  data: null, info: null, loading: null, error: '',
+  on: false, day: 'normal', t: null, h2d: false,
+  bar: null, gridKey: '',
+  u: {
+    uTOn: { value: 0 },
+    uTD: { value: new Float32Array(TH_N) },
+    uTHL: { value: new Float32Array(TH_N) },
+    uTHO: { value: new Float32Array(TH_N) },
+    uTX: { value: new THREE.Vector4(0.115, 0.14, 0, 0) },
+    uTS: { value: new THREE.Vector4() },
+    uTSd: { value: new THREE.Vector4(0, 0, 1, 0.01) },
+    uTG1: { value: new THREE.Vector4() },
+    uTG2: { value: new THREE.Vector4() },
+    uTG3: { value: new THREE.Vector4(0, 0.46, 0.14, 1) },
+    uTH2: { value: null },
+    uTRamp: { value: TH_RAMP.map((h) => { const c = new THREE.Color(h); return new THREE.Vector3(c.r, c.g, c.b); }) },
+    uTSc: { value: new THREE.Vector4(TH_SCALE.min, TH_SCALE.max, TH_SCALE.band, TH_SCALE.iso) },
+  },
+};
+TH.tex = new THREE.DataTexture(new Float32Array(TH_GRID.nr * TH_GRID.nz), TH_GRID.nr, TH_GRID.nz, THREE.RedFormat, THREE.FloatType);
+TH.tex.minFilter = THREE.NearestFilter;
+TH.tex.magFilter = THREE.NearestFilter;
+TH.tex.needsUpdate = true;
+TH.u.uTH2.value = TH.tex;
+
+// 材料に温度の塗りを足す。温度を塗らないとき（uTOn = 0）は元の色のまま描く。窓で画素を捨てる材料は、捨てる決まりも残す。
+function thermPatch(m, mode) {
+  m.userData.tmode = mode;
+  const prev = m.onBeforeCompile;
+  const prevKey = m.customProgramCacheKey();
+  m.onBeforeCompile = function (shader, r) {
+    prev.call(this, shader, r);
+    Object.assign(shader.uniforms, TH.u, { uTMode: { value: TH_MODE[mode] || 0 } });
+    shader.vertexShader = 'varying vec3 vTPos;\n' + shader.vertexShader.replace(
+      '#include <begin_vertex>',
+      '#include <begin_vertex>\n  vTPos = (modelMatrix * vec4(transformed, 1.0)).xyz;',
+    );
+    shader.fragmentShader = TH_GLSL + shader.fragmentShader
+      .replace('#include <color_fragment>', TH_FRAG_COLOR)
+      .replace('#include <opaque_fragment>', TH_FRAG_OUT);
+  };
+  m.customProgramCacheKey = () => `${prevKey}|th`;
+  return m;
+}
+
+// 組んだ窯の材料に温度の塗りを足す。1 つの材料を塗り方の違う形が分け合っているときは、塗り方ごとに材料を写して分ける。
+function thermPrepare(b) {
+  const split = new Map();
+  for (const p of PARTS) {
+    b.groups[p.key].traverse((o) => {
+      if (!o.isMesh || o.userData.passThrough || !o.material || !o.material.isMeshStandardMaterial) return;
+      const mode = o.userData.therm || TH_PART[p.key] || 'none';
+      const m = o.material;
+      if (m.userData.tmode === undefined) { thermPatch(m, mode); return; }
+      if (m.userData.tmode === mode) return;
+      const key = `${m.uuid}:${mode}`;
+      let c = split.get(key);
+      if (!c) {
+        c = m.clone();
+        delete c.userData.tmode;
+        if (m.userData.win) cutWindow(c, m.userData.win);
+        thermPatch(c, mode);
+        ovenMaterials.push(c);
+        split.set(key, c);
+      }
+      o.material = c;
+    });
+  }
+}
+
+// 塗るための寸法（ドームの中心、内の半径、炉床の面、焚き口の形、パン 2 個の位置）。窯を組み直すたびにそろえる。
+function thermGeom() {
+  const g = current && current.d && current.d.geo;
+  if (!g) return;
+  TH.u.uTG1.value.set(g.yBase, g.R, g.yFloor, P('dome.thickness'));
+  TH.u.uTG2.value.set(g.dHalf, g.yFloor + Math.max(0, g.dH - g.dHalf), g.R - BREAD.wall - BREAD.d / 2, BREAD.d / 2);
+  TH.u.uTSd.value.z = g.yFloor + TH_LAYER;
+}
+
+// 昇順の並び xs の中で x を挟む点の番号と割合を返す（端の外は端に寄せる）。
+const thermAt = (xs, x) => {
+  let j = 0;
+  while (j < xs.length - 2 && xs[j + 1] < x) j++;
+  return [j, clamp((x - xs[j]) / (xs[j + 1] - xs[j]), 0, 1)];
+};
+// 並びの点 xs から、0〜xs の終わりを n 等分した点への重みを作る。
+const thermResampler = (xs, n) => Array.from({ length: n }, (_, k) => thermAt(xs, (xs[xs.length - 1] * k) / (n - 1)));
+
+// 2 次元の主な時刻の格子を、5 mm ごとの等分の格子に取り直す。値の無い所（null）は同じ深さの内の側の値で埋める（推定）。
+function thermGrid(h, snap, rMax, zMax) {
+  const rows = snap.T.map((row) => {
+    const out = row.slice();
+    let lastV = null;
+    for (let i = 0; i < out.length; i++) { if (out[i] == null) out[i] = lastV; else lastV = out[i]; }
+    const firstV = out.find((v) => v != null);
+    for (let i = 0; i < out.length && out[i] == null; i++) out[i] = firstV;
+    return out;
+  });
+  const { nr, nz } = TH_GRID;
+  const g = new Float32Array(nr * nz);
+  for (let j = 0; j < nz; j++) {
+    const [zj, zf] = thermAt(h.z, (zMax * j) / (nz - 1));
+    for (let i = 0; i < nr; i++) {
+      const [ri, rf] = thermAt(h.r, (rMax * i) / (nr - 1));
+      const a = rows[zj][ri] + (rows[zj][ri + 1] - rows[zj][ri]) * rf;
+      const b = rows[zj + 1][ri] + (rows[zj + 1][ri + 1] - rows[zj + 1][ri]) * rf;
+      g[j * nr + i] = a + (b - a) * zf;
+    }
+  }
+  return g;
+}
+function thermGridAt(g, rMax, zMax, r, d) {
+  const { nr, nz } = TH_GRID;
+  const u = clamp(r / rMax, 0, 1) * (nr - 1);
+  const v = clamp(d / zMax, 0, 1) * (nz - 1);
+  const i = Math.min(Math.floor(u), nr - 2);
+  const j = Math.min(Math.floor(v), nz - 2);
+  const at = (a, b) => g[b * nr + a];
+  const a = at(i, j) + (at(i + 1, j) - at(i, j)) * (u - i);
+  const b = at(i, j + 1) + (at(i + 1, j + 1) - at(i, j + 1)) * (u - i);
+  return a + (b - a) * (v - j);
+}
+
+// thermal.json を読み、日ごとの並びと、帯に渡す中身（工程、窯入れ、2 次元の主な時刻）を作る。
+function thermPrepData(raw) {
+  const dn = raw.nodes.dome.x;
+  const hn = raw.nodes.hearth.x;
+  const rs = { dome: thermResampler(dn, TH_N), hearth: thermResampler(hn, TH_N) };
+  const regs = Object.values(raw.days)[0].hearth2d.regions;
+  const rMax = Math.max(...regs.map((r) => r.r[1]));
+  const zMax = Math.max(...regs.map((r) => r.z[1]));
+  const days = {};
+  for (const [k, d] of Object.entries(raw.days)) {
+    const e = d.events;
+    const snaps = d.hearth2d.snaps.map((s) => ({
+      id: s.id, label: s.label, tm: s.t,
+      t: TH_ALIGN[s.id] ? TH_ALIGN[s.id](e) : s.t,
+      grid: thermGrid(d.hearth2d, s, rMax, zMax),
+    })).sort((a, b) => a.t - b.t);
+    days[k] = { ...d, snaps };
+  }
+  const cs = String(raw.meta.clock_start || '06:00').split(':').map(Number);
+  return {
+    raw, rs, rMax, zMax, xDome: dn[dn.length - 1], xHearth: hn[hn.length - 1], days,
+    order: Object.keys(raw.days), clockStart: cs[0] * 60 + (cs[1] || 0),
+  };
+}
+
+function thermInfo(D) {
+  const days = {};
+  for (const k of D.order) {
+    const d = D.days[k];
+    days[k] = {
+      label: d.label, cond: `外気 ${neg(String(d.cond.Ta))}℃`, tmax: d.t[d.t.length - 1], bakeEnd: d.events.bake_end,
+      phases: d.phases.map((p) => ({ id: p.id, name: p.name, t: p.t })), loads: d.events.loads,
+      snaps: d.snaps.map((s) => ({ id: s.id, label: s.label, t: s.t, tm: s.tm })),
+    };
+  }
+  return { order: D.order, clockStart: D.clockStart, days };
+}
+
+function thermLoad() {
+  if (TH.data) return Promise.resolve();
+  if (TH.loading) return TH.loading;
+  TH.error = '';
+  TH.loading = (async () => {
+    const res = await fetch('../data/thermal.json', { cache: 'no-cache' });
+    if (!res.ok) throw new Error(`thermal.json を読めません（${res.status}）`);
+    TH.data = thermPrepData(await res.json());
+    TH.info = thermInfo(TH.data);
+  })().catch((e) => {
+    TH.error = String(e.message || e);
+    TH.loading = null;
+    throw e;
+  });
+  return TH.loading;
+}
+
+// 温度のデータの寸法が、いまの図（oven.json）と合っているかを見る。合わなければ札に出す（塗るのはやめない）。
+function thermCheckGeom() {
+  const g = current && current.d && current.d.geo;
+  if (!TH.data || !g) return '';
+  const G = TH.data.raw.geometry;
+  const bad = [];
+  if (Math.abs(G.y_hearth - g.yFloor) > 0.002) bad.push('炉床の面の高さ');
+  if (Math.abs(G.y_dome_base - g.yBase) > 0.002) bad.push('ドームの足の高さ');
+  if (Math.abs(G.dome_r_in - g.R) > 0.002) bad.push('ドームの内の半径');
+  if (Math.abs(TH.data.xDome - P('dome.thickness') - P('insulation.thickness')) > 0.002) bad.push('ドームの壁の厚さ');
+  if (Math.abs(TH.data.xHearth - P('hearth.firebrick') - P('hearth.insulation')) > 0.002) bad.push('炉床の厚さ');
+  return bad.length ? `温度のデータの寸法が図と合わない（${bad.join('、')}）。tools/gen_thermal.py で作り直す。` : '';
+}
+
+const thermDay = () => (TH.data ? TH.data.days[TH.day] || TH.data.days[TH.data.order[0]] : null);
+const thermActive = () => !!(TH.on && TH.data && state.type === 'cast' && current && current.d.geo);
+function thermPhase() {
+  const d = thermDay();
+  if (!d || TH.t == null) return null;
+  const i = d.phases.findIndex((p, k) => TH.t < p.t[1] || k === d.phases.length - 1);
+  return d.phases[Math.max(i, 0)];
+}
+// 焚く間は扉を外して焚くので、空気の流れの場面を選んでいないときは扉を描かない。
+const thermDoorOff = () => thermActive() && state.flow === 'none' && TH_FIRE.has((thermPhase() || {}).id);
+
+function thermSnap(d, t) {
+  let best = d.snaps[0];
+  for (const s of d.snaps) if (Math.abs(s.t - t) < Math.abs(best.t - t)) best = s;
+  return best;
+}
+// 日と時刻と 2 次元をそろえる（知らない日の名は初めの日、時刻は 0〜終わり、2 次元は主な時刻に寄せる）。
+function thermNorm() {
+  if (!TH.data) return;
+  if (!TH.data.days[TH.day]) TH.day = TH.data.order[0];
+  const d = thermDay();
+  if (TH.t == null || !Number.isFinite(TH.t)) TH.t = d.events.fire_end;
+  TH.t = clamp(TH.t, 0, d.t[d.t.length - 1]);
+  if (TH.h2d && !d.snaps.length) TH.h2d = false;
+  if (TH.h2d) TH.t = thermSnap(d, TH.t).t;
+}
+
+// 時刻 t の値を並びの前後から直線で読む。air は扉を閉めているときだけ値があり、前後のどちらかが null なら null にする。
+function thermSample(d, t) {
+  const ts = d.t;
+  let lo = 0;
+  let hi = ts.length - 1;
+  if (t <= ts[0]) hi = 0;
+  else if (t >= ts[hi]) lo = hi;
+  else while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (ts[mid] <= t) lo = mid; else hi = mid; }
+  const f = hi > lo ? (t - ts[lo]) / (ts[hi] - ts[lo]) : 0;
+  const T = d.T;
+  const sc = (a) => (a[lo] == null || a[hi] == null ? null : a[lo] + (a[hi] - a[lo]) * f);
+  const prof = (a, rs, out) => {
+    for (let k = 0; k < rs.length; k++) {
+      const [j, g] = rs[k];
+      const v0 = a[lo][j] + (a[lo][j + 1] - a[lo][j]) * g;
+      const v1 = a[hi][j] + (a[hi][j + 1] - a[hi][j]) * g;
+      out[k] = v0 + (v1 - v0) * f;
+    }
+  };
+  prof(T.dome, TH.data.rs.dome, TH.u.uTD.value);
+  prof(T.hearth_loaf, TH.data.rs.hearth, TH.u.uTHL.value);
+  prof(T.hearth_open, TH.data.rs.hearth, TH.u.uTHO.value);
+  const node0 = (a) => a[lo][0] + (a[hi][0] - a[lo][0]) * f;
+  return {
+    dome: node0(T.dome), loaf: node0(T.hearth_loaf), open: node0(T.hearth_open),
+    air: sc(T.air), surf: sc(T.surf), shell: sc(T.shell),
+    lining: sc(T.landing.lining), top: sc(T.landing.top), hot: sc(T.landing.side_hot), cold: sc(T.landing.side_cold),
+  };
+}
+
+// いまの日と時刻で塗る。温度を塗らないときは元の色に戻す。
+function thermApply() {
+  thermNorm();
+  const ok = thermActive();
+  TH.u.uTOn.value = ok ? 1 : 0;
+  document.body.classList.toggle('therm', TH.on);
+  if (current) applyVisibility();
+  if (!ok) { renderTherm(null, null); return; }
+  const d = thermDay();
+  const s = thermSample(d, TH.t);
+  TH.u.uTX.value.set(TH.data.xDome, TH.data.xHearth, 0, 0);
+  TH.u.uTS.value.set(s.shell, s.lining, s.top, 0);
+  TH.u.uTSd.value.x = s.cold;
+  TH.u.uTSd.value.y = s.hot;
+  let snap = null;
+  if (TH.h2d) {
+    snap = thermSnap(d, TH.t);
+    const key = `${TH.day}:${snap.id}`;
+    if (TH.gridKey !== key) {
+      TH.tex.image.data.set(snap.grid);
+      TH.tex.needsUpdate = true;
+      TH.gridKey = key;
+    }
+  }
+  TH.u.uTG3.value.set(TH.h2d ? 1 : 0, TH.data.rMax, TH.data.zMax, 1);
+  renderTherm(s, snap);
+}
+
+// ---------- 温度の札（凡例、いまの値、断り）
+const fT = (v) => (v == null ? '値なし' : `${neg(v.toFixed(0))}℃`);
+// 段の色（シェーダーの thColor と同じ決まり）。目盛の色見本に使う。
+function thermCss(T) {
+  const { min, max, band } = TH_SCALE;
+  const q = (Math.floor((T - min) / band) + 0.5) * band + min;
+  const s = clamp((q - min) / (max - min), 0, 1) * (TH_NR - 1);
+  const i = Math.min(Math.floor(s), TH_NR - 2);
+  const f = s - i;
+  const a = TH.u.uTRamp.value[i];
+  const b = TH.u.uTRamp.value[i + 1];
+  return '#' + new THREE.Color(a.x + (b.x - a.x) * f, a.y + (b.y - a.y) * f, a.z + (b.z - a.z) * f).getHexString();
+}
+
+// 温度の札と左の欄の切り替え（index.html に無ければ足す）
+function setupThermControls() {
+  const host = canvas.parentElement;
+  if (!$('thermPanel') && host) {
+    host.insertAdjacentHTML('beforeend', '<div id="thermPanel" hidden><div class="th-head" id="thermHead"></div><div class="th-top"><div class="th-key"><div class="th-scale" id="thermScale"></div><p class="th-axi" id="thermAxi"></p></div><div class="th-vals" id="thermVals"></div></div><details class="th-more"><summary>値の置き方と、値の無い所</summary><ul id="thermNotes"></ul></details><div id="thermBar"></div></div>');
+  }
+  const { min, max, band, iso } = TH_SCALE;
+  const n = Math.round((max - min) / band);
+  const sw = Array.from({ length: n }, (_, i) => `<span style="background:${thermCss(min + (i + 0.5) * band)}"></span>`).join('');
+  const tk = Array.from({ length: Math.round((max - min) / iso) + 1 }, (_, i) => {
+    const v = min + i * iso;
+    return `<span style="left:${((v - min) / (max - min)) * 100}%">${v}</span>`;
+  }).join('');
+  $('thermScale').innerHTML = `<div class="th-sw" role="img" aria-label="温度の色の目盛 ${min}〜${max}℃、${band} K ごと">${sw}</div><div class="th-tk">${tk}</div>`
+    + `<div class="th-unit"><span>℃（${band} K ごとの色、${iso} K ごとの線。${min}℃より低い所は ${min}℃の色）</span><span class="th-nd"><i></i>値なし</span></div>`;
+  $('thermAxi').textContent = TH_AXI;
+  if (!$('temp')) {
+    const tg = document.querySelector('aside .toggles');
+    if (tg) tg.insertAdjacentHTML('afterend', '<h2>温度の分布</h2><div class="toggles"><label><input type="checkbox" id="temp"> 工程ごとの温度の分布を塗る</label></div>');
+  }
+}
+
+function renderTherm(s, snap) {
+  const pn = $('thermPanel');
+  if (!pn) return;
+  pn.hidden = !TH.on;
+  if ($('temp')) $('temp').checked = TH.on;
+  if (!TH.on) return;
+  const head = $('thermHead');
+  const vals = $('thermVals');
+  const say = (text) => {
+    head.innerHTML = '<b>温度の分布</b>';
+    vals.innerHTML = `<p class="th-msg">${text}</p>`;
+    $('thermNotes').innerHTML = '';
+  };
+  if (state.type !== 'cast') { say('温度の分布は、分割のキャスタブルのドーム（第一案）だけで塗る。'); return; }
+  if (!TH.data) { say(TH.error ? `温度のデータを読めない（${TH.error}）。` : '温度のデータを読んでいる。'); return; }
+  if (!s) return;
+  const d = thermDay();
+  const ph = thermPhase();
+  const tb = window.ThermBar;
+  head.innerHTML = `<b>温度の分布</b><span>${d.label}（外気 ${neg(String(d.cond.Ta))}℃）</span>`
+    + `<span>${tb ? tb.clock(TH.t, TH.data.clockStart) : ''}</span><span>${ph ? ph.name : ''}</span>`;
+  const rows = [
+    ['ドームの内面', fT(s.dome)],
+    ['炉床の上（空いた所）', fT(s.open)],
+    ['炉床の上（パンを置く所）', fT(s.loaf)],
+    ['毛布の外面', fT(s.shell)],
+    ['窯の中の空気', s.air == null ? '焚く間は無い' : fT(s.air)],
+    ['前室の天板', fT(s.top)],
+  ];
+  if (snap) {
+    const r2 = TH.data.raw.geometry.dome_r_in - 0.025;
+    rows.push(['炉床の中央（2 次元）', fT(thermGridAt(snap.grid, TH.data.rMax, TH.data.zMax, 0, 0))]);
+    rows.push(['壁から 2.5 cm（2 次元）', fT(thermGridAt(snap.grid, TH.data.rMax, TH.data.zMax, r2, 0))]);
+  }
+  vals.innerHTML = rows.map(([k, v]) => `<div><span class="k">${k}</span><span class="v">${v}</span></div>`).join('');
+  const notes = [];
+  const warn = thermCheckGeom();
+  if (warn) notes.push(warn);
+  if (snap) {
+    notes.push(`炉床は 2 次元の模型の「${snap.label}」の値で塗った（模型の中の時刻は ${snap.tm.toFixed(1)} 分で、1 次元の時刻表の同じ節目に合わせた）。`);
+    notes.push('2 次元は四角の炉床を同じ面積の円に置き換えた値で、中心からの距離で読み、隅は同じ深さの端の値で塗った（推定）。');
+  } else {
+    notes.push('炉床は、パン 2 個の下をパンを置く所の列、ほかを空いた所の列で塗った。');
+    notes.push('2 回目は 1 回目を 90 度回した前と奥に置くが、計算は 3 回とも同じ所に置いて数えた（2 回目は悪い側）ので、3 回とも左右の 2 個の下をパンを置く所の列で塗った。');
+    notes.push('ドームの足の下と炉床の縁の帯は 1 次元の模型に無いので、値なし（灰色）にした。帯の「炉床を 2 次元で」で 2 次元の値を見る。');
+  }
+  if (thermDoorOff()) notes.push('焚く間は扉を外して焚くので、扉を描いていない。焚く間の炎とガスの温度は模型に無い。');
+  notes.push('値は計算の値で、測っていない（未確認）。');
+  notes.push('殻は毛布の外面の値で塗った。殻の外面はこれより低い見込みである（推定）。');
+  notes.push(`前室の箱は、定常の値を工程に当てた推定である。袖は炉床から ${f3(TH_LAYER)} m より上を熱い層、下を冷たい層の値で塗った。`);
+  notes.push('入口の枠と鍔は、ドームの壁のキャスタブルの値を焚き口の形からの距離で当てた（推定）。');
+  notes.push('焼き終わりにドームを下げる段は使わず、扉を閉めたまま冷ます基準の日である。');
+  notes.push('灰色は温度を計算していない部品（台、天板、扉、ベント、前室の床のレンガなど）である。');
+  $('thermNotes').innerHTML = notes.map((x) => `<li>${x}</li>`).join('');
+}
+
+// 単独で開いたときの時刻の帯。データを読んでから作る。
+function thermMountBar() {
+  if (EMBED || TH.bar || !TH.info || !window.ThermBar || !$('thermBar')) return;
+  TH.bar = window.ThermBar.mount($('thermBar'), {
+    onChange: (s, final) => {
+      TH.day = s.day;
+      TH.t = s.t;
+      TH.h2d = s.h2d;
+      thermApply();
+      if (final) thermUrl();
+    },
+  });
+  TH.bar.setInfo(TH.info);
+}
+
+// 単独で開いたときは、URL の temp=1、tday、tmin、t2d に残す（温度を塗らないときは載せない）。
+function thermUrl() {
+  if (EMBED) return;
+  const u = new URL(location.href);
+  for (const k of ['temp', 'tday', 'tmin', 't2d']) u.searchParams.delete(k);
+  if (TH.on) {
+    u.searchParams.set('temp', '1');
+    if (TH.data && TH.day !== TH.data.order[0]) u.searchParams.set('tday', TH.day);
+    if (TH.t != null) u.searchParams.set('tmin', String(Math.round(TH.t)));
+    if (TH.h2d) u.searchParams.set('t2d', '1');
+  }
+  history.replaceState(null, '', u.pathname + u.search.replace(/%2C/gi, ',') + u.hash);
+}
+
+// ナビゲータに、帯を作る中身と、そろえたあとの日と時刻を返す。
+function thermPost() {
+  if (!EMBED || window.parent === window) return;
+  const error = TH.error || (state.type !== 'cast' ? '温度の分布は、分割のキャスタブルのドーム（第一案）だけで塗る。' : '');
+  window.parent.postMessage({ type: 'v3d:tinfo', info: TH.info, error, state: { day: TH.day, t: TH.t, h2d: TH.h2d } }, location.origin);
+}
+
+async function thermSetOn(on, opts = {}) {
+  TH.on = !!on;
+  thermApply();
+  if (!TH.on) {
+    if (TH.bar) TH.bar.stop();
+    if (opts.url !== false) thermUrl();
+    return;
+  }
+  try {
+    await thermLoad();
+  } catch (e) {
+    thermApply();
+    thermPost();
+    return;
+  }
+  if (!TH.on) return;
+  thermApply();
+  thermMountBar();
+  if (TH.bar) TH.bar.set({ day: TH.day, t: TH.t, h2d: TH.h2d });
+  if (opts.url !== false) thermUrl();
+  thermPost();
+}
+
 // ---------- 組み替えと表示
 
 let current = null;
@@ -2549,6 +3108,7 @@ function rebuild() {
     current.caps.mats.forEach((m) => m.dispose());
   }
   const b = build(state.type);
+  thermPrepare(b);
   const caps = addCaps(b);
   current = { ...b, mats: ovenMaterials, caps };
   scene.add(b.root);
@@ -2568,6 +3128,9 @@ function rebuild() {
   state.selected = null;
   renderInfo(null);
   applyFocus(false);
+  thermGeom();
+  thermApply();
+  if (TH.on && EMBED && TH.info) thermPost();
 }
 
 // ---------- 親（ナビゲータ）から指された部品を光らせる
@@ -2667,11 +3230,18 @@ window.addEventListener('message', (e) => {
     setHidden(m.hidden);
   } else if (m.type === 'v3d:chimney') {
     if (!!m.on !== state.chim || air.autoChim) setChim(!!m.on);
+  } else if (m.type === 'v3d:temp') {
+    if (typeof m.day === 'string') TH.day = m.day;
+    if (Number.isFinite(m.t)) TH.t = m.t;
+    if (typeof m.h2d === 'boolean') TH.h2d = m.h2d;
+    if (!!m.on !== TH.on) thermSetOn(!!m.on);
+    else thermApply();
   }
 });
 
 function applyVisibility() {
   for (const p of PARTS) current.groups[p.key].visible = state.visible[p.key];
+  if (thermDoorOff()) current.groups.door.visible = false;   // 温度の表示で焚く間は扉を外して描く
 }
 
 // 図に形の無い部品（型式で使わない部品）は一覧から外す。
@@ -2902,6 +3472,8 @@ canvas.addEventListener('pointerup', (ev) => {
 $('rev').textContent = `改訂 ${spec.revision}、${spec.date}。${spec.note}`;
 renderParts();
 setupControls();
+setupThermControls();
+if ($('temp')) $('temp').addEventListener('change', (e) => thermSetOn(e.target.checked));
 
 $('type').addEventListener('click', (e) => {
   const tp = e.target.dataset.type;
@@ -2959,6 +3531,10 @@ if (q.get('door') in DOOR_STATES) state.door = q.get('door');
 if (q.get('apron') === '1') state.apron = true;
 if (q.get('shellFade') === '1') state.shellFade = true;
 if (q.get('hide')) setHidden(q.get('hide').split(','), { url: false });
+// temp=1 で温度の分布を塗って開く。tday=cold は寒い日、tmin は 6:00 に火を付けてからの分、t2d=1 は炉床を 2 次元で塗る。
+if (q.get('tday')) TH.day = q.get('tday');
+if (q.get('tmin') && Number.isFinite(Number(q.get('tmin')))) TH.t = Number(q.get('tmin'));
+if (q.get('t2d') === '1') TH.h2d = true;
 if (q.get('flow') in FLOW_SCENES) setFlow(q.get('flow'), { rebuild: false });
 if (q.get('lip') === '1' || q.get('lip') === '0') {
   const want = q.get('lip') === '1';
@@ -2973,14 +3549,31 @@ syncFlowControls();
 
 rebuild();
 setView(q.get('view') || (state.section ? 'cut' : 'iso'));
+if (q.get('temp') === '1') thermSetOn(true, { url: false });
 
+// 温度の札を図の上に重ねて出しているときは、図を札の上の高さに縮める（札が窯に重ならないように）。
+// 狭い画面で単独で開いたときは、札を図の下に続けて置くので（index.html）、図は CSS の高さのままにする。
 function resize() {
+  const pn = $('thermPanel');
+  const over = pn && !pn.hidden && getComputedStyle(pn).position === 'absolute';
   const r = canvas.parentElement.getBoundingClientRect();
-  renderer.setSize(r.width, r.height, false);
-  camera.aspect = r.width / Math.max(r.height, 1);
+  let w = r.width;
+  let h = r.height;
+  if (over) {
+    h = Math.max(r.height - pn.offsetHeight - 16, 160);
+    canvas.style.height = `${h}px`;
+  } else {
+    canvas.style.height = '';
+    const c = canvas.getBoundingClientRect();
+    w = c.width;
+    h = c.height;
+  }
+  renderer.setSize(w, h, false);
+  camera.aspect = w / Math.max(h, 1);
   camera.updateProjectionMatrix();
 }
 new ResizeObserver(resize).observe(canvas.parentElement);
+if ($('thermPanel')) new ResizeObserver(resize).observe($('thermPanel'));
 resize();
 // 準備ができたら、部品の一覧（id、名、色）を親に渡す。親はこれで部品の表示の欄を作る。
 // 垂れ壁のように場面で形が出る部品もあるので、いま形の無い部品も渡す。

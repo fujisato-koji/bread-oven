@@ -2,6 +2,8 @@
 // 帯のボタンで、煙突を足した形、断面、見る向き、まわりを透かす、空気の流れの場面を 3D の図へ伝える。
 // 既定は初めの形（煙突と垂れ壁は後で足す、施主の決定 2026-10-21）で、「煙突を足した形」を押すと URL に chim=1 を載せる。
 // 左の欄（開け閉めできる）で、部品ごとに表示と非表示を切り替える。隠した部品は URL の hide=id,id に残す。
+// 帯の「温度」で、工程ごとの温度の分布を 3D の図に塗らせ、帯の下に時刻の帯（docs/viewer/tbar.js）を出す。
+// 時刻の帯の中身は 3D の図が v3d:tinfo で渡し、日と時刻は v3d:temp で 3D の図へ伝える。URL には temp=1、tday、tmin、t2d を残す。
 NavApp.register('v3d', (api) => {
   'use strict';
 
@@ -9,7 +11,7 @@ NavApp.register('v3d', (api) => {
   const note = api.$('#v3d-note');
   const bar = api.$('#mode-v3d .modebar');
   if (!stage || !bar) return null;
-  if (note) note.textContent = '部品を選ぶと 3D でも光る。3D で部品を押すと選ばれ、何もない所を押すと選択が外れる。空気の流れの場面を選ぶと、流れを矢印で描く。左の欄で部品を隠せる。図は初めの形（煙突と垂れ壁なし）で、「煙突を足した形」で後で足したあとの形に替わる。';
+  if (note) note.textContent = '部品を選ぶと 3D でも光る。3D で部品を押すと選ばれ、何もない所を押すと選択が外れる。空気の流れの場面を選ぶと、流れを矢印で描く。左の欄で部品を隠せる。図は初めの形（煙突と垂れ壁なし）で、「煙突を足した形」で後で足したあとの形に替わる。「温度」で工程ごとの温度の分布を色で塗る。';
 
   const style = document.createElement('style');
   style.textContent = `
@@ -28,6 +30,8 @@ NavApp.register('v3d', (api) => {
       padding: 1px 6px; font: inherit; font-size: 12px;
     }
     #mode-v3d .v3d-side[hidden] { display: none; }
+    #mode-v3d .v3d-trow { flex: none; padding: 6px 16px 8px; border-bottom: 1px solid var(--rule); background: var(--card); }
+    #mode-v3d .v3d-trow[hidden] { display: none; }
     #mode-v3d .v3d-side .tools { flex-direction: row; flex-wrap: wrap; }
     #mode-v3d .v3d-side .tools button {
       border: 1px solid var(--rule); background: var(--paper); color: var(--ink); border-radius: 6px;
@@ -70,11 +74,18 @@ NavApp.register('v3d', (api) => {
   const airLabel = api.el('label', { text: '空気の流れ' });
   airLabel.append(selAir);
   const btnSide = api.el('button', { type: 'button', 'aria-controls': 'v3d-side', text: '部品の表示' });
+  const btnTemp = api.el('button', { type: 'button', 'aria-pressed': 'false', 'aria-controls': 'v3d-trow', text: '温度', title: '工程ごとの温度の分布を色で塗り、帯の下に時刻の帯を出す' });
   tools.append(btnSide, api.el('span', { class: 'sep', 'aria-hidden': 'true' }), btnChim,
     api.el('span', { class: 'sep', 'aria-hidden': 'true' }), btnCut, btnFade,
     api.el('span', { class: 'sep', 'aria-hidden': 'true' }), ...views,
-    api.el('span', { class: 'sep', 'aria-hidden': 'true' }), airLabel);
+    api.el('span', { class: 'sep', 'aria-hidden': 'true' }), airLabel,
+    api.el('span', { class: 'sep', 'aria-hidden': 'true' }), btnTemp);
   bar.append(tools);
+
+  // 時刻の帯の行（温度を塗るときだけ出す）。帯は 3D の図から中身が届いてから作る。
+  const trow = api.el('div', { class: 'v3d-trow', id: 'v3d-trow', role: 'group', 'aria-label': '温度の時刻' });
+  trow.hidden = true;
+  bar.after(trow);
 
   // 部品の表示の欄。部品の一覧は 3D の図が v3d:ready で渡す（id、名、色）。届くまでは model.yaml の部品で作る。
   const side = api.el('aside', { class: 'side v3d-side', id: 'v3d-side', 'aria-label': '部品の表示' });
@@ -108,6 +119,8 @@ NavApp.register('v3d', (api) => {
   let parts = null;            // 3D の図から届いた部品の一覧 [{ id, label, color }]
   let lastSel = '';            // 最後に見た選択（種類:id）
   let adopt = true;            // 次の選択は URL から来たもので、隠した部品を戻さない
+  const temp = { on: false, day: '', t: null, h2d: false };   // 温度の分布（日の名、6:00 に火を付けてからの分、炉床を 2 次元で）
+  let tbar = null;             // 時刻の帯（docs/viewer/tbar.js）
 
   const PART_IDS = api.data.parts.map((p) => p.id);
   const known = (id) => PART_IDS.includes(id);
@@ -180,7 +193,42 @@ NavApp.register('v3d', (api) => {
     btnChim.setAttribute('aria-pressed', String(chim));
     btnCut.setAttribute('aria-pressed', String(section));
     btnFade.setAttribute('aria-pressed', String(fade));
+    btnTemp.setAttribute('aria-pressed', String(temp.on));
+    btnTemp.setAttribute('aria-expanded', String(temp.on));
   }
+
+  function sendTemp() {
+    const m = { type: 'v3d:temp', on: temp.on, h2d: temp.h2d };
+    if (temp.day) m.day = temp.day;
+    if (temp.t != null) m.t = temp.t;
+    send(m);
+  }
+  function makeBar() {
+    if (tbar) return;
+    if (!window.ThermBar) {
+      trow.textContent = '時刻の帯を読めない（docs/viewer/tbar.js）。';
+      return;
+    }
+    tbar = window.ThermBar.mount(trow, {
+      onChange(s, final) {
+        Object.assign(temp, { day: s.day, t: s.t, h2d: s.h2d });
+        sendTemp();
+        if (final) api.writeUrl(false);
+      },
+    });
+  }
+  function setTemp(on) {
+    temp.on = !!on;
+    trow.hidden = !temp.on;
+    if (temp.on) makeBar();
+    else if (tbar) tbar.stop();
+    syncButtons();
+    sendTemp();
+  }
+  btnTemp.addEventListener('click', () => {
+    setTemp(!temp.on);
+    api.writeUrl(false);
+  });
 
   btnChim.addEventListener('click', () => {
     chim = !chim;
@@ -223,7 +271,24 @@ NavApp.register('v3d', (api) => {
       if (section) send({ type: 'v3d:section', on: true });
       if (fade) send({ type: 'v3d:fade', on: true });
       if (air) send({ type: 'v3d:flow', scene: air });
+      if (temp.on) sendTemp();
       send({ type: 'v3d:focus', parts: pending });
+    } else if (m.type === 'v3d:tinfo') {
+      // 3D の図が温度のデータを読んだ。帯を作り、3D の図がそろえた日と時刻に合わせる。
+      makeBar();
+      if (!tbar) return;
+      if (m.error || !m.info) {
+        tbar.setInfo(null);
+        tbar.message(m.error || '温度のデータを読んでいる。');
+        return;
+      }
+      tbar.setInfo(m.info);
+      const s = m.state && typeof m.state === 'object' ? m.state : {};
+      tbar.set({ day: temp.day || s.day, t: temp.t != null ? temp.t : s.t, h2d: temp.h2d });
+      const g = tbar.get();
+      const moved = g.day !== temp.day || g.t !== temp.t || g.h2d !== temp.h2d;
+      Object.assign(temp, { day: g.day, t: g.t, h2d: g.h2d });
+      if (moved) { sendTemp(); api.writeUrl(false); }
     } else if (m.type === 'v3d:pick') {
       if (m.part == null) api.select(null, null, { push: true });
       else if (typeof m.part === 'string' && api.thing(m.part)) api.select('part', m.part, { push: true });
@@ -279,6 +344,14 @@ NavApp.register('v3d', (api) => {
         syncButtons();
         send({ type: 'v3d:section', on: true });
       }
+      // 温度の分布（temp=1）と、日（tday）、時刻（tmin、分）、炉床を 2 次元で（t2d=1）
+      if (params && params.temp === '1') {
+        if (params.tday) temp.day = params.tday;
+        if (params.tmin && Number.isFinite(Number(params.tmin))) temp.t = Number(params.tmin);
+        if (params.t2d === '1') temp.h2d = true;
+        if (tbar) tbar.set({ day: temp.day || undefined, t: temp.t != null ? temp.t : undefined, h2d: temp.h2d });
+        if (!temp.on) setTemp(true); else sendTemp();
+      }
       if (params && params.air && params.air !== air && AIR.some(([v]) => v === params.air)) {
         air = params.air;
         selAir.value = air;
@@ -292,8 +365,14 @@ NavApp.register('v3d', (api) => {
       }
       make();
     },
-    leave() {},
-    params() { return { chim: chim ? '1' : '', cut: section ? '1' : '', air, hide: hideOrder().join(',') }; },
+    leave() { if (tbar) tbar.stop(); },
+    params() {
+      const tp = temp.on ? {
+        temp: '1', tday: temp.day && temp.day !== 'normal' ? temp.day : '',
+        tmin: temp.t != null ? String(Math.round(temp.t)) : '', t2d: temp.h2d ? '1' : '',
+      } : {};
+      return { chim: chim ? '1' : '', cut: section ? '1' : '', air, hide: hideOrder().join(','), ...tp };
+    },
     highlight,
     escape() { return false; },
   };
